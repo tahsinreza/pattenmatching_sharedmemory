@@ -1,1 +1,1 @@
-# pattenmatching_sharedmemory
+Pattern matching parallel shared memory and GPU implementation.
