@@ -375,25 +375,30 @@ error_t stress_unweighted_cpu(const graph_t* graph,
     // Back Propagation
     while (dist > 1) {
       dist--;
-      OMP(omp parallel for)
-      for (vid_t v = 0; v < graph->vertex_count; v++) {
-        if (dists[v] != (dist - 1)) continue;
-        for (eid_t e = graph->vertices[v]; e < graph->vertices[v + 1]; e++) {
-          // For edge (u,v)
-          vid_t u = graph->edges[e];
+      {
+        OMP(omp parallel for)
+        for (vid_t v = 0; v < graph->vertex_count; v++) {
+          if (dists[v] != (dist - 1)) continue;
+          for (eid_t e = graph->vertices[v]; e < graph->vertices[v + 1]; e++) {
+            // For edge (u,v)
+            vid_t u = graph->edges[e];
 
-          if (dists[u] == dist) {
-            delta[v] += 1 + delta[u];
+            if (dists[u] == dist) {
+              delta[v] += 1 + delta[u];
+            }
           }
         }
       }
-      OMP(omp parallel for)
-      for (vid_t v = 0; v < graph->vertex_count; v++) {
-        if (v != source && dists[v] == dist) {
-          stress_centrality[v] += 1.0 * sigma[v] * delta[v];
+      {
+        OMP(omp parallel for)
+        for (vid_t v = 0; v < graph->vertex_count; v++) {
+          if (v != source && dists[v] == dist) {
+            stress_centrality[v] += 1.0 * sigma[v] * delta[v];
+          }
         }
       }
-    } // for
+      }
+  } // for
 
   // Cleanup phase
   totem_free(sigma, TOTEM_MEM_HOST);
