@@ -160,6 +160,7 @@ kernel_configure(int64_t thread_count, dim3 &blocks,
  * @param[in] val the value to be added to the content of address
  * @return old value stored at address
  */
+ #if __CUDA_ARCH__ < 600
 inline __device__ double atomicAdd(double* address, double val) {
   unsigned long long int* address_as_ull = (unsigned long long int*)address;
   unsigned long long int old = *address_as_ull, assumed;
@@ -170,6 +171,7 @@ inline __device__ double atomicAdd(double* address, double val) {
   } while (assumed != old);
   return __longlong_as_double(old);
 }
+#endif
 
 /**
  * A double precision atomic min function. Based on the double precisision
