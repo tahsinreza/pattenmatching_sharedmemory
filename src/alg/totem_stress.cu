@@ -393,8 +393,7 @@ error_t stress_unweighted_cpu(const graph_t* graph,
           stress_centrality[v] += 1.0 * sigma[v] * delta[v];
         }
       }
-    }
-  } // for
+    } // for
 
   // Cleanup phase
   totem_free(sigma, TOTEM_MEM_HOST);
