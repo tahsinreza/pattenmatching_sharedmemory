@@ -91,7 +91,7 @@ PRIVATE error_t map_vertices_by_degree(graph_t* graph, int partition_count,
 // Overloaded for random partitioning. (Ascending, no vertex-degree array.)
 PRIVATE error_t map_vertices_by_degree(graph_t* graph, int partition_count,
                                        vid_t* partitions) {
-  map_vertices_by_degree(graph, partition_count, partitions,
+  return map_vertices_by_degree(graph, partition_count, partitions,
                          true, /* Partitioning by random flag set.     */
                          true, /* No effect, ascending is fine.        */
                          NULL  /* No vertex degree array - is ignored. */);
@@ -101,7 +101,7 @@ PRIVATE error_t map_vertices_by_degree(graph_t* graph, int partition_count,
 PRIVATE error_t map_vertices_by_degree(graph_t* graph, int partition_count,
                                        vid_t* partitions, bool asc,
                                        vdegree_t* vd) {
-  map_vertices_by_degree(graph, partition_count, partitions,
+  return map_vertices_by_degree(graph, partition_count, partitions,
                          false, /* Not partitioning randomly. */
                          asc, vd);
 }

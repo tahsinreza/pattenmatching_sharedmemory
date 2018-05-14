@@ -367,7 +367,7 @@ PRIVATE error_t init_check_space(graph_t* graph, totem_attr_t* attr, int pcount,
       available = (double)available * (1 - GPU_MIN_ALG_STATE);
       if (needed > available) {
         fprintf(stderr,
-                "Error: GPU out of memory. Needed:%dMB, Available:%dMB\n",
+                "Error: GPU out of memory. Needed:%luMB, Available:%luMB\n",
                 needed/(1024*1024), available/(1024*1024));
         return FAILURE;
       }

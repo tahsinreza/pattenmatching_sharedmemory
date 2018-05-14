@@ -346,7 +346,7 @@ void launch_communications_setup(partition_set_t* pset,
       *stream = &pset->partitions[local_pid].streams[0];
     }
   } else {
-    printf("Direction not supported: %s", direction);
+    printf("Direction not supported: %d (0=GROOVES_PUSH, 1=GROOVES_PULL)", direction);
     fflush(stdout);
     exit(EXIT_FAILURE);
   }

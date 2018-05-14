@@ -57,7 +57,7 @@ PRIVATE error_t check_special_cases(vid_t src, bfs_tree_t* tree,
   return SUCCESS;
 }
 
-PRIVATE __attribute__((always_inline)) void 
+PRIVATE inline __attribute__((always_inline)) void 
 graph500_cpu_process_vertex(graph_t* subgraph, graph500_state_t* state, 
                             vid_t v, int pid, bool& finished) {
   for (eid_t i = subgraph->vertices[v]; i < subgraph->vertices[v + 1]; i++) {

@@ -340,7 +340,7 @@ PRIVATE error_t graph_initialize_text(FILE* file_handler, bool weighted,
   err_format_clean:
     fclose(file_handler);
     graph_finalize(graph);
-    fprintf(stderr, "Incorrect file format at line number %d.\n"
+    fprintf(stderr, "Incorrect file format at line numbe r %lu.\n"
             "Check the file format described in totem_graph.h\n",
             line_number);
   err:
@@ -800,9 +800,9 @@ error_t graph_initialize_device(const graph_t* graph_h, graph_t** graph_d,
   **graph_d = *graph_h;
   (*graph_d)->gpu_graph_mem = gpu_graph_mem;
 
+#ifdef FEATURE_64BIT_EDGE_ID
   const eid_t kMaxEdgeCount =
       (static_cast<int64_t>(4) * 1024 * 1024 * 1024) - 1;
-#ifdef FEATURE_64BIT_EDGE_ID
   (*graph_d)->compressed_vertices = compressed_vertices_supported &&
       (graph_h->edge_count <= kMaxEdgeCount);
 #else
@@ -870,7 +870,7 @@ void graph_print(graph_t* graph) {
     for (eid_t i = graph->vertices[vid]; i < graph->vertices[vid + 1]; i++) {
       fprintf(stdout, "%d %d", vid, graph->edges[i]);
       if (graph->weighted) {
-        fprintf(stdout, " %f\n", graph->weights[i]);
+        fprintf(stdout, " %d\n", graph->weights[i]);
       } else {
         fprintf(stdout, "\n");
       }

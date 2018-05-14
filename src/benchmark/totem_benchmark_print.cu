@@ -47,7 +47,7 @@ PRIVATE void print_header_partitions(graph_t* graph) {
 void print_config(graph_t* graph, benchmark_options_t* options,
                   const char* benchmark_name) {
   const char* OMP_PROC_BIND = getenv("OMP_PROC_BIND");
-  printf("file:%s\tbenchmark:%s\tvertices:%llu\tedges:%llu\tpartitioning:%s\t"
+  printf("file:%s\tbenchmark:%s\tvertices:%lu\tedges:%lu\tpartitioning:%s\t"
          "platform:%s\talpha:%d\trepeat:%d\tgpu_count:%d\tthread_count:%d\t"
          "thread_sched:%s\tthread_bind:%s\tgpu_graph_mem:%s\t"
          "gpu_par_randomized:%s\tsorted:%s\tedge_sort_key:%s\tedge_order:%s\t"
@@ -86,7 +86,7 @@ void print_timing(graph_t* graph, double time_total, uint64_t trv_edges,
                   bool totem_based) {
   const totem_timing_t* timers = totem_timing();
   printf("%0.2f\t%0.2f\t%0.2f\t%0.2f\t%0.2f\t%0.2f\t"
-         "%0.2f\t%0.2f\t%0.2f\t%0.2f\t%0.2f\t%0.2f\t%llu\t%0.4f\n",
+         "%0.2f\t%0.2f\t%0.2f\t%0.2f\t%0.2f\t%0.2f\t%lu\t%0.4f\n",
          time_total,
          totem_based ? timers->alg_exec : time_total,
          totem_based ? timers->alg_init : 0,
