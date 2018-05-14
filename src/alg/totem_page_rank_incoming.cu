@@ -202,7 +202,7 @@ error_t page_rank_incoming_cpu(graph_t* graph, rank_t *rank_i, rank_t* rank) {
     rank_t initial_value = 1 / (rank_t)graph->vertex_count;
     totem_memset(outbox, initial_value, graph->vertex_count, type);
   } else {
-    OMP(omp parallel for schedule(static))
+    #pragma omp parallel for  schedule(static)
     for (vid_t vertex_id = 0; vertex_id < graph->vertex_count; vertex_id++) {
       outbox[vertex_id] = rank_i[vertex_id];
     }
@@ -218,7 +218,7 @@ error_t page_rank_incoming_cpu(graph_t* graph, rank_t *rank_i, rank_t* rank) {
     // The "runtime" scheduling clause defer the choice of thread scheduling
     // algorithm to the choice of the client, either via OS environment variable
     // or omp_set_schedule interface.
-    OMP(omp parallel for schedule(runtime))
+    #pragma omp parallel for  schedule(runtime)
     for(vid_t vertex_id = 0; vertex_id < graph->vertex_count; vertex_id++) {
       // calculate the sum of all neighbors' rank
       rank_t sum = 0;
@@ -238,7 +238,7 @@ error_t page_rank_incoming_cpu(graph_t* graph, rank_t *rank_i, rank_t* rank) {
     }
   }
 
-  OMP(omp parallel for schedule(static))
+  #pragma omp parallel for  schedule(static)
   for (vid_t v = 0; v < graph->vertex_count; v++) rank[v] = outbox[v];
 
   totem_free(inbox, type);

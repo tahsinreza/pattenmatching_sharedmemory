@@ -300,7 +300,8 @@ error_t bfs_cpu(graph_t* graph, vid_t source_id, cost_t* cost) {
   finished = false;
   // Within the following code segment, all threads execute in parallel the
   // same code (similar to a cuda kernel)
-  OMP(omp parallel) {
+  #pragma omp parallel
+  {
     // level is a local variable to each thread, having a separate copy per
     // thread reduces the overhead of cache coherency protocol compared to
     // the case where level is shared
@@ -311,12 +312,12 @@ error_t bfs_cpu(graph_t* graph, vid_t source_id, cost_t* cost) {
       // checked the while condition above using the same "finished" value
       // that resulted from the previous iteration before it is initialized
       // again for the next one.
-      OMP(omp barrier)
+      #pragma omp barrier
 
       // This "single" clause ensures that only one thread sets the variable.
       // Note that this close has an implicit barrier (i.e., all threads will
       // block until the variable is set by the responsible thread)
-      OMP(omp single)
+      #pragma omp single
       finished = true;
 
       // The "for" clause instructs openmp to run the loop in parallel. Each
@@ -328,7 +329,7 @@ error_t bfs_cpu(graph_t* graph, vid_t source_id, cost_t* cost) {
       // coherency overhead. The "runtime" scheduling clause defer the choice
       // of thread scheduling algorithm to the choice of the client, either
       // via OS environment variable or omp_set_schedule interface.
-      OMP(omp for schedule(runtime) reduction(& : finished))
+      #pragma omp for schedule(runtime) reduction(& : finished)
       for (vid_t vertex_id = 0; vertex_id < graph->vertex_count; vertex_id++) {
         if (cost[vertex_id] != level) continue;
         for (eid_t i = graph->vertices[vertex_id];
@@ -411,7 +412,7 @@ error_t bfs_queue_cpu(graph_t* graph, vid_t source_id, cost_t* cost) {
 
   // Do level 0 separately and parallelize across neighbours.
   // Only the source node is active in level 0
-  OMP(omp parallel for schedule(static))
+  #pragma omp parallel for  schedule(static)
   for (vid_t v = graph->vertices[source_id];
        v < graph->vertices[source_id + 1]; v++) {
     vid_t nbr = graph->edges[v];
@@ -421,7 +422,8 @@ error_t bfs_queue_cpu(graph_t* graph, vid_t source_id, cost_t* cost) {
   }
 
 
-  OMP(omp parallel) {
+  #pragma omp parallel
+  {
     // thread-local variables
     cost_t level        = 1;
     vid_t  localF_index = 0;
@@ -432,12 +434,13 @@ error_t bfs_queue_cpu(graph_t* graph, vid_t source_id, cost_t* cost) {
       // The following barrier is necessary to ensure that all threads have
       // checked the while condition before nextF_index is cleared for the next
       // round.
-      OMP(omp barrier)
+      #pragma omp barrier
 
       // This "single" clause ensures that only one thread enters the
       // following block of code. Note that this close has an implicit
       // barrier.
-      OMP(omp single) {
+      #pragma omp single
+      {
         // Swap the current with the next queue.
         vid_t* tmp = currF;
         currF = nextF;
@@ -452,7 +455,7 @@ error_t bfs_queue_cpu(graph_t* graph, vid_t source_id, cost_t* cost) {
       // OMP scheduling algorithm. The "runtime" scheduling clause defer the
       // choice of thread scheduling algorithm to the choice of the client,
       // either via OS environment variable or omp_set_schedule interface.
-      OMP(omp for schedule(runtime))
+      #pragma omp for schedule(runtime)
       for (vid_t q = 0; q < currF_index; q++) {
         vid_t v = currF[q];
         for (eid_t i = graph->vertices[v]; i < graph->vertices[v + 1]; i++) {
@@ -473,7 +476,7 @@ error_t bfs_queue_cpu(graph_t* graph, vid_t source_id, cost_t* cost) {
 
       // The following barrier is necessary to ensure that all threads see the
       // same nextF_index value that is being incremented by the localF_indices
-      OMP(omp barrier)
+      #pragma omp barrier
     }
   }  // omp parallel
   bitmap_finalize_cpu(visited);
@@ -488,7 +491,7 @@ bool top_down_step(graph_t* graph, cost_t* cost, bitmap_t* visited,
   bool finished = true;
 
   // Iterate across all vertices in frontier.
-  OMP(omp parallel for schedule(runtime) reduction(& : finished))
+  #pragma omp parallel for schedule(runtime) reduction(& : finished)
   for (vid_t vertex_id = 0; vertex_id < graph->vertex_count; vertex_id++) {
     if (!bitmap_is_set(state->current, vertex_id)) continue;
 
@@ -520,7 +523,7 @@ bool bottom_up_step(graph_t* graph, cost_t* cost, bitmap_t* visited,
   bool finished = true;
 
   // Iterate across all vertices.
-  OMP(omp parallel for schedule(runtime) reduction(& : finished))
+  #pragma omp parallel for schedule(runtime) reduction(& : finished)
   for (vid_t vertex_id = 0; vertex_id < graph->vertex_count; vertex_id++) {
     // Ignore vertices that have been visited.
     if (bitmap_is_set(*visited, vertex_id)) { continue; }

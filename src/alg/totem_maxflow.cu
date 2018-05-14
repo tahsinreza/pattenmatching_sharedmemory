@@ -555,7 +555,7 @@ error_t maxflow_cpu(graph_t* graph, vid_t source_id, vid_t sink_id,
     finished = true;
     int count = KERNEL_CYCLES;
     while(count--) {
-      OMP(omp parallel for)
+      #pragma omp parallel for
       for (vid_t u = 0; u < local_graph->vertex_count; u++) {
         if (u == sink_id || u == source_id) continue;
         // Perform a push/relabel operation

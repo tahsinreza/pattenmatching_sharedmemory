@@ -30,7 +30,7 @@ PRIVATE void randomize_across_gpus(graph_t* graph, vid_t* partitions,
   uint32_t seed = GLOBAL_SEED;
 
   // Randomize the placement of vertices across GPUs, can be done in parallel.
-  OMP(omp parallel for schedule(static))
+  #pragma omp parallel for  schedule(static)
   for (vid_t v = 0; v < graph->vertex_count; v++) {
     if (partitions[v] < gpu_count) {
       partitions[v] = rand_r(&seed) % gpu_count;
@@ -286,7 +286,7 @@ error_t partition_by_sorted_degree(graph_t* graph, int partition_count,
   assert(vd);
 
   // Calculate the degree for each vertex (# in destination, less source)
-  OMP(omp parallel for)
+  #pragma omp parallel for
   for (vid_t v = 0; v < graph->vertex_count; v++) {
     vd[v].id = v;
     vd[v].degree = graph->vertices[v + 1] - graph->vertices[v];
@@ -427,7 +427,7 @@ PRIVATE error_t init_allocate_struct_space(graph_t* graph, int pcount,
 PRIVATE
 void init_compute_partitions_sizes(partition_set_t* pset, vid_t* plabels) {
   graph_t* graph = pset->graph;
-  OMP(omp parallel for)
+  #pragma omp parallel for
   for (vid_t vid = 0; vid < graph->vertex_count; vid++) {
     vid_t nbr_count = graph->vertices[vid + 1] - graph->vertices[vid];
     int pid = plabels[vid];
@@ -509,7 +509,7 @@ PRIVATE void init_build_partitions_vertices_array(partition_set_t* pset,
   }
 
   // Compute the vertex array of each partition (prefix sum).
-  OMP(omp parallel for schedule(static))
+  #pragma omp parallel for  schedule(static)
   for (int pid = 0; pid < pset->partition_count; pid++) {
     partition_t* partition = &pset->partitions[pid];
     graph_t* subgraph = &partition->subgraph;
@@ -523,7 +523,7 @@ PRIVATE void init_build_partitions_vertices_array(partition_set_t* pset,
 
 PRIVATE void init_build_partitions_edges_array(partition_set_t* pset) {
   graph_t* graph = pset->graph;
-  OMP(omp parallel for schedule(guided))
+  #pragma omp parallel for schedule(guided)
   for (vid_t vid = 0; vid < graph->vertex_count; vid++) {
     vid_t local_id = GET_VERTEX_ID(pset->id_in_partition[vid]);
     partition_t* partition =

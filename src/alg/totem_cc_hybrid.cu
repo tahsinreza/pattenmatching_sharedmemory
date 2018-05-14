@@ -54,7 +54,7 @@ void cc_cpu(partition_t* par, cc_state_t* state) {
 
   vid_t* label = state->label[par->id];
 
-  OMP(omp parallel for schedule(runtime) reduction(& : finished))
+  #pragma omp parallel for schedule(runtime) reduction(& : finished)
   for (vid_t v = 0; v < subgraph->vertex_count; v++) {
     if (!bitmap_is_set(state->updated[par->id], v)) { continue; }
     bitmap_unset_cpu(state->updated[par->id], v);
@@ -241,7 +241,7 @@ PRIVATE void cc_scatter_cpu(grooves_box_table_t* inbox, bitmap_t updated,
   bitmap_t  rmt_updated = reinterpret_cast<bitmap_t>(inbox->push_values);
   vid_t* rmt_label =
       (vid_t*)&rmt_updated[bitmap_bits_to_words(inbox->count)];
-  OMP(omp parallel for schedule(static))
+  #pragma omp parallel for  schedule(static)
   for (vid_t word_index = 0; word_index < bitmap_bits_to_words(inbox->count);
        word_index++) {
     bitmap_word_t word = rmt_updated[word_index];
@@ -333,7 +333,7 @@ PRIVATE void cc_aggregate(partition_t* par) {
     assert(false);
   }
   assert(state_g.label);
-  OMP(omp parallel for schedule(static))
+  #pragma omp parallel for  schedule(static)
   for (vid_t v = 0; v < subgraph->vertex_count; v++) {
     state_g.label[par->map[v]] = src_label[v];
   }

@@ -377,7 +377,7 @@ __host__ error_t sssp_cpu(const graph_t* graph, vid_t source_id,
   if (finished) return rc;
 
   // Initialize the shortest_distances to infinite
-  OMP(omp parallel for)
+  #pragma omp parallel for
   for (vid_t vertex_id = 0; vertex_id < graph->vertex_count; vertex_id++) {
     shortest_distances[vertex_id] = WEIGHT_MAX;
   }
@@ -393,7 +393,7 @@ __host__ error_t sssp_cpu(const graph_t* graph, vid_t source_id,
   finished = false;
   while (!finished) {
     finished = true;
-    OMP(omp parallel for reduction(& : finished))
+    #pragma omp parallel for reduction(& : finished)
     for (vid_t vertex_id = 0; vertex_id < graph->vertex_count; vertex_id++) {
       if (!bitmap_is_set(active, vertex_id)) {
         continue;

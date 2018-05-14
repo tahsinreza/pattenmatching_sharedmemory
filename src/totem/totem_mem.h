@@ -88,7 +88,7 @@ error_t totem_memset(T* ptr, T value, size_t size, totem_mem_t type,
     case TOTEM_MEM_HOST:
     case TOTEM_MEM_HOST_PINNED: 
     case TOTEM_MEM_HOST_MAPPED: {
-      OMP(omp parallel for schedule(static))
+      #pragma omp parallel for  schedule(static)
       for (size_t i = 0; i < size; i++) {
         ptr[i] = value;
       }

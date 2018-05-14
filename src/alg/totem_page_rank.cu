@@ -377,7 +377,7 @@ error_t page_rank_cpu(graph_t* graph, rank_t* rank_i, rank_t* rank) {
     // The "runtime" scheduling clause defer the choice of thread scheduling
     // algorithm to the choice of the client, either via OS environment variable
     // or omp_set_schedule interface.
-    OMP(omp parallel for schedule(runtime))
+    #pragma omp parallel for  schedule(runtime)
     for (vid_t vertex_id = 0; vertex_id < graph->vertex_count; vertex_id++) {
       // Calculate the sum of the neighbors' ranks.
       rank_t my_rank = rank[vertex_id];
@@ -391,7 +391,7 @@ error_t page_rank_cpu(graph_t* graph, rank_t* rank_i, rank_t* rank) {
     // The loop has no load balancing issues, hence the choice of dividing
     // the iterations between the threads statically via the static schedule
     // clause.
-    OMP(omp parallel for schedule(static))
+    #pragma omp parallel for  schedule(static)
     for (vid_t vertex_id = 0; vertex_id < graph->vertex_count; vertex_id++) {
       rank_t sum = mailbox[vertex_id];
       mailbox[vertex_id] = 0;

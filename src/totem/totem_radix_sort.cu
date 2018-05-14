@@ -117,11 +117,12 @@ PRIVATE void parallel_binary_radix_sort(vid_t* array, int64_t start,
   if (start < end && (depth <= max_depth) && (mask != 0)) {
     int64_t bin0, bin1;
     radix_sort_partition(array, start, end, mask, &bin0, &bin1);
-    OMP(omp parallel sections) {
-      OMP(omp section)
+    #pragma omp parallel sections 
+    {
+      #pragma omp section
       binary_radix_sort(array, start, bin0, depth + 1, max_depth, mask >> 1);
 
-      OMP(omp section)
+      #pragma omp section
       binary_radix_sort(array, bin1, end, depth + 1, max_depth, mask >> 1);
     }
   }
@@ -170,11 +171,12 @@ PRIVATE void parallel_binary_radix_sort(vdegree_t* array, int64_t start,
   if (start < end && (depth <= max_depth) && (mask != 0)) {
     int64_t bin0, bin1;
     radix_sort_partition(array, start, end, mask, &bin0, &bin1);
-    OMP(omp parallel sections) {
-      OMP(omp section)
+    #pragma omp parallel sections 
+    {
+      #pragma omp section
       binary_radix_sort(array, start, bin0, depth + 1, max_depth, mask >> 1);
 
-      OMP(omp section)
+      #pragma omp section
       binary_radix_sort(array, bin1, end, depth + 1, max_depth, mask >> 1);
     }
   }

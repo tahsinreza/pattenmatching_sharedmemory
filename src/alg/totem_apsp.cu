@@ -293,7 +293,7 @@ error_t apsp_cpu(graph_t* graph, weight_t** path_ret) {
 
   // Run the main loop |V| times to converge.
   for (vid_t mid = 0; mid < v_count; mid++) {
-    OMP(omp parallel for)
+    #pragma omp parallel for
     for (vid_t src = 0; src < v_count; src++) {
       weight_t* base = &distances[src * v_count];
       weight_t* mid_base = &distances[mid * v_count];

@@ -37,7 +37,7 @@ void degree_gpu(partition_t* par) {
 }
 
 void degree_cpu(partition_t* par) {
-  OMP(omp parallel for)
+  #pragma omp parallel for
   for (vid_t v = 0; v < par->subgraph.vertex_count; v++) {
     for (eid_t i = par->subgraph.vertices[v];
          i < par->subgraph.vertices[v + 1]; i++) {
@@ -104,7 +104,7 @@ void degree_aggr(partition_t* par) {
     src = (int*)par->algo_state;
   }
   // aggregate the results
-  OMP(omp parallel for)
+  #pragma omp parallel for
   for (vid_t v = 0; v < par->subgraph.vertex_count; v++) {
     degree_g[par->map[v]] = src[v];
   }

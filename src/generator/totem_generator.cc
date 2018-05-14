@@ -162,7 +162,7 @@ PRIVATE error_t check_edge_and_vertex_count(
     const graph_t* graph, std::string* report) {
   printf("Checking edge count... "); fflush(stdout);
   eid_t edge_count = 0;
-  OMP(omp parallel for reduction(+ : edge_count))
+  #pragma omp parallel for reduction(+ : edge_count)
   for (vid_t vid = 0; vid < graph->vertex_count; vid++) {
     edge_count += (graph->vertices[vid + 1] - graph->vertices[vid]);
   }
@@ -191,8 +191,8 @@ PRIVATE error_t check_neighbours_sorted(
   bool sorted_dsc = true;
   bool failed = false;
   vid_t invalid_nbr_id = 0;
-  OMP(omp parallel for schedule(guided) reduction(| : failed)
-      reduction(& : sorted_asc) reduction(& : sorted_dsc))
+  #pragma omp parallel for schedule(guided) reduction(| : failed) \
+      reduction(& : sorted_asc) reduction(& : sorted_dsc)
   for (vid_t vid = 0; vid < graph->vertex_count; vid++) {
     for (eid_t i = graph->vertices[vid]; i < graph->vertices[vid + 1]; i++) {
       failed |= (graph->edges[i] >= graph->vertex_count);
@@ -222,7 +222,7 @@ PRIVATE error_t check_neighbours_sorted(
 
 PRIVATE bool check_nbr_exist(const graph_t* graph, vid_t vertex, vid_t nbr) {
   bool exist = false;
-  OMP(omp parallel for reduction(| : exist))
+  #pragma omp parallel for reduction(| : exist)
   for (eid_t i = graph->vertices[vertex];
        i < graph->vertices[vertex + 1]; i++) {
     exist |= (graph->edges[i] == nbr);
@@ -246,7 +246,7 @@ PRIVATE error_t check_direction(
   // Check if the graph is undirected by checking if each edge exist in both
   // directions.
   bool directed = false;
-  OMP(omp parallel for schedule(guided) reduction(| : directed))
+  #pragma omp parallel for schedule(guided) reduction(| : directed)
   for (vid_t vid = 0; vid < graph->vertex_count; vid++) {
     for (eid_t i = graph->vertices[vid]; i < graph->vertices[vid + 1]; i++) {
       vid_t nbr = graph->edges[i];
@@ -277,7 +277,7 @@ PRIVATE error_t check_vertices_sorted(
   printf("Checking if vertices are sorted by degree... "); fflush(stdout);
   bool sorted_asc = true;
   bool sorted_dsc = true;
-  OMP(omp parallel for reduction(& : sorted_asc) reduction(& : sorted_dsc))
+  #pragma omp parallel for reduction(& : sorted_asc) reduction(& : sorted_dsc)
   for (vid_t vid = 0; vid < graph->vertex_count - 1; vid++) {
     vid_t nbr_count = graph->vertices[vid + 1] - graph->vertices[vid];
     vid_t next_nbr_count = graph->vertices[vid + 2] - graph->vertices[vid + 1];
@@ -299,7 +299,7 @@ PRIVATE void count_repeated_edges(graph_t* graph, std::string* report) {
   printf("Counting repeated edges... "); fflush(stdout);
   graph_sort_nbrs(graph);
   eid_t repeated_edges = 0;
-  OMP(omp parallel for reduction(+ : repeated_edges))
+  #pragma omp parallel for reduction(+ : repeated_edges)
   for (vid_t vid = 0; vid < graph->vertex_count; vid++) {
     for (eid_t i = graph->vertices[vid]; i < graph->vertices[vid + 1]; i++) {
       if ((i > graph->vertices[vid]) &&
@@ -323,7 +323,7 @@ PRIVATE void mark_non_singleton_vertices(
   if (graph->vertex_count == 0) { return; }
   bool* mask = reinterpret_cast<bool*>(calloc(graph->vertex_count,
                                               sizeof(bool)));
-  OMP(omp parallel for schedule(guided))
+  #pragma omp parallel for schedule(guided)
   for (vid_t vid = 0; vid < graph->vertex_count; vid++) {
     for (eid_t i = graph->vertices[vid]; i < graph->vertices[vid + 1]; i++) {
       mask[graph->edges[i]] = true;
@@ -343,20 +343,20 @@ PRIVATE void count_singletons_and_leafs(
   mark_non_singleton_vertices(graph, &mask);
 
   vid_t singleton_count = 0;
-  OMP(omp parallel for reduction(+ : singleton_count))
+  #pragma omp parallel for reduction(+ : singleton_count)
   for (vid_t v = 0; v < graph->vertex_count; v++) {
     if (!mask[v]) { singleton_count++; }
   }
 
   // Mark the leaf nodes.
-  OMP(omp parallel for schedule(guided))
+  #pragma omp parallel for schedule(guided)
   for (vid_t vid = 0; vid < graph->vertex_count; vid++) {
     vid_t nbr_count = graph->vertices[vid + 1] - graph->vertices[vid];
     if (nbr_count != 0) { mask[vid] = false; }
   }
 
   vid_t leaf_count = 0;
-  OMP(omp parallel for reduction(+ : leaf_count))
+  #pragma omp parallel for reduction(+ : leaf_count)
   for (vid_t v = 0; v < graph->vertex_count; v++) {
     if (mask[v]) { leaf_count++; }
   }
@@ -685,7 +685,7 @@ PRIVATE void get_sorted_vertices_map(const graph_t* graph, vid_t** map) {
   vertex_degree_t* degree = reinterpret_cast<vertex_degree_t*>(calloc(
       graph->vertex_count, sizeof(vertex_degree_t)));
   assert(degree);
-  OMP(omp parallel for)
+  #pragma omp parallel for
   for (vid_t v = 0; v < graph->vertex_count; v++) {
     degree[v].id = v;
     degree[v].degree = graph->vertices[v + 1] - graph->vertices[v];
@@ -700,7 +700,7 @@ PRIVATE void get_sorted_vertices_map(const graph_t* graph, vid_t** map) {
   // Create a map of old to new vertex id.
   *map = reinterpret_cast<vid_t*>(calloc(graph->vertex_count, sizeof(vid_t)));
   assert(*map);
-  OMP(omp parallel for)
+  #pragma omp parallel for
   for (vid_t v = 0; v < graph->vertex_count; v++) { (*map)[degree[v].id] = v; }
   free(degree);
 }

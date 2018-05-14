@@ -80,8 +80,8 @@ PRIVATE void graph500_td_cpu(partition_t* par, graph500_state_t* state) {
 
   // Iterate across all of our vertices.
   vid_t edge_frontier_count = 0;
-  OMP(omp parallel for schedule(runtime) reduction(& : finished)
-      reduction(+ : edge_frontier_count))
+  #pragma omp parallel for schedule(runtime) reduction(& : finished) \
+      reduction(+ : edge_frontier_count)
   for (vid_t vertex_id = 0; vertex_id < subgraph->vertex_count; vertex_id++) {
     // Ignore the local vertex if it is not in the frontier.
     if (!bitmap_is_set(state->frontier[par->id], vertex_id)) { continue; }
@@ -129,7 +129,7 @@ PRIVATE void graph500_bu_cpu(partition_t* par, graph500_state_t* state) {
   vid_t* tree = state->tree[par->id];
 
   // Iterate across all of our vertices.
-  OMP(omp parallel for schedule(runtime) reduction(& : finished))
+  #pragma omp parallel for schedule(runtime) reduction(& : finished)
   for (vid_t vertex_id = 0; vertex_id < subgraph->vertex_count; vertex_id++) {
     // Ignore the local vertex if it has already been visited.
     if (bitmap_is_set(visited, vertex_id)) { continue; }
@@ -498,7 +498,7 @@ PRIVATE void graph500_gather_cpu(partition_t* par, graph500_state_t* state,
   bitmap_t bitmap = reinterpret_cast<bitmap_t>(inbox->pull_values);
 
   // Iterate across the items in the inbox.
-  OMP(omp parallel for schedule(runtime))
+  #pragma omp parallel for  schedule(runtime)
   for (vid_t word_index = 0; word_index < words; word_index++) {
     vid_t start_index = word_index * BITMAP_BITS_PER_WORD;
     bitmap_word_t word = bitmap[word_index];
@@ -592,7 +592,7 @@ PRIVATE inline void graph500_scatter_cpu(partition_t* par) {
     if (!inbox->count) { continue; }
     bitmap_t remotely_visited = (bitmap_t)inbox->push_values;
     vid_t* tree = state->tree[par->id];
-    OMP(omp parallel for schedule(runtime))
+    #pragma omp parallel for  schedule(runtime)
     for (vid_t word_index = 0; word_index < bitmap_bits_to_words(inbox->count);
          word_index++) {
       if (remotely_visited[word_index]) {
@@ -981,7 +981,7 @@ PRIVATE inline void graph500_rmt_tree_scatter_cpu(grooves_box_table_t* inbox,
                                                vid_t* tree, int rmt_pid) {
   bitmap_t rmt_bitmap = (bitmap_t)inbox->push_values;
   vid_t* rmt_tree = (vid_t*)(&rmt_bitmap[bitmap_bits_to_words(inbox->count)]);
-  OMP(omp parallel for schedule(runtime))
+  #pragma omp parallel for  schedule(runtime)
   for (vid_t index = 0; index < inbox->count; index++) {
     vid_t vid = inbox->rmt_nbrs[index];
     if ((GET_VERTEX_ID(tree[vid]) == GET_VERTEX_ID(VERTEX_ID_MAX)) &&
@@ -1040,7 +1040,7 @@ void graph500_rmt_tree(partition_t* par) {
 
 PRIVATE void graph500_final_aggregation() {
   vid_t* map = engine_vertex_id_in_partition();
-  OMP(omp parallel for schedule(static))
+  #pragma omp parallel for  schedule(static)
   for (vid_t v = 0; v < engine_vertex_count(); v++) {
     vid_t local = map[v];
     vid_t* tree = state_g.tree_h[GET_PARTITION_ID(local)];

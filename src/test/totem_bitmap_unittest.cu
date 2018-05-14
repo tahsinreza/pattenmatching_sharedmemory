@@ -64,7 +64,7 @@ class BitmapTest : public TestWithParam<int> {
   }
   
   void BitmapSetVectorCPU(bitmap_t bitmap, vid_t* bits, vid_t count) {
-    OMP(omp parallel for)
+    #pragma omp parallel for
     for (vid_t i = 0; i < count; i++) {
       bitmap_set_cpu(bitmap, bits[i]);
       // Try to unset again
@@ -73,7 +73,7 @@ class BitmapTest : public TestWithParam<int> {
   }
   
   void BitmapUnsetVectorCPU(bitmap_t bitmap, vid_t* bits, vid_t count) {
-    OMP(omp parallel for)
+    #pragma omp parallel for
     for (vid_t i = 0; i < count; i++) {
       bitmap_unset_cpu(bitmap, bits[i]);
       // Try to unset again
@@ -83,11 +83,11 @@ class BitmapTest : public TestWithParam<int> {
   
   void BitmapVerifyCPU(bitmap_t bitmap, vid_t* is_set, vid_t is_set_count, 
                        vid_t* is_not_set, vid_t is_not_set_count) {
-    OMP(omp parallel for)
+    #pragma omp parallel for
     for (vid_t i = 0; i < is_set_count; i++) {
       EXPECT_TRUE(bitmap_is_set(bitmap, is_set[i]));
     }
-    OMP(omp parallel for)
+    #pragma omp parallel for
     for (vid_t i = 0; i < is_not_set_count; i++) {
       EXPECT_FALSE(bitmap_is_set(bitmap, is_not_set[i]));
     }

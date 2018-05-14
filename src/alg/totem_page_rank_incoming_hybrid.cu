@@ -246,7 +246,7 @@ PRIVATE void page_rank_incoming_cpu(partition_t* par, bool last_round) {
   graph_t* subgraph = &(par->subgraph);
   vid_t vcount = engine_vertex_count();  
 
-  OMP(omp parallel for schedule(runtime))
+  #pragma omp parallel for  schedule(runtime)
   for(vid_t vid = 0; vid < subgraph->vertex_count; vid++) {
     rank_t sum = 0;
     for (eid_t i = subgraph->vertices[vid];

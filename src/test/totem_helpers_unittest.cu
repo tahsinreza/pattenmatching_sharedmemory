@@ -253,7 +253,7 @@ TEST_F(GraphHelper, AtomicOperations) {
     sum_float += buf_f[i];
   }
   float p_sum_float = 0;
-  OMP(omp parallel for)
+  #pragma omp parallel for
   for (int i = 0; i < buf_count; i++) {
     __sync_fetch_and_add_float(&p_sum_float, buf_f[i]);
   }
@@ -265,7 +265,7 @@ TEST_F(GraphHelper, AtomicOperations) {
     sum_double += buf_d[i];
   }
   double p_sum_double = 0;
-  OMP(omp parallel for)
+  #pragma omp parallel for
   for (int i = 0; i < buf_count; i++) {
     __sync_fetch_and_add_double(&p_sum_double, buf_d[i]);
   }
@@ -278,7 +278,7 @@ TEST_F(GraphHelper, AtomicOperations) {
     min_int = min_int > buf[i] ? buf[i] : min_int;
   }
   int p_min_int = 0;
-  OMP(omp parallel for)
+  #pragma omp parallel for
   for (int i = 0; i < buf_count; i++) {
     __sync_fetch_and_min(&p_min_int, buf[i]);
   }
@@ -290,7 +290,7 @@ TEST_F(GraphHelper, AtomicOperations) {
     min_float = min_float > buf_f[i] ? buf_f[i] : min_float;
   }
   float p_min_float = 0;
-  OMP(omp parallel for)
+  #pragma omp parallel for
   for (int i = 0; i < buf_count; i++) {
     __sync_fetch_and_min_float(&p_min_float, buf_f[i]);
   }
@@ -302,7 +302,7 @@ TEST_F(GraphHelper, AtomicOperations) {
     min_double = min_double > buf_d[i] ? buf_d[i] : min_double;
   }
   double p_min_double = 0;
-  OMP(omp parallel for)
+  #pragma omp parallel for
   for (int i = 0; i < buf_count; i++) {
     __sync_fetch_and_min_double(&p_min_double, buf_d[i]);
   }

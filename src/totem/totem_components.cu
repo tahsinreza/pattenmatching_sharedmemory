@@ -85,7 +85,7 @@ PRIVATE void mark_component(const graph_t* graph, vid_t src, vid_t* marker,
   bool finished = false;
   for (vid_t level = comp; !finished; level++) {
     finished = true;
-    OMP(omp parallel for)
+    #pragma omp parallel for
     for (vid_t vid = src; vid < graph->vertex_count; vid++) {
       // the assumption is that all the vertices less than src has alredy been
       // marked, therefore we can safely skip them and start the loop from src.
@@ -124,7 +124,7 @@ error_t get_components_cpu(graph_t* graph, component_set_t** comp_set_ret) {
   // compute the vertex and edge count of each component
   comp_set->vertex_count = (vid_t*)calloc(comp_count, sizeof(vid_t));
   comp_set->edge_count   = (eid_t*)calloc(comp_count, sizeof(eid_t));
-  OMP(omp parallel for)
+  #pragma omp parallel for
   for (vid_t vid = 0; vid < graph->vertex_count; vid++) {
     vid_t comp = comp_set->marker[vid];
     __sync_fetch_and_add(&(comp_set->vertex_count[comp]), 1);

@@ -59,7 +59,7 @@ error_t graph500_cpu(graph_t* graph, vid_t src, bfs_tree_t* tree) {
   finished = false;
   // Within the following code segment, all threads execute in parallel the 
   // same code (similar to a cuda kernel)
-  OMP(omp parallel)
+  #pragma omp parallel
   {
     // level is a local variable to each thread, having a separate copy per
     // thread reduces the overhead of cache coherency protocol
@@ -69,12 +69,13 @@ error_t graph500_cpu(graph_t* graph, vid_t src, bfs_tree_t* tree) {
       // This barrier ensures that all threads checked the while condition above
       // using the same "finished" value that resulted from the previous
       // iteration before it is initialized again for the next one.
-      OMP(omp barrier)
+      #pragma omp barrier
 
       // This "single" clause ensures that only one thread sets the variable. 
       // Note that this close has an implicit barrier (i.e., all threads will
       // block until the variable is set by the responsible thread)
-      OMP(omp single) {
+      #pragma omp single 
+      {
         finished = true;
       }
       // The "for" clause instructs openmp to run the loop in parallel. Each
@@ -85,7 +86,7 @@ error_t graph500_cpu(graph_t* graph, vid_t src, bfs_tree_t* tree) {
       // by reducing cache coherency overhead. The "runtime" scheduling clause
       // defer the choice of thread scheduling algorithm to the client, 
       // either via OS environment variable or omp_set_schedule interface.
-      OMP(omp for schedule(runtime) reduction(& : finished))
+      #pragma omp for schedule(runtime) reduction(& : finished)
       for (vid_t vertex_id = 0; vertex_id < graph->vertex_count; vertex_id++) {
         if (cost[vertex_id] != level) continue;
         for (eid_t i = graph->vertices[vertex_id];

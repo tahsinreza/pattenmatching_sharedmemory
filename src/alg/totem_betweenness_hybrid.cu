@@ -240,8 +240,8 @@ void betweenness_forward_cpu(partition_t* par) {
   bool done = true;
   bool comm = false;
   // In parallel, iterate over vertices which are at the current level.
-  OMP(omp parallel for schedule(runtime) reduction(& : done)
-      reduction(| : comm))
+  #pragma omp parallel for schedule(runtime) reduction(& : done) \
+      reduction(| : comm)
   for (vid_t v = 0; v < subgraph->vertex_count; v++) {
     if (distance[v] == state->level) {
       for (eid_t e = subgraph->vertices[v]; e < subgraph->vertices[v + 1];
@@ -473,7 +473,7 @@ void betweenness_backward_cpu(partition_t* par) {
   score_t* delta = state->delta[par->id];
 
   // In parallel, iterate over vertices which are at the current level.
-  OMP(omp parallel for schedule(runtime))
+  #pragma omp parallel for  schedule(runtime)
   for (vid_t v = 0; v < subgraph->vertex_count; v++) {
     cost_t v_distance = distance[v];
     if (v_distance == state->level) {
@@ -548,7 +548,7 @@ PRIVATE inline void betweenness_scatter_cpu(int pid, grooves_box_table_t* inbox,
   uint32_t* numSPs = state->numSPs[pid];
   // Get the values that have been pushed to this vertex.
   uint32_t* inbox_values = reinterpret_cast<uint32_t*>(inbox->push_values);
-  OMP(omp parallel for schedule(runtime))
+  #pragma omp parallel for  schedule(runtime)
   for (vid_t index = 0; index < inbox->count; index++) {
     if (inbox_values[index] != 0) {
       vid_t vid = inbox->rmt_nbrs[index];
@@ -636,7 +636,7 @@ PRIVATE inline void betweenness_gather_cpu(int pid, grooves_box_table_t* inbox,
                                            score_t* values) {
   cost_t* distance = state->distance[pid];
   score_t* delta = state->delta[pid];
-  OMP(omp parallel for schedule(runtime))
+  #pragma omp parallel for  schedule(runtime)
   for (vid_t index = 0; index < inbox->count; index++) {
     vid_t vid = inbox->rmt_nbrs[index];
     // Check whether the vertex's distance is equal to level + 1.
@@ -886,7 +886,7 @@ PRIVATE void betweenness_aggr(partition_t* par) {
 
   // Aggregate the results
   assert(bc_g.betweenness_score);
-  OMP(omp parallel for schedule(static))
+  #pragma omp parallel for  schedule(static)
   for (vid_t v = 0; v < subgraph->vertex_count; v++) {
     // Check whether we are computing exact centrality values
     if (bc_g.epsilon == CENTRALITY_EXACT) {
@@ -936,7 +936,7 @@ PRIVATE void betweenness_synch_distance(partition_t* par) {
         cost_t* src =
             reinterpret_cast<cost_t*>(par->outbox[rmt_pid].pull_values);
         cost_t* dst = state->distance[rmt_pid];
-        OMP(omp parallel for schedule(static))
+        #pragma omp parallel for  schedule(static)
         for (int i = 0; i < par->outbox[rmt_pid].count; i++) {
           dst[i] = src[i];
         }
@@ -978,7 +978,7 @@ PRIVATE void betweenness_synch_numSPs(partition_t* par) {
         uint32_t* src =
             reinterpret_cast<uint32_t*>(par->outbox[rmt_pid].pull_values);
         uint32_t* dst = state->numSPs[rmt_pid];
-        OMP(omp parallel for schedule(static))
+        #pragma omp parallel for  schedule(static)
         for (int i = 0; i < par->outbox[rmt_pid].count; i++) {
           dst[i] = src[i];
         }

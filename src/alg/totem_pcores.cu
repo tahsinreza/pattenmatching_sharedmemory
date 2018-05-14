@@ -229,7 +229,7 @@ error_t pcore_cpu(const graph_t* graph, uint32_t start, uint32_t step,
   CALL_SAFE(totem_malloc(graph->vertex_count * sizeof(uint32_t), mem_type,
                          (void**)&round));
 
-  OMP(omp parallel for)
+  #pragma omp parallel for
   for (vid_t vertex_id = 0; vertex_id < graph->vertex_count; vertex_id++) {
     // all vertices are active at the beginnig
     round[vertex_id] = ACTIVE_FLAG;
@@ -259,7 +259,7 @@ error_t pcore_cpu(const graph_t* graph, uint32_t start, uint32_t step,
     while (!round_finished) {
       round_finished = true; // a deactivated vertex will set this back to false
       finished = true; // an active vertex will set this back to false
-      OMP(omp parallel for)
+      #pragma omp parallel for
       for (vid_t vertex_id = 0; vertex_id < graph->vertex_count; vertex_id++) {
         if (round[vertex_id] != ACTIVE_FLAG) {
           continue;

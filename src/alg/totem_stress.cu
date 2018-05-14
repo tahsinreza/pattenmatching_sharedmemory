@@ -348,7 +348,7 @@ error_t stress_unweighted_cpu(const graph_t* graph,
     bool finished = false;
     while (!finished) {
       finished = true;
-      OMP(omp parallel for)
+      #pragma omp parallel for
       for (vid_t u = 0; u < graph->vertex_count; u++) {
         for (eid_t e = graph->vertices[u]; e < graph->vertices[u + 1]; e++) {
           // For edge (u,v)
@@ -376,7 +376,7 @@ error_t stress_unweighted_cpu(const graph_t* graph,
     while (dist > 1) {
       dist--;
       {
-        OMP(omp parallel for)
+        #pragma omp parallel for
         for (vid_t v = 0; v < graph->vertex_count; v++) {
           if (dists[v] != (dist - 1)) continue;
           for (eid_t e = graph->vertices[v]; e < graph->vertices[v + 1]; e++) {
@@ -390,7 +390,7 @@ error_t stress_unweighted_cpu(const graph_t* graph,
         }
       }
       {
-        OMP(omp parallel for)
+        #pragma omp parallel for
         for (vid_t v = 0; v < graph->vertex_count; v++) {
           if (v != source && dists[v] == dist) {
             stress_centrality[v] += 1.0 * sigma[v] * delta[v];

@@ -83,7 +83,7 @@ PRIVATE void label_probability_initialisation(vid_t knumLabels, const graph_t*
                   graph, float** ProbMatrix, vid_t*
                   max_prb_label_not_changed_count) {
   // TODO(tanuj): Declare data types label_t and probability_t.
-  OMP(omp parallel for schedule(runtime))
+  #pragma omp parallel for  schedule(runtime)
   for (vid_t v = 0; v < graph->vertex_count; v++) {
     max_prb_label_not_changed_count[v] = 0;
     vid_t num_of_neighbours = graph->vertices[v+1] - graph->vertices[v];
@@ -101,7 +101,7 @@ PRIVATE void label_propagation(const graph_t* graph, float** ProbMatrix,
                                float** ProbMatrix_new, vid_t*
                                max_prb_label_not_changed_count, vid_t
                                knumLabels) {
-  OMP(omp parallel for schedule(runtime))
+  #pragma omp parallel for  schedule(runtime)
   for (vid_t v = 0; v < graph->vertex_count; v++) {
     vid_t num_of_neighbours = graph->vertices[v+1] - graph->vertices[v];
     for (vid_t l = 0; l < knumLabels; l++) {  // iterate over each label
@@ -120,7 +120,7 @@ PRIVATE void label_propagation(const graph_t* graph, float** ProbMatrix,
 PRIVATE void update_labels(const graph_t* graph, vid_t* labels, float**
                           ProbMatrix, float** ProbMatrix_new, vid_t*
                           max_prb_label_not_changed_count, vid_t knumLabels) {
-  OMP(omp parallel for schedule(runtime))
+  #pragma omp parallel for  schedule(runtime)
   for (vid_t v = 0; v < graph->vertex_count; v++) {
     float max_prb = 0.0;
     int max_label = 0;
@@ -146,7 +146,7 @@ PRIVATE void update_labels(const graph_t* graph, vid_t* labels, float**
 
 PRIVATE bool convergence_termination_checking(const graph_t* graph, vid_t*
                           max_prb_label_not_changed_count, bool finished) {
-  OMP(omp parallel for schedule(runtime) reduction(& : finished))
+  #pragma omp parallel for schedule(runtime) reduction(& : finished)
   for (vid_t v = 0; v < graph->vertex_count; v++) {
     if (max_prb_label_not_changed_count[v] <
       LABEL_PROPAGATION_MAX_LABEL_NOT_CHANGED_COUNT) {
@@ -163,7 +163,7 @@ error_t label_propagation_cpu(const graph_t* graph, vid_t* labels) {
   if (finished) return rc;
 
   // Initialize the labels
-  OMP(omp parallel for schedule(runtime))
+  #pragma omp parallel for  schedule(runtime)
   for (vid_t vertex_id = 0; vertex_id < graph->vertex_count; vertex_id++) {
     labels[vertex_id] = vertex_id;
   }

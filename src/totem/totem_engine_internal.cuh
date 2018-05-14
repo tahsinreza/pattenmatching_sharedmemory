@@ -128,7 +128,7 @@ void engine_scatter_inbox_add(uint32_t pid, T* dst) {
       CALL_CU_SAFE(cudaGetLastError());
     } else {
       assert(par->processor.type == PROCESSOR_CPU);
-      OMP(omp parallel for)
+      #pragma omp parallel for
       for (uint32_t index = 0; index < inbox->count; index++) {
         _REDUCE_ENTRY_ADD(inbox, index, dst);
       }
@@ -151,7 +151,7 @@ void engine_scatter_inbox_min(uint32_t pid, T* dst) {
       CALL_CU_SAFE(cudaGetLastError());
     } else {
       assert(par->processor.type == PROCESSOR_CPU);
-      OMP(omp parallel for)
+      #pragma omp parallel for
       for (uint32_t index = 0; index < inbox->count; index++) {
         _REDUCE_ENTRY_MIN(inbox, index, dst);
       }
@@ -174,7 +174,7 @@ void engine_scatter_inbox_max(uint32_t pid, T* dst) {
       CALL_CU_SAFE(cudaGetLastError());
     } else {
       assert(par->processor.type == PROCESSOR_CPU);
-      OMP(omp parallel for)
+      #pragma omp parallel for
       for (uint32_t index = 0; index < inbox->count; index++) {
         _REDUCE_ENTRY_MAX(inbox, index, dst);
       }
@@ -204,7 +204,7 @@ void engine_gather_inbox(uint32_t pid, T* src) {
       CALL_CU_SAFE(cudaGetLastError());
     } else {
       assert(par->processor.type == PROCESSOR_CPU);
-      OMP(omp parallel for)
+      #pragma omp parallel for
       for (uint32_t index = 0; index < inbox->count; index++) {
         ((T*)(inbox->pull_values))[index] = src[inbox->rmt_nbrs[index]];
       }
@@ -231,7 +231,7 @@ void engine_set_outbox(uint32_t pid, T value) {
       //                par->streams[1]);
     } else {
       assert(par->processor.type == PROCESSOR_CPU);
-      OMP(omp parallel for)
+      #pragma omp parallel for
       for (uint32_t i = 0; i < outbox->count; i++) values[i] = value;
     }
   }

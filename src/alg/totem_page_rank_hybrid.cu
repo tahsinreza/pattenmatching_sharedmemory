@@ -148,7 +148,7 @@ PRIVATE void page_rank_cpu(partition_t* par) {
     // Compute my rank The loop has no load balancing issues, hence the choice
     // of dividing the iterations between the threads statically via the static
     // schedule clause.
-    OMP(omp parallel for schedule(static))
+    #pragma omp parallel for  schedule(static)
     for (vid_t v = 0; v < subgraph->vertex_count; v++) {
       vid_t nbr_count = subgraph->vertices[v + 1] - subgraph->vertices[v];
       if (nbr_count == 0) { continue; }
@@ -163,7 +163,7 @@ PRIVATE void page_rank_cpu(partition_t* par) {
   // The "runtime" scheduling clause defer the choice of thread scheduling
   // algorithm to the choice of the client, either via OS environment variable
   // or omp_set_schedule interface.
-  OMP(omp parallel for schedule(runtime))
+  #pragma omp parallel for  schedule(runtime)
   for (vid_t v = 0; v < subgraph->vertex_count; v++) {
     rank_t my_rank = ps->rank[v];
     for (eid_t i = subgraph->vertices[v]; i < subgraph->vertices[v + 1]; i++) {

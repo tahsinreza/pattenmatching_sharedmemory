@@ -56,7 +56,7 @@ void sssp_cpu(partition_t* par, sssp_state_t* state) {
 
   weight_t* distance = state->distance[par->id];
 
-  OMP(omp parallel for schedule(runtime) reduction(& : finished))
+  #pragma omp parallel for schedule(runtime) reduction(& : finished)
   for (vid_t v = 0; v < subgraph->vertex_count; v++) {
     if (!bitmap_is_set(state->updated[par->id], v)) { continue; }
     bitmap_unset_cpu(state->updated[par->id], v);
@@ -244,7 +244,7 @@ PRIVATE void sssp_scatter_cpu(grooves_box_table_t* inbox, bitmap_t updated,
   weight_t* rmt_distance =
       (weight_t*)&rmt_updated[bitmap_bits_to_words(inbox->count)];
   /* for (vid_t index = 0; index < inbox->count; index++) { */
-  OMP(omp parallel for schedule(static))
+  #pragma omp parallel for  schedule(static)
   for (vid_t word_index = 0; word_index < bitmap_bits_to_words(inbox->count);
        word_index++) {
     bitmap_word_t word = rmt_updated[word_index];
@@ -337,7 +337,7 @@ PRIVATE void sssp_aggregate(partition_t* par) {
     assert(false);
   }
   assert(state_g.distance);
-  OMP(omp parallel for schedule(static))
+  #pragma omp parallel for  schedule(static)
   for (vid_t v = 0; v < subgraph->vertex_count; v++) {
     state_g.distance[par->map[v]] = src_distance[v];
   }

@@ -324,7 +324,7 @@ error_t clustering_coefficient_cpu(const graph_t* graph,
 
   memset(clustering_coefficients, 0.0, graph->vertex_count * sizeof(weight_t));
 
-  OMP(omp parallel for)
+  #pragma omp parallel for
   for (vid_t v = 0; v < graph->vertex_count; v++) {
     vid_t triangle_count_v = 0;
     for (eid_t e = graph->vertices[v]; e < graph->vertices[v + 1]; e++) {
@@ -379,7 +379,7 @@ error_t clustering_coefficient_sorted_neighbours_cpu(const graph_t* graph,
 
   memset(clustering_coefficients, (weight_t)0.0,
          graph->vertex_count * sizeof(weight_t));
-  OMP(omp parallel for schedule(runtime))
+  #pragma omp parallel for  schedule(runtime)
   for (vid_t v = 0; v < graph->vertex_count; v++) {
     uint64_t triangle_count_v = 0;
     eid_t degree_v = graph->vertices[v + 1] - graph->vertices[v];

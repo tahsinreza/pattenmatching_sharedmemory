@@ -83,8 +83,8 @@ bfs_cpu_sparse_frontier(graph_t* subgraph, bfs_state_t* state, int pid) {
   bitmap_t frontier = state->frontier.current;
   bool finished = true;
   vid_t count = 0;
-  OMP(omp parallel for schedule(runtime) reduction(& : finished)
-      reduction(+ : count))
+  #pragma omp parallel for schedule(runtime) reduction(& : finished) \
+      reduction(+ : count)
   for (vid_t word_index = 0; word_index < words; word_index++) {
     if (!frontier[word_index]) continue;
     vid_t v = word_index * BITMAP_BITS_PER_WORD;
@@ -103,8 +103,8 @@ PRIVATE void
 bfs_cpu_dense_frontier(graph_t* subgraph, bfs_state_t* state, int pid) {
   bool finished = true;
   vid_t count = 0;
-  OMP(omp parallel for schedule(runtime) reduction(& : finished)
-      reduction(+ : count))
+  #pragma omp parallel for schedule(runtime) reduction(& : finished)\
+      reduction(+ : count)
   for (vid_t v = 0; v < subgraph->vertex_count; v++) {
     if (state->cost[v] != state->level) continue;
     count++;
@@ -363,7 +363,7 @@ PRIVATE void bfs(partition_t* par) {
 PRIVATE inline void bfs_scatter_cpu(grooves_box_table_t* inbox, 
                                     bfs_state_t* state, bitmap_t visited) {
   bitmap_t remotely_visited = (bitmap_t)inbox->push_values;
-  OMP(omp parallel for schedule(runtime))
+  #pragma omp parallel for  schedule(runtime)
   for (vid_t word_index = 0; word_index < bitmap_bits_to_words(inbox->count); 
        word_index++) {
     if (remotely_visited[word_index]) {
@@ -456,7 +456,7 @@ PRIVATE void bfs_aggregate(partition_t* par) {
   }
   // aggregate the results
   assert(state_g.cost);
-  OMP(omp parallel for schedule(runtime))
+  #pragma omp parallel for  schedule(runtime)
   for (vid_t v = 0; v < subgraph->vertex_count; v++) {
     state_g.cost[par->map[v]] = src_cost[v];
   }

@@ -81,8 +81,8 @@ PRIVATE void bfs_td_cpu(partition_t* par, bfs_state_t* state) {
 
   // Iterate across all of our vertices.
   vid_t edge_frontier_count = 0;
-  OMP(omp parallel for schedule(runtime) reduction(& : finished)
-      reduction(+ : edge_frontier_count))
+  #pragma omp parallel for schedule(runtime) reduction(& : finished) \
+      reduction(+ : edge_frontier_count)
   for (vid_t vertex_id = 0; vertex_id < subgraph->vertex_count; vertex_id++) {
     // Ignore the local vertex if it is not in the frontier.
     if (!bitmap_is_set(state->frontier[par->id], vertex_id)) { continue; }
@@ -122,7 +122,7 @@ PRIVATE void bfs_bu_cpu(partition_t* par, bfs_state_t* state) {
   bitmap_t visited = state->visited[par->id];
 
   // Iterate across all of our vertices.
-  OMP(omp parallel for schedule(runtime) reduction(& : finished))
+  #pragma omp parallel for schedule(runtime) reduction(& : finished)
   for (vid_t vertex_id = 0; vertex_id < subgraph->vertex_count; vertex_id++) {
     // Ignore the local vertex if it has already been visited.
     if (bitmap_is_set(visited, vertex_id)) { continue; }
@@ -471,7 +471,7 @@ PRIVATE void bfs_gather_cpu(partition_t* par, bfs_state_t* state,
   bitmap_t bitmap = reinterpret_cast<bitmap_t>(inbox->pull_values);
 
   // Iterate across the items in the inbox.
-  OMP(omp parallel for schedule(runtime))
+  #pragma omp parallel for  schedule(runtime)
   for (vid_t word_index = 0; word_index < words; word_index++) {
     vid_t start_index = word_index * BITMAP_BITS_PER_WORD;
     bitmap_word_t word = bitmap[word_index];
@@ -562,7 +562,7 @@ PRIVATE inline void bfs_scatter_cpu(partition_t* par) {
     grooves_box_table_t* inbox = &par->inbox[rmt_pid];
     if (!inbox->count) { continue; }
     bitmap_t remotely_visited = (bitmap_t)inbox->push_values;
-    OMP(omp parallel for schedule(runtime))
+    #pragma omp parallel for  schedule(runtime)
     for (vid_t word_index = 0; word_index < bitmap_bits_to_words(inbox->count);
          word_index++) {
       if (remotely_visited[word_index]) {
@@ -661,7 +661,7 @@ PRIVATE void bfs_permute(partition_t* par) {
                                  par->subgraph.vertex_count * sizeof(cost_t),
                                  cudaMemcpyDefault, par->streams[1]));
   } else {
-    OMP(omp parallel for schedule(static))
+    #pragma omp parallel for  schedule(static)
     for (vid_t i = 0; i < par->subgraph.vertex_count; i++) {
       state->permuted_cost[i] = state->cost[state->permutation_map[i]];
     }
@@ -771,7 +771,7 @@ PRIVATE inline vid_t* bfs_alloc_prepare_permutation_map(partition_t* par) {
   CALL_SAFE(totem_malloc(par->subgraph.vertex_count * sizeof(vid_t),
                          TOTEM_MEM_HOST,
                          reinterpret_cast<void**>(&permutation_map)));
-  OMP(omp parallel for schedule(static))
+  #pragma omp parallel for  schedule(static)
   for (vid_t i = 0; i < par->subgraph.vertex_count; i++) {
     permutation_map[i] = i;
   }
@@ -781,7 +781,7 @@ PRIVATE inline vid_t* bfs_alloc_prepare_permutation_map(partition_t* par) {
                      permutation_map + par->subgraph.vertex_count,
                      compare_global_ids_asc);
 
-  OMP(omp parallel for schedule(static))
+  #pragma omp parallel for  schedule(static)
   for (vid_t i = 0; i < par->subgraph.vertex_count; i++) {
     state_g.map[par->map[permutation_map[i]]] = SET_PARTITION_ID(i, par->id);
   }
@@ -956,7 +956,7 @@ void bfs_stepwise_free(partition_t* par) {
 }
 
 PRIVATE void bfs_final_aggregation() {
-  OMP(omp parallel for schedule(static))
+  #pragma omp parallel for  schedule(static)
   for (vid_t v = 0; v < engine_vertex_count(); v++) {
     vid_t local = state_g.map[v];
     cost_t* cost = state_g.cost_h[GET_PARTITION_ID(local)];

@@ -135,7 +135,7 @@ PRIVATE uint64_t get_traversed_edges(graph_t* graph, void* benchmark_output) {
   switch (options->benchmark) {
     case BENCHMARK_BFS:
     case BENCHMARK_BFS_STEPWISE: {
-      OMP(omp parallel for reduction(+ : trv_edges))
+      #pragma omp parallel for reduction(+ : trv_edges)
       for (vid_t vid = 0; vid < graph->vertex_count; vid++) {
         cost_t* cost = reinterpret_cast<cost_t*>(benchmark_output);
         if (cost[vid] != INF_COST) {
@@ -145,7 +145,7 @@ PRIVATE uint64_t get_traversed_edges(graph_t* graph, void* benchmark_output) {
       break;
     }
     case BENCHMARK_SSSP: {
-      OMP(omp parallel for reduction(+ : trv_edges))
+      #pragma omp parallel for reduction(+ : trv_edges)
       for (vid_t vid = 0; vid < graph->vertex_count; vid++) {
         weight_t* distance = reinterpret_cast<weight_t*>(benchmark_output);
         if (distance[vid] != WEIGHT_MAX) {

@@ -291,7 +291,7 @@ PRIVATE error_t graph_initialize_binary(FILE* fh, bool load_weights,
           edge_count, err_free);
     } else {
       // Set weights to the default value.
-      OMP(omp parallel for)
+      #pragma omp parallel for
       for (eid_t e = 0; e < edge_count; e++) {
         (*graph)->weights[e] = DEFAULT_EDGE_WEIGHT;
       }
@@ -470,7 +470,7 @@ error_t graph_remove_singletons(const graph_t* graph, graph_t** subgraph) {
   assert(graph);
   bool* mask = reinterpret_cast<bool*>(
       calloc(graph->vertex_count, sizeof(bool)));
-  OMP(omp parallel for schedule(guided))
+  #pragma omp parallel for schedule(guided)
   for (vid_t vid = 0; vid < graph->vertex_count; vid++) {
     for (eid_t i = graph->vertices[vid]; i < graph->vertices[vid + 1]; i++) {
       mask[graph->edges[i]] = true;
@@ -659,7 +659,7 @@ PRIVATE void initialize_device_vertices(
     CALL_SAFE(totem_malloc((graph_h->vertex_count + 1) * sizeof(eid_device_t),
                            TOTEM_MEM_HOST,
                            reinterpret_cast<void**>(&vertices_h)));
-    OMP(omp parallel for)
+    #pragma omp parallel for
     for (vid_t i = 0; i < graph_h->vertex_count + 1; i++) {
       vertices_h[i] = static_cast<eid_device_t>(graph_h->vertices[i]);
     }
@@ -921,7 +921,7 @@ error_t graph_store_binary(graph_t* graph, const char* filename) {
 }
 
 void graph_sort_nbrs(graph_t* graph, bool edge_sort_dsc) {
-  OMP(omp parallel for schedule(guided))
+  #pragma omp parallel for schedule(guided)
   for (vid_t v = 0; v < graph->vertex_count; v++) {
     vid_t* nbrs = &graph->edges[graph->vertices[v]];
 
@@ -948,7 +948,7 @@ void graph_sort_nbrs_by_degree(graph_t* graph, bool edge_sort_dsc) {
   // variables, make it reentrant.
   graph_g = graph;
   edge_sort_dsc_g = edge_sort_dsc;
-  OMP(omp parallel for schedule(guided))
+  #pragma omp parallel for schedule(guided)
   for (vid_t v = 0; v < graph->vertex_count; v++) {
     vid_t* nbrs = &graph->edges[graph->vertices[v]];
     qsort(nbrs, graph->vertices[v + 1] - graph->vertices[v], sizeof(vid_t),

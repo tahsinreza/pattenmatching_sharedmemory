@@ -537,7 +537,7 @@ error_t betweenness_unweighted_cpu(const graph_t* graph,
   int64_t phase = 0;
 
   // Initialization stage
-  OMP(omp parallel for)
+  #pragma omp parallel for
   for (vid_t v = 0; v < graph->vertex_count; v++) {
     betweenness_centrality[v] = (score_t)0.0;
   }
@@ -551,7 +551,7 @@ error_t betweenness_unweighted_cpu(const graph_t* graph,
     memset(succ_count, 0, graph->vertex_count * sizeof(vid_t));
     memset(stack, 0, graph->vertex_count * graph->vertex_count * sizeof(vid_t));
     memset(stack_count, 0,  graph->vertex_count * sizeof(vid_t));
-    OMP(omp parallel for)
+    #pragma omp parallel for
     for (vid_t t = 0; t < graph->vertex_count; t++) {
       sigma[t] = 0;
       dist[t] = -1;
@@ -569,7 +569,7 @@ error_t betweenness_unweighted_cpu(const graph_t* graph,
       for (vid_t v_index = 0; v_index < stack_count[phase]; v_index++) {
         vid_t v = stack[graph->vertex_count * phase + v_index];
         // For all neighbors of v in parallel, iterate over paths
-        OMP(omp parallel for)
+        #pragma omp parallel for
         for (eid_t e = graph->vertices[v]; e < graph->vertices[v + 1]; e++) {
           vid_t w = graph->edges[e];
           int32_t dw = __sync_val_compare_and_swap(&dist[w], (uint32_t)-1,
@@ -595,7 +595,7 @@ error_t betweenness_unweighted_cpu(const graph_t* graph,
     memset(delta, (score_t)0.0, graph->vertex_count * sizeof(vid_t));
     phase--;
     while (phase > 0) {
-      OMP(omp parallel for)
+      #pragma omp parallel for
       for (vid_t p = 0; p < stack_count[phase]; p++) {
         vid_t w = stack[graph->vertex_count * phase + p];
         score_t dsw = 0.0;
@@ -652,7 +652,7 @@ void betweenness_cpu_forward_propagation(const graph_t* graph,
   while (!done) {
     done = true;
     // In parallel, iterate over vertices which are at the current level
-    OMP(omp parallel for schedule(runtime) reduction(& : done))
+    #pragma omp parallel for schedule(runtime) reduction(& : done)
     for (vid_t v = 0; v < graph->vertex_count; v++) {
       if (distance[v] == level) {
         // For all neighbors of v, iterate over paths
@@ -698,7 +698,7 @@ void betweenness_cpu_backward_propagation(const graph_t* graph,
   while (level > 1) {
     level--;
     // In parallel, iterate over vertices which are at the current level
-    OMP(omp parallel for  schedule(runtime))
+    #pragma omp parallel for  schedule(runtime)
     for (vid_t v = 0; v < graph->vertex_count; v++) {
       if (distance[v] == level) {
         // For all neighbors of v, iterate over paths
@@ -798,7 +798,7 @@ error_t betweenness_cpu(const graph_t* graph, double epsilon,
     // Scale the computed Betweenness Centrality metrics since they were
     // computed using a subset of the total nodes within the graph
     // The scaling value is: (Total Number of Nodes / Subset of Nodes Used)
-    OMP(omp parallel for) 
+    #pragma omp parallel for 
     for (vid_t v = 0; v < graph->vertex_count; v++) {
       betweenness_score[v] *= (score_t)((double)(graph->vertex_count) /
                                         (double)num_samples);

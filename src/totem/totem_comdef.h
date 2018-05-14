@@ -53,10 +53,8 @@ typedef double stopwatch_t;
 
 // This is defined if -fopenmp flag is passed to the compiler.
 #if defined(_OPENMP)
-#define OMP(x) _Pragma(#x)
 #include <omp.h>
 #else
-#define OMP(x)
 static int omp_get_thread_num (void)  {return 0;}
 static int omp_get_num_threads (void) {return 1;}
 static int omp_get_max_threads (void) {return 1;}

@@ -81,7 +81,7 @@ vid_t bitmap_count_gpu(bitmap_t bitmap, size_t len, vid_t* count_d,
 }
 vid_t bitmap_count_cpu(bitmap_t bitmap, size_t len) {
   vid_t count = 0;
-  OMP(omp parallel for schedule(static) reduction(+ : count))
+  #pragma omp parallel for schedule(static) reduction(+ : count)
   for (vid_t w = 0; w < bitmap_bits_to_words(len); w++) {
     // popcount returns the number of set bits in the word
     count += __builtin_popcount(bitmap[w]);
@@ -90,7 +90,7 @@ vid_t bitmap_count_cpu(bitmap_t bitmap, size_t len) {
 }
 
 void bitmap_copy_cpu(bitmap_t src, bitmap_t dst, size_t len) {
-  OMP(omp parallel for schedule(static))
+  #pragma omp parallel for  schedule(static)
   for (vid_t w = 0; w < bitmap_bits_to_words(len); w++) {
     dst[w] = src[w];
   }
@@ -118,7 +118,7 @@ void bitmap_diff_gpu(bitmap_t cur, bitmap_t diff, size_t len,
   CALL_CU_SAFE(cudaGetLastError());
 }
 void bitmap_diff_cpu(bitmap_t cur, bitmap_t diff, size_t len) {
-  OMP(omp parallel for schedule(static))
+  #pragma omp parallel for  schedule(static)
   for (vid_t word = 0; word < bitmap_bits_to_words(len); word++) {
     diff[word] ^= cur[word];
   }  
@@ -143,7 +143,7 @@ void bitmap_diff_copy_gpu(bitmap_t cur, bitmap_t diff, bitmap_t copy,
 }
 void bitmap_diff_copy_cpu(bitmap_t cur, bitmap_t diff, bitmap_t copy,
                           size_t len) {
-  OMP(omp parallel for schedule(static))
+  #pragma omp parallel for  schedule(static)
   for (vid_t w = 0; w < bitmap_bits_to_words(len); w++) {
     diff[w] ^= cur[w];
     copy[w] = cur[w];
@@ -161,7 +161,7 @@ vid_t bitmap_diff_copy_count_cpu(bitmap_t cur, bitmap_t diff, bitmap_t copy,
                                  size_t len) {
   vid_t words = bitmap_bits_to_words(len);
   vid_t count = 0;
-  OMP(omp parallel for schedule(static) reduction(+ : count))
+  #pragma omp parallel for schedule(static) reduction(+ : count)
   for (vid_t w = 0; w < words; w++) {
     diff[w] ^= cur[w];
     copy[w] = cur[w];

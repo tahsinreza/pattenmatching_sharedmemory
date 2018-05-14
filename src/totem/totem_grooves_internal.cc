@@ -21,7 +21,7 @@
 PRIVATE void mark_rmt_nbrs(partition_t* partition, vid_t** marker) {
   const graph_t& subgraph = partition->subgraph;
   eid_t rmt_edge_count = 0;
-  OMP(omp parallel for schedule(guided) reduction(+ : rmt_edge_count))
+  #pragma omp parallel for schedule(guided) reduction(+ : rmt_edge_count)
   for (vid_t v = 0; v < subgraph.vertex_count; v++) {
     for (eid_t i = subgraph.vertices[v]; i < subgraph.vertices[v + 1]; i++) {
       uint32_t nbr_pid = GET_PARTITION_ID(subgraph.edges[i]);
@@ -55,7 +55,7 @@ PRIVATE vid_t get_forward_rmt_nbrs_map(
 // Creates a reverse remote neighbours map from the forward map.
 PRIVATE void get_reverse_rmt_nbrs_map(
     const graph_t& rmt_subgraph, const vid_t* forward_map, vid_t* reverse_map) {
-  OMP(omp parallel for schedule(guided))
+  #pragma omp parallel for schedule(guided)
   for (vid_t v = 0; v < rmt_subgraph.vertex_count; v++) {
     if (forward_map[v] != 0) { reverse_map[forward_map[v] - 1] = v; }
   }
@@ -94,7 +94,7 @@ PRIVATE void get_rmt_nbrs_map(partition_set_t* pset, int pid,
 // outbox entry.
 PRIVATE void update_subgraph(partition_t* par, vid_t** forward_map) {
   graph_t* subgraph = &par->subgraph;
-  OMP(omp parallel for schedule(guided))
+  #pragma omp parallel for schedule(guided)
   for (vid_t v = 0; v < subgraph->vertex_count; v++) {
     for (eid_t i = subgraph->vertices[v]; i < subgraph->vertices[v + 1]; i++) {
       uint32_t nbr_pid = GET_PARTITION_ID(subgraph->edges[i]);
