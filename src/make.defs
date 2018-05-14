@@ -64,7 +64,7 @@ GEN_SM35 = -gencode=arch=compute_35,code=\"sm_35,compute_35\"
 ifdef GPU_ARCH
   ifeq ($(GPU_ARCH), 20)
     SM_TARGETS = $(GEN_SM20)
-    NVCCFLAGS += -DFEATURE_SM20
+    NVCCFLAGS += -DFEATURE_SM20 -Wno-deprecated-gpu-targets
     CFLAGS += -DFEATURE_SM20
     BUILDPATH := $(BUILDPATH)_CC20
   else ifeq ($(GPU_ARCH), 35)
