@@ -20,51 +20,51 @@ error_t bfs_hybrid(vid_t src_id, cost_t* cost);
 
 // Benchmark attributes type.
 typedef struct benchmark_attr_s {
-    void (*func)(graph_t*, void*, totem_attr_t*);  // Benchmark function.
-    const char* name;                              // Benchmark name.
-    size_t output_size;                            // Per-vertex output size.
-    bool totem_supported;                          // true if the benchmark has a Totem-based
-    // implementation
-    bool compressed_vertices_supported;  // Indicates whether the algorithm
-    // supports compressed vertices or not.
-    size_t push_msg_size;        // Push message size (Totem-based alg.).
-    size_t pull_msg_size;        // Pull message size (Totem-based alg.).
-    totem_cb_func_t alloc_func;  // Allocation callback function
-    // (Totem-based alg.).
-    totem_cb_func_t free_func;  // Free callback function (Totem-based alg.).
+  void (*func)(graph_t*, void*, totem_attr_t*);  // Benchmark function.
+  const char* name;                              // Benchmark name.
+  size_t output_size;                            // Per-vertex output size.
+  bool totem_supported;                          // true if the benchmark has a Totem-based
+  // implementation
+  bool compressed_vertices_supported;  // Indicates whether the algorithm
+  // supports compressed vertices or not.
+  size_t push_msg_size;        // Push message size (Totem-based alg.).
+  size_t pull_msg_size;        // Pull message size (Totem-based alg.).
+  totem_cb_func_t alloc_func;  // Allocation callback function
+  // (Totem-based alg.).
+  totem_cb_func_t free_func;  // Free callback function (Totem-based alg.).
 } benchmark_attr_t;
 
 // Benchmark command line options type.
 typedef struct benchmark_options_s {
-    char* graph_file;       // The file to run the benchmark on.
-    benchmark_t benchmark;  // Benchmark to run.
-    platform_t platform;    // Execution platform.
-    int gpu_count;          // Number of GPUs to use.
-    int thread_count;       // Number of CPU threads.
-    omp_sched_t omp_sched;  // OMP scheduling policy.
-    int repeat;             // Number of times to repeat an
-    // execution (for traversal algorithms,
-    // different runs use different seeds.
-    int alpha;  // The percentage of edges placed on the
-    // CPU  for hybrid platforms
-    int lambda;  // Amount of edges of the opposing
-    // degree of Alpha, placed on the GPUs.
-    partition_algorithm_t par_algo;  // Partitioning algorithm.
-    gpu_graph_mem_t gpu_graph_mem;   // The type of memory used to allocate
-    // the graph data structure of
-    // GPU-based partitions.
-    bool gpu_par_randomized;  // Indicates if the placement of
-    // vertices across GPUs is random
-    // or according to par_algo.
-    bool sorted;  // Maps the vertex ids in sorted order
-    // by edge degree during the
-    // partitioning phase.
-    bool edge_sort_by_degree;  // Sorts the edges by degree
-    // rather than by id.
-    bool edge_sort_dsc;  // Makes the direction of edge
-    // sorting descending order.
-    bool separate_singletons;  // Creates a CPU partition
-    // to handle singletons.
+  char* graph_file;       // The file to run the benchmark on.
+  benchmark_t benchmark;  // Benchmark to run.
+  platform_t platform;    // Execution platform.
+  int gpu_count;          // Number of GPUs to use.
+  int thread_count;       // Number of CPU threads.
+  omp_sched_t omp_sched;  // OMP scheduling policy.
+  int repeat;             // Number of times to repeat an
+  // execution (for traversal algorithms,
+  // different runs use different seeds.
+  int alpha;  // The percentage of edges placed on the
+  // CPU  for hybrid platforms
+  int lambda;  // Amount of edges of the opposing
+  // degree of Alpha, placed on the GPUs.
+  partition_algorithm_t par_algo;  // Partitioning algorithm.
+  gpu_graph_mem_t gpu_graph_mem;   // The type of memory used to allocate
+  // the graph data structure of
+  // GPU-based partitions.
+  bool gpu_par_randomized;  // Indicates if the placement of
+  // vertices across GPUs is random
+  // or according to par_algo.
+  bool sorted;  // Maps the vertex ids in sorted order
+  // by edge degree during the
+  // partitioning phase.
+  bool edge_sort_by_degree;  // Sorts the edges by degree
+  // rather than by id.
+  bool edge_sort_dsc;  // Makes the direction of edge
+  // sorting descending order.
+  bool separate_singletons;  // Creates a CPU partition
+                             // to handle singletons.
 } benchmark_options_t;
 
 /**

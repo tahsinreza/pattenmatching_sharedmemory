@@ -12,10 +12,9 @@
 #include "totem_util.h"
 
 #ifdef FEATURE_SM35
-template<typename eid_type>
-PRIVATE __global__ void
-frontier_update_boundaries_kernel(frontier_state_t state,
-                                  const eid_type* __restrict vertices) {
+template <typename eid_type>
+PRIVATE __global__ void frontier_update_boundaries_kernel(frontier_state_t state,
+                                                          const eid_type* __restrict vertices) {
   const vid_t index = THREAD_GLOBAL_INDEX;
   if (index >= *state.count) return;
 
@@ -45,21 +44,19 @@ frontier_update_boundaries_kernel(frontier_state_t state,
   }
 }
 
-template<typename eid_type>
-PRIVATE __global__ void
-frontier_update_boundaries_launch_kernel(frontier_state_t state,
-                                         const eid_type* __restrict vertices) {
+template <typename eid_type>
+PRIVATE __global__ void frontier_update_boundaries_launch_kernel(
+    frontier_state_t state, const eid_type* __restrict vertices) {
   if (THREAD_GLOBAL_INDEX > 0 || (*state.count == 0)) return;
   dim3 blocks;
   kernel_configure(*state.count, blocks);
   cudaStream_t stream;
   cudaStreamCreateWithFlags(&stream, cudaStreamNonBlocking);
-  frontier_update_boundaries_kernel
-    <<<blocks, DEFAULT_THREADS_PER_BLOCK, 0, stream>>>(state, vertices);
+  frontier_update_boundaries_kernel<<<blocks, DEFAULT_THREADS_PER_BLOCK, 0, stream>>>(state,
+                                                                                      vertices);
 }
 
-PRIVATE __global__ void
-frontier_init_boundaries_kernel(frontier_state_t state) {
+PRIVATE __global__ void frontier_init_boundaries_kernel(frontier_state_t state) {
   const vid_t index = THREAD_GLOBAL_INDEX;
   if (index >= FRONTIER_BOUNDARY_COUNT) return;
   state.boundaries[index + 1] = *state.count;
@@ -67,10 +64,9 @@ frontier_init_boundaries_kernel(frontier_state_t state) {
 
 #endif /* FEATURE_SM35  */
 
-template<int THREADS_PER_BLOCK>
-PRIVATE __global__ void
-frontier_update_list_kernel(frontier_state_t state, const cost_t level,
-                            const cost_t* __restrict cost) {
+template <int THREADS_PER_BLOCK>
+PRIVATE __global__ void frontier_update_list_kernel(frontier_state_t state, const cost_t level,
+                                                    const cost_t* __restrict cost) {
   const vid_t v = THREAD_GLOBAL_INDEX;
   if (v >= state.len) return;
 
@@ -97,20 +93,18 @@ frontier_update_list_kernel(frontier_state_t state, const cost_t level,
   state.list[index + THREAD_BLOCK_INDEX] = queue_l[THREAD_BLOCK_INDEX];
 }
 
-void frontier_update_list_gpu(frontier_state_t* state,
-                              vid_t level, const cost_t* cost,
+void frontier_update_list_gpu(frontier_state_t* state, vid_t level, const cost_t* cost,
                               const cudaStream_t stream) {
   cudaMemsetAsync(state->count, 0, sizeof(vid_t), stream);
   dim3 blocks;
   kernel_configure(state->len, blocks);
   frontier_update_list_kernel<DEFAULT_THREADS_PER_BLOCK>
-    <<<blocks, DEFAULT_THREADS_PER_BLOCK, 0, stream>>>(*state, level, cost);
+      <<<blocks, DEFAULT_THREADS_PER_BLOCK, 0, stream>>>(*state, level, cost);
   CALL_CU_SAFE(cudaGetLastError());
 }
 
-template<int THREADS_PER_BLOCK>
-PRIVATE __global__ void
-frontier_update_list_kernel(frontier_state_t state) {
+template <int THREADS_PER_BLOCK>
+PRIVATE __global__ void frontier_update_list_kernel(frontier_state_t state) {
   const vid_t v = THREAD_GLOBAL_INDEX;
   if (v >= state.len) return;
 
@@ -136,48 +130,41 @@ frontier_update_list_kernel(frontier_state_t state) {
   state.list[index + THREAD_BLOCK_INDEX] = queue_l[THREAD_BLOCK_INDEX];
 }
 
-void frontier_update_list_gpu(frontier_state_t* state,
-                              const cudaStream_t stream) {
+void frontier_update_list_gpu(frontier_state_t* state, const cudaStream_t stream) {
   cudaMemsetAsync(state->count, 0, sizeof(vid_t), stream);
   dim3 blocks;
   kernel_configure(state->len, blocks);
   frontier_update_list_kernel<DEFAULT_THREADS_PER_BLOCK>
-    <<<blocks, DEFAULT_THREADS_PER_BLOCK, 0, stream>>>(*state);
+      <<<blocks, DEFAULT_THREADS_PER_BLOCK, 0, stream>>>(*state);
   CALL_CU_SAFE(cudaGetLastError());
 }
 
 #ifdef FEATURE_SM35
-void frontier_update_boundaries_gpu(frontier_state_t* state,
-                                    const graph_t* graph,
+void frontier_update_boundaries_gpu(frontier_state_t* state, const graph_t* graph,
                                     const cudaStream_t stream) {
   if (engine_sorted()) {
     // If the vertices are sorted by degree, build the boundaries array
     // to optimize thread scheduling when launching the traversal kernel
     dim3 blocks;
     kernel_configure(FRONTIER_BOUNDARY_COUNT, blocks);
-    frontier_init_boundaries_kernel
-      <<<blocks, DEFAULT_THREADS_PER_BLOCK, 0, stream>>>(*state);
+    frontier_init_boundaries_kernel<<<blocks, DEFAULT_THREADS_PER_BLOCK, 0, stream>>>(*state);
     CALL_CU_SAFE(cudaGetLastError());
 
     if (graph->compressed_vertices) {
-      frontier_update_boundaries_launch_kernel
-          <<<1, 1, 0, stream>>>(*state, graph->vertices_d);
+      frontier_update_boundaries_launch_kernel<<<1, 1, 0, stream>>>(*state, graph->vertices_d);
     } else {
-      frontier_update_boundaries_launch_kernel
-          <<<1, 1, 0, stream>>>(*state, graph->vertices);
+      frontier_update_boundaries_launch_kernel<<<1, 1, 0, stream>>>(*state, graph->vertices);
     }
     CALL_CU_SAFE(cudaGetLastError());
   }
 }
 #endif /* FEATURE_SM35 */
 
-vid_t frontier_update_bitmap_gpu(frontier_state_t* state, bitmap_t visited,
-                                 cudaStream_t stream) {
+vid_t frontier_update_bitmap_gpu(frontier_state_t* state, bitmap_t visited, cudaStream_t stream) {
   bitmap_t tmp = state->current;
   state->current = state->visited_last;
   state->visited_last = tmp;
-    bitmap_diff_copy_gpu(visited, state->current, state->visited_last,
-                         state->len, stream);
+  bitmap_diff_copy_gpu(visited, state->current, state->visited_last, state->len, stream);
   return 0;
 }
 vid_t frontier_update_bitmap_cpu(frontier_state_t* state, bitmap_t visited) {
@@ -185,8 +172,7 @@ vid_t frontier_update_bitmap_cpu(frontier_state_t* state, bitmap_t visited) {
   bitmap_t tmp = state->current;
   state->current = state->visited_last;
   state->visited_last = tmp;
-  bitmap_diff_copy_cpu(visited, state->current, state->visited_last,
-                       state->len);
+  bitmap_diff_copy_cpu(visited, state->current, state->visited_last, state->len);
   return 0;
 }
 
@@ -205,8 +191,7 @@ void frontier_init_gpu(frontier_state_t* state, vid_t vertex_count) {
   state->len = vertex_count;
   state->current = bitmap_init_gpu(vertex_count);
   state->visited_last = bitmap_init_gpu(vertex_count);
-  CALL_SAFE(totem_calloc(sizeof(vid_t), TOTEM_MEM_DEVICE,
-                         reinterpret_cast<void**>(&state->count)));
+  CALL_SAFE(totem_calloc(sizeof(vid_t), TOTEM_MEM_DEVICE, reinterpret_cast<void**>(&state->count)));
   state->list_len = vertex_count;
   /* vid_t list_max_len = TRV_MAX_FRONTIER_SIZE * get_gpu_device_memory() / */
   /*     sizeof(vid_t); */
@@ -216,8 +201,7 @@ void frontier_init_gpu(frontier_state_t* state, vid_t vertex_count) {
 
 #ifdef FEATURE_SM35
   if (engine_sorted()) {
-    CALL_SAFE(totem_calloc((FRONTIER_BOUNDARY_COUNT + 1) * sizeof(vid_t),
-                           TOTEM_MEM_DEVICE,
+    CALL_SAFE(totem_calloc((FRONTIER_BOUNDARY_COUNT + 1) * sizeof(vid_t), TOTEM_MEM_DEVICE,
                            reinterpret_cast<void**>(&state->boundaries)));
   }
 #endif /* FEATURE_SM35 */
@@ -231,7 +215,7 @@ void frontier_init_cpu(frontier_state_t* state, vid_t vertex_count) {
 void frontier_finalize_gpu(frontier_state_t* state) {
   assert(state);
 #ifdef FEATURE_SM35
-    if (engine_sorted()) totem_free(state->boundaries, TOTEM_MEM_DEVICE);
+  if (engine_sorted()) totem_free(state->boundaries, TOTEM_MEM_DEVICE);
 #endif /* FEATURE_SM35  */
   totem_free(state->list, TOTEM_MEM_DEVICE);
   totem_free(state->count, TOTEM_MEM_DEVICE);

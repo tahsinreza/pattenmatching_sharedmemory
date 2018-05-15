@@ -5,17 +5,16 @@
  *  Created on: 2012-01-30
  *  Author: Abdullah Gharaibeh
  */
- #ifndef TOTEM_BFS_HYBRID_COPY_CUH
- #define TOTEM_BFS_HYBRID_COPY_CUH
+#ifndef TOTEM_BFS_HYBRID_COPY_CUH
+#define TOTEM_BFS_HYBRID_COPY_CUH
 
 #include "totem_bitmap.cuh"
 #include "totem_comdef.h"
 #include "totem_comkernel.cuh"
+#include "totem_engine.cuh"
 #include "totem_graph.h"
 #include "totem_mem.h"
 #include "totem_partition.h"
-#include "totem_engine.cuh"
-
 
 /**
  * A type for the cost in traversal-based algorithms.
@@ -50,23 +49,22 @@ const double TRV_FRONTIER_SPARSE_THRESHOLD = .1;
  */
 const double TRV_MAX_FRONTIER_SIZE = .1;
 
-
 typedef struct frontier_state_s {
-  bitmap_t current;         // current frontier bitmap
-  bitmap_t visited_last;    // a bitmap of the visited vertices before the
-                            // start of the previous round. This is used to
-                            // compute the frontier bitmap of the current
-                            // round by diffing this bitmap with the visited
-                            // bitmap (a bitmap of the visited untill after the
-                            // end of the previous round
-  vid_t len;                // frontier bitmaps length
-  vid_t* list;              // maintains the list of vertices that belong to the
-                            // current frontier being processed (GPU only)
-  vid_t  list_len;          // maximum number of vertices that the frontier
-                            // list can hold (GPU only)
-  vid_t* count;             // used to calculate the current number of vertices
-                            // in the frontier (GPU only)
-  vid_t* boundaries;        // thread scheduling boundaries (GPU only)
+  bitmap_t current;       // current frontier bitmap
+  bitmap_t visited_last;  // a bitmap of the visited vertices before the
+                          // start of the previous round. This is used to
+                          // compute the frontier bitmap of the current
+                          // round by diffing this bitmap with the visited
+                          // bitmap (a bitmap of the visited untill after the
+                          // end of the previous round
+  vid_t len;              // frontier bitmaps length
+  vid_t* list;            // maintains the list of vertices that belong to the
+                          // current frontier being processed (GPU only)
+  vid_t list_len;         // maximum number of vertices that the frontier
+                          // list can hold (GPU only)
+  vid_t* count;           // used to calculate the current number of vertices
+                          // in the frontier (GPU only)
+  vid_t* boundaries;      // thread scheduling boundaries (GPU only)
 } frontier_state_t;
 
 #ifdef FEATURE_SM35
@@ -101,10 +99,8 @@ void frontier_reset_cpu(frontier_state_t* state);
  * @param[in] visited a bitmap representing  all the vertices that has been
  * visited untill now
  */
-vid_t frontier_update_bitmap_cpu(frontier_state_t* state,
-                                 const bitmap_t visited);
-vid_t frontier_update_bitmap_gpu(frontier_state_t* state,
-                                 const bitmap_t visited,
+vid_t frontier_update_bitmap_cpu(frontier_state_t* state, const bitmap_t visited);
+vid_t frontier_update_bitmap_gpu(frontier_state_t* state, const bitmap_t visited,
                                  cudaStream_t stream);
 
 /**
@@ -113,11 +109,9 @@ vid_t frontier_update_bitmap_gpu(frontier_state_t* state,
  * the vertices are sorted by degree
  * @param[in] frontier reference to the frontier data structure
  */
-void frontier_update_list_gpu(frontier_state_t* state,
-                              vid_t level, const cost_t* cost,
+void frontier_update_list_gpu(frontier_state_t* state, vid_t level, const cost_t* cost,
                               const cudaStream_t stream);
-void frontier_update_list_gpu(frontier_state_t* state,
-                              const cudaStream_t stream);
+void frontier_update_list_gpu(frontier_state_t* state, const cudaStream_t stream);
 
 #ifdef FEATURE_SM35
 /**
@@ -125,8 +119,7 @@ void frontier_update_list_gpu(frontier_state_t* state,
  * @param[in] frontier reference to the frontier data structure
  * @param[in] graph a reference to the graph to be processed
  */
-void frontier_update_boundaries_gpu(frontier_state_t* state,
-                                    const graph_t* graph,
+void frontier_update_boundaries_gpu(frontier_state_t* state, const graph_t* graph,
                                     const cudaStream_t stream);
 #endif /* FEATURE_SM35 */
 
