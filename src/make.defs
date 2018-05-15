@@ -136,6 +136,9 @@ ALG_DEPS   = $(wildcard $(ALG_PATH)/*.[cuh,h])
 BENCHMARK_PATH   = $(ROOTDIR)/benchmark
 BENCHMARK_DEPS   = $(wildcard $(BENCHMARK_PATH)/*.[cuh,h])
 
+PATTERNMATCHING_PATH   = $(ROOTDIR)/patternmatching
+PATTERNMATCHING_DEPS   = $(wildcard $(PATTERNMATCHING_PATH)/*.[cuh,h])
+
 GENERATOR_PATH   = $(ROOTDIR)/generator
 GENERATOR_DEPS   = $(wildcard $(GENERATOR_PATH)/*.[cuh,h])
 

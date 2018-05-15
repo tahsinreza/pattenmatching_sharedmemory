@@ -8,7 +8,7 @@
 
 objects: $(OBJDIR) $(CCOBJS) $(CUOBJS) $(COBJS)
 
-.PHONY: lib libbenchmark libtotem libalg clean clean-build clean-all
+.PHONY: lib libbenchmark libpatternmatching libtotem libalg clean clean-build clean-all
 
 lib: objects $(LIBDIR)
 	@printf "\nCreating %s library ...\n" $(LIBDIR)/lib$(TARGET).a
@@ -17,6 +17,9 @@ lib: objects $(LIBDIR)
 
 libbenchmark:
 	@$(MAKE) lib -C $(BENCHMARK_PATH)
+
+libpatternmatching:
+	@$(MAKE) lib -C $(PATTERNMATCHING_PATH)
 
 libtotem:
 	@$(MAKE) lib -C $(TOTEM_PATH)
