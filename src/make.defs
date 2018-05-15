@@ -61,30 +61,26 @@ endif
 # Compute capability targets.
 GEN_SM20 = -gencode=arch=compute_20,code=\"sm_20,compute_20\"
 GEN_SM35 = -gencode=arch=compute_35,code=\"sm_35,compute_35\"
-ifdef GPU_ARCH
-  ifeq ($(GPU_ARCH), 20)
-    SM_TARGETS = $(GEN_SM20)
-    NVCCFLAGS += -DFEATURE_SM20 -Wno-deprecated-gpu-targets
-    CFLAGS += -DFEATURE_SM20
-    BUILDPATH := $(BUILDPATH)_CC20
-  else ifeq ($(GPU_ARCH), 35)
-    SM_TARGETS = $(GEN_SM35)
-    NVCCFLAGS += -dc
-    LFLAGS    += $(SM_TARGETS) -rdc=true -lcudadevrt
-    NVCCFLAGS += -DFEATURE_SM35
-    CFLAGS += -DFEATURE_SM35
-    BUILDPATH := $(BUILDPATH)_CC35
-  else
-    $(error unsupported GPU architecture)
-  endif
+ifndef GPU_ARCH
+	GPU_ARCH=35
+endif
+
+ifeq ($(GPU_ARCH), 20)
+	SM_TARGETS = $(GEN_SM20)
+	NVCCFLAGS += -DFEATURE_SM20 -Wno-deprecated-gpu-targets
+	LNVCCFLAGS += -Wno-deprecated-gpu-targets
+	CFLAGS += -DFEATURE_SM20
+	BUILDPATH := $(BUILDPATH)_CC20
+else ifeq ($(GPU_ARCH), 35)
+	SM_TARGETS = $(GEN_SM35)
+	NVCCFLAGS += -dc
+	LFLAGS    += $(SM_TARGETS) -lcudadevrt
+	LNVCCFLAGS    += $(SM_TARGETS) -rdc=true -lcudadevrt
+	NVCCFLAGS += -DFEATURE_SM35
+	CFLAGS += -DFEATURE_SM35
+	BUILDPATH := $(BUILDPATH)_CC35
 else
-  # Default is 3.5
-  SM_TARGETS = $(GEN_SM35)
-  NVCCFLAGS += -dc
-  LFLAGS    += $(SM_TARGETS) -rdc=true -lcudadevrt
-  NVCCFLAGS += -DFEATURE_SM35
-  CFLAGS += -DFEATURE_SM35
-  BUILDPATH := $(BUILDPATH)_CC35
+	$(error unsupported GPU architecture)
 endif
 
 # Compilers.
@@ -102,6 +98,8 @@ NVCCFLAGS := $(NVCCFLAGS) -g -Xcompiler "-fopenmp -fno-strict-aliasing" -O3 \
              -I. -I$(CUDA_INSTALL_PATH)/include $(SM_TARGETS) \
              -D__STDC_LIMIT_MACROS
 LFLAGS    := $(LFLAGS) -lcudart -I. -L. -L$(CUDA_INSTALL_PATH)/lib$(ARCH) -lm  \
+             -ltbb "-fopenmp"
+LNVCCFLAGS    := $(LNVCCFLAGS) -lcudart -I. -L. -L$(CUDA_INSTALL_PATH)/lib$(ARCH) -lm  \
              -ltbb -Xcompiler "-fopenmp"
 
 # Build directories.

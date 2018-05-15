@@ -41,7 +41,7 @@ $(CCOBJS): $(OBJDIR)/%.cc.o: %.cc $(DEPS)
 
 $(CUOBJS): $(OBJDIR)/%.cu.o: %.cu $(DEPS)
 	$(NVCC) $(NVCCFLAGS) $(INC) -c $< -o $@
-
+	
 clean:
 	@rm -rf *~ $(OBJDIR)
 

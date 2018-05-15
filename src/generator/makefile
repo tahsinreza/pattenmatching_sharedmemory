@@ -16,6 +16,6 @@ all: $(BINDIR)/$(TARGET)
 
 $(BINDIR)/$(TARGET): objects $(BINDIR) libtotem
 	@printf "\nLinking %s executable ...\n" $(BINDIR)/$(TARGET)
-	$(NVCC) -o $@ $(COBJS) $(CCOBJS) $(CUOBJS) $(LIBS) $(LFLAGS)
+	$(NVCC) -o $@ $(COBJS) $(CCOBJS) $(CUOBJS) $(LIBS) $(LNVCCFLAGS)
 
 include $(ROOTDIR)/make.rules
