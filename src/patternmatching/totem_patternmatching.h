@@ -12,7 +12,7 @@
 #include "totem.h"
 #include "totem_util.h"
 
-#include "totem_bfs_hybrid_copy.cuh"
+#include "algorithms/totem_bfs_hybrid_copy.cuh"
 
 // Benchmark algorithm types.
 typedef enum { BENCHMARK_BFS = 0 } benchmark_t;

@@ -19,7 +19,7 @@ libbenchmark:
 	@$(MAKE) lib -C $(BENCHMARK_PATH)
 
 libpatternmatching:
-	@$(MAKE) lib -C $(PATTERNMATCHING_PATH)
+	@$(MAKE) lib -C $(PATTERNMATCHING_PATH) $(PATTERNMATCHING_PATH)/algorithms/
 
 libtotem:
 	@$(MAKE) lib -C $(TOTEM_PATH)

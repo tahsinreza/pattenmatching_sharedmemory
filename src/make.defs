@@ -93,10 +93,10 @@ NVCC = $(CUDA_INSTALL_PATH)/bin/nvcc
 CFLAGS    := $(CFLAGS) -g -fopenmp $(OPTFLAGS) -Wall -Wno-format -O3 \
              -fno-strict-aliasing -I$(CUDA_INSTALL_PATH)/include \
              -D__STDC_LIMIT_MACROS
-CCFLAGS   := $(CFLAGS) -std=c++11
+CCFLAGS   := $(CFLAGS) -std=c++14
 NVCCFLAGS := $(NVCCFLAGS) -g -Xcompiler "-fopenmp -fno-strict-aliasing" -O3 \
              -I. -I$(CUDA_INSTALL_PATH)/include $(SM_TARGETS) \
-             -D__STDC_LIMIT_MACROS
+             -D__STDC_LIMIT_MACROS -std=c++14
 LFLAGS    := $(LFLAGS) -lcudart -I. -L. -L$(CUDA_INSTALL_PATH)/lib$(ARCH) -lm  \
              -ltbb "-fopenmp"
 LNVCCFLAGS    := $(LNVCCFLAGS) -lcudart -I. -L. -L$(CUDA_INSTALL_PATH)/lib$(ARCH) -lm  \
@@ -138,6 +138,7 @@ BENCHMARK_DEPS   = $(wildcard $(BENCHMARK_PATH)/*.[cuh,h])
 
 PATTERNMATCHING_PATH   = $(ROOTDIR)/patternmatching
 PATTERNMATCHING_DEPS   = $(wildcard $(PATTERNMATCHING_PATH)/*.[cuh,h])
+PATTERNMATCHING_DEPS   += $(wildcard $(PATTERNMATCHING_PATH)/algorithms/*.[cuh,h])
 
 GENERATOR_PATH   = $(ROOTDIR)/generator
 GENERATOR_DEPS   = $(wildcard $(GENERATOR_PATH)/*.[cuh,h])

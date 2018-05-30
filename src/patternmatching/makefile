@@ -8,15 +8,16 @@ TARGET  = patternmatching
 ROOTDIR = ..
 include $(ROOTDIR)/make.defs
 
-DEPS := $(DEPS) $(TOTEM_DEPS)
+DEPS := $(DEPS) $(TOTEM_DEPS) $(PATTERNMATCHING_DEPS)
 INC  := $(INC) -I$(TOTEM_PATH)
 LIBS = -l$(TARGET) -ltotem -L$(LIBDIR)
 
 all: $(BINDIR)/$(TARGET)
 
-$(BINDIR)/$(TARGET): $(BINDIR) lib libtotem 
+$(BINDIR)/$(TARGET): $(BINDIR) lib libtotem libpatternmatching
 	@printf "\nLinking %s executable ...\n" $(BINDIR)/$(TARGET)
-	$(NVCC) -o $(OBJDIR)/$(TARGET).cuo -dlink $(CUBINOBJS) $(LIBS) $(LNVCCFLAGS)
-	$(CC) -o $@ $(CBINOBJS) $(CCBINOBJS) $(CUBINOBJS) $(OBJDIR)/$(TARGET).cuo $(LIBS) $(LFLAGS)
+	$(NVCC) -o $@ $(CBINOBJS) $(CCBINOBJS) $(CUBINOBJS) $(LIBS) $(LNVCCFLAGS)
+
+
 
 include $(ROOTDIR)/make.rules
