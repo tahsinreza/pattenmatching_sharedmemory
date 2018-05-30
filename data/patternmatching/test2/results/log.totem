@@ -1,0 +1,35 @@
+[2018-05-28 12:51:12] : Loading graph
+[2018-05-28 12:51:12] : Loading pattern
+[2018-05-28 12:51:12] : Initialize Totem and global state
+[2018-05-28 12:51:12] : Initialize LCC, CC, and Step algorithms
+[2018-05-28 12:51:12] : Label 2 : 
+	 Sublabel 1 : 1
+	 Sublabel 0 : 1
+Label 0 : 
+	 Sublabel 2 : 1
+	 Sublabel 1 : 1
+Label 1 : 
+	 Sublabel 2 : 1
+	 Sublabel 0 : 1
+
+[2018-05-28 12:51:12] : Constraint number =  1. 
+=== Current constraint = 0 ===
+Vertex Index : 0 -> 1 -> 2 -> 0
+Vertex Label : 0 -> 1 -> 2 -> 0
+
+[2018-05-28 12:51:12] : End of initialisation
+[2018-05-28 12:51:12] : Start run
+[2018-05-28 12:51:12] : vertex 0 remove because it did not satisfy constaint 2(1)
+[2018-05-28 12:51:12] : vertex 2 remove because it did not satisfy constaint 1(1)
+[2018-05-28 12:51:12] : vertex 10 remove because it did not satisfy constaint 1(1)
+[2018-05-28 12:51:12] : Iteration    0 [LCC], Running time 0.1001, Eliminated vertex 3
+[2018-05-28 12:51:12] : vertex 1 remove because it did not satisfy constaint 2(1)
+[2018-05-28 12:51:12] : Iteration    1 [LCC], Running time 0.0200, Eliminated vertex 1
+[2018-05-28 12:51:12] : Iteration    2 [LCC], Running time 0.0020, Eliminated vertex 0
+[2018-05-28 12:51:12] : currentConstraint : 
+[2018-05-28 12:51:12] : Vertex Index : 0 -> 1 -> 2 -> 0
+Vertex Label : 0 -> 1 -> 2 -> 0
+
+[2018-05-28 12:51:12] : Iteration    3 [CC], Running time 0.0310, Eliminated vertex 4
+[2018-05-28 12:51:12] : Iteration    4 [LCC], Running time 0.0029, Eliminated vertex 0
+[2018-05-28 12:51:12] : End run
