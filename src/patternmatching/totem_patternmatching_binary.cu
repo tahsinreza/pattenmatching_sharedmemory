@@ -4,6 +4,7 @@
 
 #include "totem_patternmatching_cmd_line_option.h"
 #include "totem_unique_label_cpu.cuh"
+#include "totem_multiple_label_cpu.cuh"
 #include "totem_patternmatching_logger.h"
 
 using namespace patternmatching;
@@ -15,12 +16,24 @@ int main(int argc, char** argv) {
 
   Logger::get().init(cmdLineOption.getOutputResultDirectory());
 
-  UniqueLabelCpu uniqueLabelCpu;
-  uniqueLabelCpu.allocate(cmdLineOption);
 
-  uniqueLabelCpu.runPatternMatching();
+  if(0) {
+    UniqueLabelCpu uniqueLabelCpu;
+    uniqueLabelCpu.allocate(cmdLineOption);
 
-  uniqueLabelCpu.free();
+    uniqueLabelCpu.runPatternMatching();
+
+    uniqueLabelCpu.free();
+  }
+  else {
+    MultipleLabelCpu multipleLabelCpu;
+    multipleLabelCpu.allocate(cmdLineOption);
+
+    multipleLabelCpu.runPatternMatching();
+
+    multipleLabelCpu.free();
+
+  }
 
   return 0;
 }

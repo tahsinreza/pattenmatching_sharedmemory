@@ -25,8 +25,9 @@ class Logger {
   enum LogOutput {
     E_OUTPUT_COUT=1<<0,
     E_OUTPUT_FILE_GRAPH=1<<1,
-    E_OUTPUT_FILE_ITERATION_RESULTS=1<<2,
-    E_OUTPUT_FILE_LOG=1<<3,
+    E_OUTPUT_FILE_VERTEX=1<<2,
+    E_OUTPUT_FILE_ITERATION_RESULTS=1<<3,
+    E_OUTPUT_FILE_LOG=1<<4,
     E_OUTPUT_DEBUG=E_OUTPUT_COUT | E_OUTPUT_FILE_LOG
   };
 
@@ -58,6 +59,7 @@ class Logger {
   int currentIteration;
 
   static const std::string C_GRAPH_FILEPATTERN;
+  static const std::string C_VERTEX_FILEPATTERN;
   static const std::string C_LOG_FILEPATTERN;
   static const std::string C_ITERATION_RESULTS_FILEPATTERN;
   static const int C_MIN_LOG_LEVEL;

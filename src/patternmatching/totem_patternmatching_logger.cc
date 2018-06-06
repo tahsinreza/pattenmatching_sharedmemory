@@ -10,12 +10,13 @@
 namespace patternmatching {
 
 const std::string Logger::C_GRAPH_FILEPATTERN = "graph_%04d.totem";
+const std::string Logger::C_VERTEX_FILEPATTERN = "vertex_%04d.totem";
 
 const std::string Logger::C_LOG_FILEPATTERN = "log.totem";
 
 const std::string Logger::C_ITERATION_RESULTS_FILEPATTERN = "results.totem";
 
-const int Logger::C_MIN_LOG_LEVEL = Logger::E_LEVEL_INFO;
+const int Logger::C_MIN_LOG_LEVEL = Logger::E_LEVEL_DEBUG;
 
 Logger *Logger::instance = nullptr;
 
@@ -64,6 +65,14 @@ void Logger::log(const LogLevel &logLevel, const std::string &message, const Log
   if (logOutput & E_OUTPUT_FILE_GRAPH) {
     char buffer[128];
     sprintf(buffer, C_GRAPH_FILEPATTERN.c_str(), currentIteration);
+    std::ofstream fileStream(resultDirectory + buffer, std::ofstream::out);
+    fileStream << message << std::endl;
+    fileStream.close();
+  }
+
+  if (logOutput & E_OUTPUT_FILE_VERTEX) {
+    char buffer[128];
+    sprintf(buffer, C_VERTEX_FILEPATTERN.c_str(), currentIteration);
     std::ofstream fileStream(resultDirectory + buffer, std::ofstream::out);
     fileStream << message << std::endl;
     fileStream.close();

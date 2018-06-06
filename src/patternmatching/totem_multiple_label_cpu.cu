@@ -2,12 +2,12 @@
 #include <omp.h>
 #include <iostream>
 #include <iomanip>
-#include "totem_unique_label_cpu.cuh"
+#include "totem_multiple_label_cpu.cuh"
 #include "totem_patternmatching_logger.h"
 
 namespace patternmatching {
 
-error_t parse_vertex_list(FILE *file_handler, graph_t *graph) {
+error_t parse_vertex_list2(FILE *file_handler, graph_t *graph) {
   const uint32_t MAX_LINE_LENGTH = 100;
   const char delimiters[] = " \t\n:";
   uint64_t line_number = 0;
@@ -59,7 +59,7 @@ error_t parse_vertex_list(FILE *file_handler, graph_t *graph) {
   return FAILURE;
 }
 
-void UniqueLabelCpu::initialiseTotem() {
+void MultipleLabelCpu::initialiseTotem() {
   attributeCpu = TOTEM_DEFAULT_ATTR;
   attributeCpu.platform = PLATFORM_CPU;
   attributeCpu.par_algo = PAR_RANDOM;
@@ -85,14 +85,14 @@ void UniqueLabelCpu::initialiseTotem() {
 
 }
 
-error_t UniqueLabelCpu::allocate(CmdLineOption &cmdLineOption) {
+error_t MultipleLabelCpu::allocate(CmdLineOption &cmdLineOption) {
   // Load graph
   Logger::get().log(Logger::E_LEVEL_INFO, "Loading graph");
   CALL_SAFE(graph_initialize(cmdLineOption.getInputGraphFilePath().c_str(), 0, &graph));
 
   if (!cmdLineOption.getInputVertexMetadataFilePath().empty()) {
     FILE *file_handler = fopen(cmdLineOption.getInputVertexMetadataFilePath().c_str(), "r");
-    if (file_handler != NULL) parse_vertex_list(file_handler, graph);
+    if (file_handler != NULL) parse_vertex_list2(file_handler, graph);
   }
 
   // Load pattern
@@ -101,31 +101,39 @@ error_t UniqueLabelCpu::allocate(CmdLineOption &cmdLineOption) {
 
   if (!cmdLineOption.getInputVertexMetadataFilePath().empty()) {
     FILE *file_handler = fopen((cmdLineOption.getInputPatternDirectory() + "pattern_vertex_data").c_str(), "r");
-    if (file_handler != NULL) parse_vertex_list(file_handler, pattern);
+    if (file_handler != NULL) parse_vertex_list2(file_handler, pattern);
   }
 
   Logger::get().log(Logger::E_LEVEL_INFO, "Initialize Totem and global state");
   initialiseTotem();
 
-  patternmatchingState.allocate(graph->vertex_count);
+  patternmatchingState.allocate(graph->vertex_count, graph->edge_count, pattern->vertex_count);
 
   // Initialise algorithms
-  Logger::get().log(Logger::E_LEVEL_INFO, "Initialize LCC, CC, and Step algorithms");
+  Logger::get().log(Logger::E_LEVEL_INFO, "Initialize LCC, CC, PC, and Step algorithms");
 
   lccCpu.preprocessPatern(*pattern);
   Logger::get().logFunction(Logger::E_LEVEL_INFO, lccCpu, &LccType::printLocalConstraint, Logger::E_OUTPUT_FILE_LOG);
+  Logger::get().logFunction(Logger::E_LEVEL_DEBUG, lccCpu, &LccType::printLocalConstraint, Logger::E_OUTPUT_COUT);
 
   ccCpu.init(*graph, *pattern);
   ccCpu.preprocessPatern(*pattern);
   Logger::get().logFunction(Logger::E_LEVEL_INFO, ccCpu, &CcType::printCircularConstraint, Logger::E_OUTPUT_FILE_LOG);
+  Logger::get().logFunction(Logger::E_LEVEL_DEBUG, ccCpu, &CcType::printCircularConstraint, Logger::E_OUTPUT_COUT);
+
+  pcCpu.init(*graph, *pattern);
+  pcCpu.preprocessPatern(*pattern);
+  Logger::get().logFunction(Logger::E_LEVEL_INFO, pcCpu, &PcType::printPathConstraint, Logger::E_OUTPUT_FILE_LOG);
+  Logger::get().logFunction(Logger::E_LEVEL_DEBUG, pcCpu, &PcType::printPathConstraint, Logger::E_OUTPUT_COUT);
 
   algorithmStep.initStepCc(ccCpu.getCircularConstraintNumber());
+  algorithmStep.initStepPc(pcCpu.getPathConstraintNumber());
 
   Logger::get().log(Logger::E_LEVEL_INFO, "End of initialisation");
   return SUCCESS;
 }
 
-error_t UniqueLabelCpu::free() {
+error_t MultipleLabelCpu::free() {
   totem_finalize();
   patternmatchingState.free();
   CALL_SAFE(graph_finalize(graph));
@@ -133,21 +141,25 @@ error_t UniqueLabelCpu::free() {
   return SUCCESS;
 }
 
-int UniqueLabelCpu::runPatternMatching() {
+int MultipleLabelCpu::runPatternMatching() {
   // run step
   bool finished = 0;
-  UniqueLabelStep::Step currentStep;
+  MultipleLabelStep::Step currentStep;
   totalStepTime = 0.;
 
   Logger::get().log(Logger::E_LEVEL_INFO, "Start run");
 
   int currentIteration = 0;
   algorithmStep.getNextStep(currentStepVertexEliminated, &currentStep, &currentStepName);
-  while (!finished && currentIteration < 100) {
+  while (!finished && currentIteration < 200) {
   // reinitialise
     switch (currentStep) {
-      case UniqueLabelStep::E_CC :
+      case MultipleLabelStep::E_CC :
         ccCpu.resetState(&patternmatchingState);
+        break;
+
+      case MultipleLabelStep::E_PC :
+        pcCpu.resetState(&patternmatchingState);
         break;
       default:break;
     }
@@ -157,11 +169,14 @@ int UniqueLabelCpu::runPatternMatching() {
     stopwatch_start(&stopwatch);
 
     switch (currentStep) {
-      case UniqueLabelStep::E_LCC :
+      case MultipleLabelStep::E_LCC :
         currentStepVertexEliminated = lccCpu.compute(*graph, &patternmatchingState);
         break;
-      case UniqueLabelStep::E_CC :
+      case MultipleLabelStep::E_CC :
         currentStepVertexEliminated = ccCpu.compute(*graph, &patternmatchingState);
+        break;
+      case MultipleLabelStep::E_PC :
+        currentStepVertexEliminated = pcCpu.compute(*graph, &patternmatchingState);
         break;
       default:break;
     }
@@ -178,12 +193,14 @@ int UniqueLabelCpu::runPatternMatching() {
   //printActiveGraph(stringStream);
   Logger::get().log(Logger::E_LEVEL_INFO, "End run");
   Logger::get().log(Logger::E_LEVEL_INFO, "Saving pruned graph");
+  currentStepTime=0.;
+  currentStepVertexEliminated=0;
   logResults(currentIteration, true);
 
   return 0;
 }
 
-void UniqueLabelCpu::logResults(const int currentIteration, const bool logGraph) const {
+void MultipleLabelCpu::logResults(const int currentIteration, const bool logGraph) const {
   Logger::get().setCurrentIteration(currentIteration);
   // Print Result file
   if (currentIteration == 0) {
@@ -223,24 +240,46 @@ void UniqueLabelCpu::logResults(const int currentIteration, const bool logGraph)
   if (logGraph) {
     Logger::get().logFunction(Logger::E_LEVEL_RESULT,
                               *this,
-                              &UniqueLabelCpu::printActiveGraph,
+                              &MultipleLabelCpu::printActiveGraph,
                               Logger::E_OUTPUT_FILE_GRAPH);
+  }
+
+  // Save graph
+  if (logGraph) {
+    Logger::get().logFunction(Logger::E_LEVEL_RESULT,
+                              *this,
+                              &MultipleLabelCpu::printActiveVertex,
+                              Logger::E_OUTPUT_FILE_VERTEX);
   }
 
 }
 
-void UniqueLabelCpu::printActiveGraph(std::ostream &ostream) const {
-  for (vid_t vid = 0; vid < graph->vertex_count; vid++) {
-    if (patternmatchingState.vertexActiveList[vid] == 0) continue;
+void MultipleLabelCpu::printActiveGraph(std::ostream &ostream) const {
+  for (vid_t vertexId = 0; vertexId < graph->vertex_count; vertexId++) {
+    if (patternmatchingState.vertexActiveList[vertexId] == 0) continue;
 
-    for (eid_t i = graph->vertices[vid]; i < graph->vertices[vid + 1]; i++) {
-      vid_t neighborVertexId = graph->edges[i];
+    for (eid_t edgeId = graph->vertices[vertexId]; edgeId < graph->vertices[vertexId + 1]; edgeId++) {
+      if (patternmatchingState.edgeActiveList[edgeId] == 0) continue;
+      vid_t neighborVertexId = graph->edges[edgeId];
 
       if (patternmatchingState.vertexActiveList[neighborVertexId] == 0) continue;
 
-      ostream << vid << " " << neighborVertexId << " " << graph->values[vid] << " " << graph->values[neighborVertexId]
+      ostream << vertexId << " " << neighborVertexId << " " << graph->values[vertexId] << " " << graph->values[neighborVertexId]
               << std::endl;
     }
+  }
+}
+
+void MultipleLabelCpu::printActiveVertex(std::ostream &ostream) const {
+  for (vid_t vertexId = 0; vertexId < graph->vertex_count; vertexId++) {
+    if (patternmatchingState.vertexActiveList[vertexId] == 0) continue;
+
+    ostream << vertexId << " ";
+
+    for(const auto& it : patternmatchingState.vertexPatternMatch[vertexId]) {
+      ostream << it << " ";
+    }
+    ostream << std::endl;
   }
 }
 
