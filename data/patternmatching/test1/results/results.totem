@@ -1,6 +1,0 @@
-Iteration; Step; Step time; Cumulative time; Eliminated vertex
-0000; LCC; 0.1150 ; 0.1150 ; 3
-0001; LCC; 0.0190 ; 0.1340 ; 1
-0002; LCC; 0.0032 ; 0.1372 ; 0
-0003; CC; 0.0300 ; 0.1672 ; 4
-0004; LCC; 0.0032 ; 0.1704 ; 0
