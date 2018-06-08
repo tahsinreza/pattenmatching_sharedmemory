@@ -7,25 +7,25 @@ include_directories(
         ${SOURCE_ROOT_DIR}/totem)
 
 set(PROJECT_TPP_SOURCES
-        algorithms/totem_multiple_label_cc_cpu.tpp
-        algorithms/totem_multiple_label_common_cpu.tpp
-        algorithms/totem_multiple_label_lcc_cpu.tpp
-        algorithms/totem_multiple_label_pc_cpu.tpp
-        algorithms/totem_unique_label_cc_cpu.tpp
-        algorithms/totem_unique_label_common_cpu.tpp
-        algorithms/totem_unique_label_lcc_cpu.tpp
+        algorithms/multiple_label_cc_cpu.tpp
+        algorithms/multiple_label_common_cpu.tpp
+        algorithms/multiple_label_lcc_cpu.tpp
+        algorithms/multiple_label_pc_cpu.tpp
+        algorithms/unique_label_cc_cpu.tpp
+        algorithms/unique_label_common_cpu.tpp
+        algorithms/unique_label_lcc_cpu.tpp
         )
 
 set(PROJECT_CPP_SOURCES
-        totem_multiple_label_step.cc
-        totem_patternmatching_logger.cc
-        totem_patternmatching_cmd_line_option.cc
-        totem_unique_label_step.cc)
+        multiple_label_step.cc
+        patternmatching_logger.cc
+        patternmatching_cmd_line_option.cc
+        unique_label_step.cc)
 
 set(PROJECT_CUDA_SOURCES
-        totem_multiple_label_cpu.cu
-        totem_patternmatching_binary.cu
-        totem_unique_label_cpu.cu)
+        multiple_label_cpu.cu
+        patternmatching_binary.cu
+        unique_label_cpu.cu)
 
 add_executable(${PROJECT_NAME}
         ${PROJECT_TPP_SOURCES}

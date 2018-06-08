@@ -5,7 +5,7 @@
 #ifndef TOTEM_UNIQUE_LABEL_CC_CPU_H
 #define TOTEM_UNIQUE_LABEL_CC_CPU_H
 
-#include "totem_unique_label_common_cpu.cuh"
+#include "unique_label_common_cpu.cuh"
 #include <vector>
 #include <set>
 #include <unordered_map>
@@ -80,6 +80,6 @@ class UniqueLabelCcCpu : public UniqueLabelCpuBase<State> {
 
 }
 
-#include "totem_unique_label_cc_cpu.tpp"
+#include "unique_label_cc_cpu.tpp"
 
 #endif //TOTEM_UNIQUE_LABEL_CC_CPU_H

@@ -2,8 +2,8 @@
 #include <omp.h>
 #include <iostream>
 #include <iomanip>
-#include "totem_multiple_label_cpu.cuh"
-#include "totem_patternmatching_logger.h"
+#include "multiple_label_cpu.cuh"
+#include "patternmatching_logger.h"
 
 namespace patternmatching {
 

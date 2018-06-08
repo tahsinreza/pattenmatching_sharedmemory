@@ -3,13 +3,13 @@
 #ifndef TOTEM_UNIQUE_LABEL_CPU_CUH
 #define TOTEM_UNIQUE_LABEL_CPU_CUH
 
-#include "totem_patternmatching_cmd_line_option.h"
-#include "totem_unique_label_step.h"
+#include "patternmatching_cmd_line_option.h"
+#include "unique_label_step.h"
 #include "totem.h"
 #include "totem_mem.h"
-#include "algorithms/totem_unique_label_common_cpu.cuh"
-#include "algorithms/totem_unique_label_lcc_cpu.cuh"
-#include "algorithms/totem_unique_label_cc_cpu.cuh"
+#include "algorithms/unique_label_common_cpu.cuh"
+#include "algorithms/unique_label_lcc_cpu.cuh"
+#include "algorithms/unique_label_cc_cpu.cuh"
 
 namespace patternmatching {
 

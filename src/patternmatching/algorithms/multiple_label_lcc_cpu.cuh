@@ -5,7 +5,7 @@
 #ifndef TOTEM_MULTIPLE_LABEL_LCC_CPU_H
 #define TOTEM_MULTIPLE_LABEL_LCC_CPU_H
 
-#include "totem_multiple_label_common_cpu.cuh"
+#include "multiple_label_common_cpu.cuh"
 #include <iostream>
 #include <unordered_set>
 
@@ -49,6 +49,6 @@ class MultipleLabelLccCpu : public MultipleLabelCpuBase<State> {
 
 }
 
-#include "totem_multiple_label_lcc_cpu.tpp"
+#include "multiple_label_lcc_cpu.tpp"
 
 #endif //TOTEM_MULTIPLE_LABEL_LCC_CPU_H

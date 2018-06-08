@@ -2,10 +2,10 @@
 // Created by qiu on 17/05/18.
 //
 
-#include "totem_patternmatching_cmd_line_option.h"
-#include "totem_unique_label_cpu.cuh"
-#include "totem_multiple_label_cpu.cuh"
-#include "totem_patternmatching_logger.h"
+#include "patternmatching_cmd_line_option.h"
+#include "unique_label_cpu.cuh"
+#include "multiple_label_cpu.cuh"
+#include "patternmatching_logger.h"
 
 using namespace patternmatching;
 

@@ -8,8 +8,8 @@
 #include "totem_graph.h"
 #include "totem_mem.h"
 #include "totem_partition.h"
-#include "totem_multiple_label_common_cpu.cuh"
-#include "totem_patternmatching_logger.h"
+#include "multiple_label_common_cpu.cuh"
+#include "patternmatching_logger.h"
 
 namespace patternmatching {
 

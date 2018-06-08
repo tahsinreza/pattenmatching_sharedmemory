@@ -4,7 +4,7 @@
 #include <cuda.h>
 #include "totem_engine.cuh"
 #include "totem_util.h"
-#include "totem_unique_label_lcc_cpu.cuh"
+#include "unique_label_lcc_cpu.cuh"
 #include <iostream>
 
 namespace patternmatching {

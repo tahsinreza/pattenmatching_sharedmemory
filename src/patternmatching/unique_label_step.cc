@@ -2,7 +2,7 @@
 // Created by qiu on 23/05/18.
 //
 
-#include "totem_unique_label_step.h"
+#include "unique_label_step.h"
 
 namespace patternmatching {
 

@@ -11,7 +11,7 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
-#include "totem_patternmatching_logger.h"
+#include "patternmatching_logger.h"
 
 namespace patternmatching {
 typedef uint32_t pvid_t;
@@ -68,6 +68,6 @@ class MultipleLabelCpuBase {
 
 }
 
-#include "totem_multiple_label_common_cpu.tpp"
+#include "multiple_label_common_cpu.tpp"
 
 #endif //TOTEM_MULTIPLE_LABEL_COMMON_CPU_H

@@ -9,7 +9,7 @@
 #include "totem_mem.h"
 #include "totem_partition.h"
 #include <unordered_map>
-#include "totem_patternmatching_logger.h"
+#include "patternmatching_logger.h"
 
 namespace patternmatching {
 
@@ -46,6 +46,6 @@ class UniqueLabelCpuBase {
 
 }
 
-#include "totem_unique_label_common_cpu.tpp"
+#include "unique_label_common_cpu.tpp"
 
 #endif //TOTEM_UNIQUE_LABEL_COMMON_CPU_H

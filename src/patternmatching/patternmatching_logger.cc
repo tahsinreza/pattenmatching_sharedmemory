@@ -1,5 +1,5 @@
 
-#include "totem_patternmatching_logger.h"
+#include "patternmatching_logger.h"
 #include <iostream>
 #include <fstream>
 #include <cstdio>

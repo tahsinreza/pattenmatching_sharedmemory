@@ -3,14 +3,14 @@
 #ifndef TOTEM_MULTIPLE_LABEL_CPU_CUH
 #define TOTEM_MULTIPLE_LABEL_CPU_CUH
 
-#include "totem_patternmatching_cmd_line_option.h"
-#include "totem_multiple_label_step.h"
+#include "patternmatching_cmd_line_option.h"
+#include "multiple_label_step.h"
 #include "totem.h"
 #include "totem_mem.h"
-#include "algorithms/totem_multiple_label_common_cpu.cuh"
-#include "algorithms/totem_multiple_label_lcc_cpu.cuh"
-#include "algorithms/totem_multiple_label_cc_cpu.cuh"
-#include "algorithms/totem_multiple_label_pc_cpu.cuh"
+#include "algorithms/multiple_label_common_cpu.cuh"
+#include "algorithms/multiple_label_lcc_cpu.cuh"
+#include "algorithms/multiple_label_cc_cpu.cuh"
+#include "algorithms/multiple_label_pc_cpu.cuh"
 
 namespace patternmatching {
 
