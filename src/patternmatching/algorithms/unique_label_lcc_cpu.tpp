@@ -2,9 +2,8 @@
 // Created by qiu on 17/05/18.
 //
 #include <cuda.h>
-#include "totem_engine.cuh"
 #include "totem_util.h"
-#include "unique_label_lcc_cpu.cuh"
+#include "unique_label_lcc_cpu.h"
 #include <iostream>
 
 namespace patternmatching {

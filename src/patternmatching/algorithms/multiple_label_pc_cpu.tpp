@@ -1,10 +1,8 @@
 //
 // Created by qiu on 17/05/18.
 //
-#include <cuda.h>
-#include "totem_engine.cuh"
 #include "totem_util.h"
-#include "multiple_label_pc_cpu.cuh"
+#include "multiple_label_pc_cpu.h"
 #include <iostream>
 
 namespace patternmatching {
@@ -16,7 +14,7 @@ void MultipleLabelPcCpu<State>::init(const graph_t &graph, const graph_t &patter
 }
 
 template<class State>
-bool MultipleLabelPcCpu<State>::isInConstraintVector(const MultipleLabelPcCpu<State>::PathConstraint &constraint) const {
+bool MultipleLabelPcCpu<State>::isInConstraintVector(const PathConstraint &constraint) const {
   for (const auto &it : pathConstraintVector) {
     if (it == constraint) return true;
   }
@@ -31,7 +29,7 @@ __host__ void MultipleLabelPcCpu<State>::buildConstraintList(
     const size_t &currentLength,
     std::vector <vid_t> *historyVertexId,
     std::vector <weight_t> *historyVertexLabel,
-    std::vector <MultipleLabelPcCpu<State>::PathConstraint> *constraintVector) {
+    std::vector <PathConstraint> *constraintVector) {
 
   // Close the loop
   if (currentLength >= 2 ) {
@@ -120,7 +118,7 @@ template<class State>
 bool MultipleLabelPcCpu<State>::checkConstraint(
     const graph_t &graph,
     State *globalState,
-    const MultipleLabelPcCpu<State>::PathConstraint &currentConstraint,
+    const PathConstraint &currentConstraint,
     const bool &reverse,
     const vid_t &sourceVertexId,
     const vid_t &currentVertexId,
@@ -294,62 +292,4 @@ void MultipleLabelPcCpu<State>::removeMatch(State *globalState,
   globalState->vertexPatternToUnmatchPc[vertexId].insert(patternVertexId);
 }
 
-template<class State>
-MultipleLabelPcCpu<State>::PathConstraint::PathConstraint(
-    const std::vector <vid_t> &historyVertexId,
-    const std::vector <weight_t> &historyVertexLabel) {
-  initialLabel = historyVertexLabel[0];
-  length = historyVertexId.size();
-
-  // Create a full order
-  bool reverse = historyVertexId[length - 1] > historyVertexId[0];
-
-  // Fill in
-  vertexIndexVector.resize(length);
-  vertexLabelVector.resize(length);
-  if (reverse) {
-    for (int currentPosition = 0; currentPosition < length; currentPosition++) {
-      vertexIndexVector[currentPosition] = historyVertexId[length - 1 - currentPosition];
-      vertexLabelVector[currentPosition] = historyVertexLabel[length - 1 - currentPosition];
-    }
-  } else {
-    vertexIndexVector = historyVertexId;
-    vertexLabelVector = historyVertexLabel;
-  }
-}
-
-template<class State>
-bool MultipleLabelPcCpu<State>::PathConstraint::operator==(const MultipleLabelPcCpu<State>::PathConstraint &other) const {
-  return (initialLabel == other.initialLabel) && (length == other.length)
-      && (vertexIndexVector == other.vertexIndexVector);
-}
-
-template<class State>
-void MultipleLabelPcCpu<State>::PathConstraint::print(std::ostream &ostream) const {
-  bool first=true;
-  ostream << "Vertex Index : ";
-  for (const auto &it : vertexIndexVector) {
-    if(first) {
-      first=false;
-      ostream << it;
-
-    } else {
-      ostream << " -> " << it;
-    }
-  }
-  ostream << std::endl;
-
-  first=true;
-  ostream << "Vertex Label : ";
-  for (const auto &it : vertexLabelVector) {
-    if(first) {
-      first=false;
-      ostream << it;
-
-    } else {
-      ostream << " -> " << it;
-    }
-  }
-  ostream << std::endl;
-}
 }

@@ -10,7 +10,7 @@
 #include <set>
 #include <unordered_map>
 #include <iostream>
-
+#include "multiple_label_circular_constraint.h"
 
 namespace patternmatching {
 
@@ -32,18 +32,6 @@ class MultipleLabelCcCpu : public MultipleLabelCpuBase<State> {
   void resetState(State *globalState);
 
  private:
-  class CircularConstraint {
-   public:
-    CircularConstraint(
-        const std::vector <vid_t> &historyVertexId,
-        const std::vector <weight_t> &historyVertexLabel);
-    void print(std::ostream &ostream = std::cout) const;
-   public:
-    bool operator==(const CircularConstraint &other) const;
-    size_t length;
-    std::vector <vid_t> vertexIndexVector;
-    std::vector <weight_t> vertexLabelVector;
-  };
 
   void buildConstraintList(
       const graph_t &pattern,
@@ -52,18 +40,18 @@ class MultipleLabelCcCpu : public MultipleLabelCpuBase<State> {
       const size_t &remainingLength,
       std::vector <vid_t> *historyVertexId,
       std::vector <weight_t> *historyVertexLabel,
-      std::vector <MultipleLabelCcCpu<State>::CircularConstraint> *constraintVector);
+      std::vector <MultipleLabelCircularConstraint> *constraintVector);
 
   bool checkConstraint(
       const graph_t &graph,
       State *globalState,
-      const MultipleLabelCcCpu<State>::CircularConstraint &currentConstraint,
+      const MultipleLabelCircularConstraint &currentConstraint,
       const vid_t &sourceVertexId,
       const vid_t &currentVertexId,
       const size_t &startingPosition,
       const size_t &remainingLength);
 
-  bool isInConstraintVector(const MultipleLabelCcCpu<State>::CircularConstraint &constraint) const;
+  bool isInConstraintVector(const MultipleLabelCircularConstraint &constraint) const;
 
   inline bool isOmitted(const State &globalState, const vid_t vertexId) const;
   inline void makeOmitted(State *globalState, const vid_t vertexId) const;
@@ -71,8 +59,8 @@ class MultipleLabelCcCpu : public MultipleLabelCpuBase<State> {
 
   std::vector <std::unordered_map<vid_t, size_t>> sourceTraversalVector;
   std::vector <std::set<vid_t>> patternTraversalVector;
-  std::vector <CircularConstraint> circularConstraintVector;
-  typename std::vector<CircularConstraint>::const_iterator circularConstraintIterator;
+  std::vector <MultipleLabelCircularConstraint> circularConstraintVector;
+  typename std::vector<MultipleLabelCircularConstraint>::const_iterator circularConstraintIterator;
 };
 
 }

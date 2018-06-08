@@ -60,6 +60,7 @@ error_t parse_vertex_list(FILE *file_handler, graph_t *graph) {
 }
 
 void UniqueLabelCpu::initialiseTotem() {
+  #if 0
   attributeCpu = TOTEM_DEFAULT_ATTR;
   attributeCpu.platform = PLATFORM_CPU;
   attributeCpu.par_algo = PAR_RANDOM;
@@ -77,7 +78,8 @@ void UniqueLabelCpu::initialiseTotem() {
   attributeCpu.pull_msg_size = MSG_SIZE_ZERO;
   attributeCpu.alloc_func = NULL;
   attributeCpu.free_func = NULL;
-  CALL_SAFE(totem_init(graph, &attributeCpu));
+  totem_init(graph, &attributeCpu);
+    #endif
 
   // Configure OpenMP.
   omp_set_num_threads(omp_get_max_threads());
@@ -88,7 +90,7 @@ void UniqueLabelCpu::initialiseTotem() {
 error_t UniqueLabelCpu::allocate(CmdLineOption &cmdLineOption) {
   // Load graph
   Logger::get().log(Logger::E_LEVEL_INFO, "Loading graph");
-  CALL_SAFE(graph_initialize(cmdLineOption.getInputGraphFilePath().c_str(), 0, &graph));
+  graph_initialize(cmdLineOption.getInputGraphFilePath().c_str(), 0, &graph);
 
   if (!cmdLineOption.getInputVertexMetadataFilePath().empty()) {
     FILE *file_handler = fopen(cmdLineOption.getInputVertexMetadataFilePath().c_str(), "r");
@@ -97,7 +99,7 @@ error_t UniqueLabelCpu::allocate(CmdLineOption &cmdLineOption) {
 
   // Load pattern
   Logger::get().log(Logger::E_LEVEL_INFO, "Loading pattern");
-  CALL_SAFE(graph_initialize((cmdLineOption.getInputPatternDirectory() + "pattern_edge").c_str(), 0, &pattern));
+  graph_initialize((cmdLineOption.getInputPatternDirectory() + "pattern_edge").c_str(), 0, &pattern);
 
   if (!cmdLineOption.getInputVertexMetadataFilePath().empty()) {
     FILE *file_handler = fopen((cmdLineOption.getInputPatternDirectory() + "pattern_vertex_data").c_str(), "r");
@@ -128,7 +130,7 @@ error_t UniqueLabelCpu::allocate(CmdLineOption &cmdLineOption) {
 error_t UniqueLabelCpu::free() {
   totem_finalize();
   patternmatchingState.free();
-  CALL_SAFE(graph_finalize(graph));
+  graph_finalize(graph);
 
   return SUCCESS;
 }

@@ -2,9 +2,9 @@
 // Created by qiu on 17/05/18.
 //
 #include <cuda.h>
-#include "totem_engine.cuh"
+#include "totem_graph.h"
 #include "totem_util.h"
-#include "multiple_label_cc_cpu.cuh"
+#include "multiple_label_cc_cpu.h"
 #include <iostream>
 
 namespace patternmatching {
@@ -16,7 +16,7 @@ void MultipleLabelCcCpu<State>::init(const graph_t &graph, const graph_t &patter
 }
 
 template<class State>
-bool MultipleLabelCcCpu<State>::isInConstraintVector(const MultipleLabelCcCpu<State>::CircularConstraint &constraint) const {
+bool MultipleLabelCcCpu<State>::isInConstraintVector(const MultipleLabelCircularConstraint &constraint) const {
   for (const auto &it : circularConstraintVector) {
     if (it == constraint) return true;
   }
@@ -31,13 +31,13 @@ __host__ void MultipleLabelCcCpu<State>::buildConstraintList(
     const size_t &remainingLength,
     std::vector <vid_t> *historyVertexId,
     std::vector <weight_t> *historyVertexLabel,
-    std::vector <MultipleLabelCcCpu<State>::CircularConstraint> *constraintVector) {
+    std::vector <MultipleLabelCircularConstraint> *constraintVector) {
 
   // Close the loop
   if (remainingLength == 0) {
     if (sourceVertexId != currentVertexId) return;
 
-    CircularConstraint constraint = CircularConstraint(*historyVertexId, *historyVertexLabel);
+    MultipleLabelCircularConstraint constraint = MultipleLabelCircularConstraint(*historyVertexId, *historyVertexLabel);
 
     if (!isInConstraintVector(constraint)) constraintVector->push_back(constraint);
 
@@ -118,7 +118,7 @@ template<class State>
 bool MultipleLabelCcCpu<State>::checkConstraint(
     const graph_t &graph,
     State *globalState,
-    const MultipleLabelCcCpu<State>::CircularConstraint &currentConstraint,
+    const MultipleLabelCircularConstraint &currentConstraint,
     const vid_t &sourceVertexId,
     const vid_t &currentVertexId,
     const size_t &startingPosition,
@@ -194,7 +194,7 @@ MultipleLabelCcCpu<State>::compute(
   Logger::get().log(Logger::E_LEVEL_DEBUG, "currentConstraint : ", Logger::E_OUTPUT_FILE_LOG);
   Logger::get().logFunction(Logger::E_LEVEL_DEBUG,
                             currentConstraint,
-                            &CircularConstraint::print,
+                            &MultipleLabelCircularConstraint::print,
                             Logger::E_OUTPUT_FILE_LOG);
 
   //#pragma omp parallel for
@@ -281,73 +281,4 @@ void MultipleLabelCcCpu<State>::removeMatch(State *globalState,
   globalState->vertexPatternToUnmatchCc[vertexId].insert(patternVertexId);
 }
 
-template<class State>
-MultipleLabelCcCpu<State>::CircularConstraint::CircularConstraint(
-    const std::vector <vid_t> &historyVertexId,
-    const std::vector <weight_t> &historyVertexLabel) {
-  auto vertexIndexVectorCopy = historyVertexId;
-  auto vertexLabelVectorCopy = historyVertexLabel;
-
-  // remove the last vertex which is the same as the first one
-  vertexIndexVectorCopy.pop_back();
-  vertexLabelVectorCopy.pop_back();
-  length = vertexIndexVectorCopy.size();
-
-  // find minimum
-  size_t minValue = vertexIndexVectorCopy[0];
-  size_t minIndex = 0;
-  size_t currentValue;
-  for (int currentIndex = 1; currentIndex < length; currentIndex++) {
-    currentValue = vertexIndexVectorCopy[currentIndex];
-    if (currentValue < minValue) {
-      minValue = currentValue;
-      minIndex = currentIndex;
-    }
-  }
-
-  // Create a full order
-  bool reverse = false;
-  if (minIndex > 0 && minIndex < length - 1) {
-    reverse = vertexIndexVectorCopy[minIndex - 1] < vertexIndexVectorCopy[minIndex + 1];
-  } else if (minIndex == 0) {
-    reverse = vertexIndexVectorCopy[length - 1] < vertexIndexVectorCopy[1];
-  } else {
-    reverse = vertexIndexVectorCopy[length - 2] < vertexIndexVectorCopy[0];
-  }
-
-  // Fill in
-  vertexIndexVector.resize(length);
-  vertexLabelVector.resize(length);
-
-  int copyPosition = minIndex;
-  for (int currentPosition = 0; currentPosition < length; currentPosition++) {
-    vertexIndexVector[currentPosition] = vertexIndexVectorCopy[copyPosition];
-    vertexLabelVector[currentPosition] = vertexLabelVectorCopy[copyPosition];
-
-    if (reverse) { --copyPosition; } else { ++copyPosition; }
-    if (copyPosition == length) copyPosition = 0;
-    if (copyPosition == -1) copyPosition = length - 1;
-  }
-
-}
-
-template<class State>
-bool MultipleLabelCcCpu<State>::CircularConstraint::operator==(const MultipleLabelCcCpu<State>::CircularConstraint &other) const {
-  return (length == other.length) && (vertexIndexVector == other.vertexIndexVector);
-}
-
-template<class State>
-void MultipleLabelCcCpu<State>::CircularConstraint::print(std::ostream &ostream) const {
-  ostream << "Vertex Index : ";
-  for (const auto &it : vertexIndexVector) {
-    ostream << it << " -> ";
-  }
-  ostream << vertexIndexVector[0] << std::endl;
-
-  ostream << "Vertex Label : ";
-  for (const auto &it : vertexLabelVector) {
-    ostream << it << " -> ";
-  }
-  ostream << vertexLabelVector[0] << std::endl;
-}
 }

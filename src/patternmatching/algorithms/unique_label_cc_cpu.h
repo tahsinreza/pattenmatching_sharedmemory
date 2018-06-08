@@ -41,18 +41,18 @@ class UniqueLabelCcCpu : public UniqueLabelCpuBase<State> {
       const size_t &remainingLength,
       std::vector <vid_t> *historyVertexId,
       std::vector <weight_t> *historyVertexLabel,
-      std::vector <CircularConstraint> *constraintVector);
+      std::vector <UniqueLabelCircularConstraint> *constraintVector);
 
   bool checkConstraint(
       const graph_t &graph,
       State *globalState,
-      const CircularConstraint &currentConstraint,
+      const UniqueLabelCircularConstraint &currentConstraint,
       const vid_t &sourceVertexId,
       const vid_t &currentVertexId,
       const size_t &startingPosition,
       const size_t &remainingLength);
 
-  bool isInConstraintVector(const CircularConstraint &constraint) const;
+  bool isInConstraintVector(const UniqueLabelCircularConstraint &constraint) const;
 
   inline bool isOmitted(const State &globalState, const vid_t vertexId) const;
   inline void makeOmitted(State *globalState, const vid_t vertexId) const;
@@ -63,8 +63,8 @@ class UniqueLabelCcCpu : public UniqueLabelCpuBase<State> {
 
   std::vector <std::unordered_map<vid_t, size_t>> sourceTraversalVector;
   std::vector <std::set<vid_t>> patternTraversalVector;
-  std::vector <CircularConstraint> circularConstraintVector;
-  typename std::vector<CircularConstraint>::const_iterator circularConstraintIterator;
+  std::vector <UniqueLabelCircularConstraint> UniqueLabelCircularConstraintVector;
+  typename std::vector<UniqueLabelCircularConstraint>::const_iterator UniqueLabelCircularConstraintIterator;
 };
 
 }

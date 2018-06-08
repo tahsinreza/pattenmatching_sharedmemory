@@ -2,7 +2,9 @@
 #include <omp.h>
 #include <iostream>
 #include <iomanip>
-#include "multiple_label_cpu.cuh"
+
+#include "totem.h"
+#include "multiple_label_cpu.h"
 #include "patternmatching_logger.h"
 
 namespace patternmatching {
@@ -60,6 +62,7 @@ error_t parse_vertex_list2(FILE *file_handler, graph_t *graph) {
 }
 
 void MultipleLabelCpu::initialiseTotem() {
+  #if 0
   attributeCpu = TOTEM_DEFAULT_ATTR;
   attributeCpu.platform = PLATFORM_CPU;
   attributeCpu.par_algo = PAR_RANDOM;
@@ -78,6 +81,7 @@ void MultipleLabelCpu::initialiseTotem() {
   attributeCpu.alloc_func = NULL;
   attributeCpu.free_func = NULL;
   CALL_SAFE(totem_init(graph, &attributeCpu));
+    #endif
 
   // Configure OpenMP.
   omp_set_num_threads(omp_get_max_threads());
@@ -88,7 +92,7 @@ void MultipleLabelCpu::initialiseTotem() {
 error_t MultipleLabelCpu::allocate(CmdLineOption &cmdLineOption) {
   // Load graph
   Logger::get().log(Logger::E_LEVEL_INFO, "Loading graph");
-  CALL_SAFE(graph_initialize(cmdLineOption.getInputGraphFilePath().c_str(), 0, &graph));
+  graph_initialize(cmdLineOption.getInputGraphFilePath().c_str(), 0, &graph);
 
   if (!cmdLineOption.getInputVertexMetadataFilePath().empty()) {
     FILE *file_handler = fopen(cmdLineOption.getInputVertexMetadataFilePath().c_str(), "r");
@@ -97,7 +101,7 @@ error_t MultipleLabelCpu::allocate(CmdLineOption &cmdLineOption) {
 
   // Load pattern
   Logger::get().log(Logger::E_LEVEL_INFO, "Loading pattern");
-  CALL_SAFE(graph_initialize((cmdLineOption.getInputPatternDirectory() + "pattern_edge").c_str(), 0, &pattern));
+  graph_initialize((cmdLineOption.getInputPatternDirectory() + "pattern_edge").c_str(), 0, &pattern);
 
   if (!cmdLineOption.getInputVertexMetadataFilePath().empty()) {
     FILE *file_handler = fopen((cmdLineOption.getInputPatternDirectory() + "pattern_vertex_data").c_str(), "r");
@@ -134,9 +138,11 @@ error_t MultipleLabelCpu::allocate(CmdLineOption &cmdLineOption) {
 }
 
 error_t MultipleLabelCpu::free() {
+  #if 0
   totem_finalize();
+    #endif
   patternmatchingState.free();
-  CALL_SAFE(graph_finalize(graph));
+  graph_finalize(graph);
 
   return SUCCESS;
 }

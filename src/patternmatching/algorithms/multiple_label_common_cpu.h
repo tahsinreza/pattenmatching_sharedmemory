@@ -2,9 +2,8 @@
 #ifndef TOTEM_MULTIPLE_LABEL_COMMON_CPU_H
 #define TOTEM_MULTIPLE_LABEL_COMMON_CPU_H
 
-#include "totem_bitmap.cuh"
+
 #include "totem_comdef.h"
-#include "totem_comkernel.cuh"
 #include "totem_graph.h"
 #include "totem_mem.h"
 #include "totem_partition.h"

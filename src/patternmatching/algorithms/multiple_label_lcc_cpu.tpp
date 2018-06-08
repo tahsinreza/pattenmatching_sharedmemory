@@ -2,9 +2,9 @@
 // Created by qiu on 17/05/18.
 //
 #include <cuda.h>
-#include "totem_engine.cuh"
+#include "totem_graph.h"
 #include "totem_util.h"
-#include "multiple_label_lcc_cpu.cuh"
+#include "multiple_label_lcc_cpu.h"
 #include <iostream>
 
 namespace patternmatching {
@@ -160,33 +160,5 @@ void MultipleLabelLccCpu<State>::removeMatch(State *globalState,
   globalState->vertexPatternToUnmatchLcc[vertexId].insert(patternVertexId);
 }
 
-template<class State>
-MultipleLabelLccCpu<State>::LocalConstraint::LocalConstraint()
-    : originVertex(0), originLabel(0) {
-  localConstraint.clear();
-  localConstraintNeighborVertex.clear();
-}
-
-template<class State>
-MultipleLabelLccCpu<State>::LocalConstraint::LocalConstraint(
-    const pvid_t &originVertex_,
-    const weight_t &originLabel_,
-    const std::unordered_map <weight_t, size_t> &localConstraint_,
-    const std::unordered_set <vid_t> &localConstraintNeighborVertex_)
-    : originVertex(originVertex_), originLabel(originLabel_) {
-  localConstraint = localConstraint_;
-  localConstraintNeighborVertex = localConstraintNeighborVertex_;
-}
-
-template<class State>
-void MultipleLabelLccCpu<State>::LocalConstraint::print(std::ostream &ostream) const {
-  ostream << "Vertex " << originVertex << " : Label " << originLabel << std::endl;
-  for (const auto &subit : localConstraint) {
-    ostream << "\t Sublabel " << subit.first << " : " << subit.second << std::endl;
-  }
-  for (const auto &subit : localConstraintNeighborVertex) {
-    ostream << "\t Neighbor " << subit << std::endl;
-  }
-}
 
 }

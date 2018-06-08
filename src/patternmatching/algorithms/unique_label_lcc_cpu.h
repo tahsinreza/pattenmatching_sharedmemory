@@ -5,7 +5,7 @@
 #ifndef TOTEM_UNIQUE_LABEL_LCC_CPU_H
 #define TOTEM_UNIQUE_LABEL_LCC_CPU_H
 
-#include "unique_label_common_cpu.cuh"
+#include "unique_label_common_cpu.h"
 #include <iostream>
 
 namespace patternmatching {

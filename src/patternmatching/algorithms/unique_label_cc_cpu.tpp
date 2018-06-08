@@ -1,10 +1,8 @@
 //
 // Created by qiu on 17/05/18.
 //
-#include <cuda.h>
-#include "totem_engine.cuh"
 #include "totem_util.h"
-#include "unique_label_cc_cpu.cuh"
+#include "unique_label_cc_cpu.h"
 #include <iostream>
 
 namespace patternmatching {
@@ -16,8 +14,8 @@ void UniqueLabelCcCpu<State>::init(const graph_t &graph, const graph_t &pattern)
 }
 
 template<class State>
-bool UniqueLabelCcCpu<State>::isInConstraintVector(const UniqueLabelCcCpu<State>::CircularConstraint &constraint) const {
-  for (const auto &it : circularConstraintVector) {
+bool UniqueLabelCcCpu<State>::isInConstraintVector(const UniqueLabelCircularConstraint &constraint) const {
+  for (const auto &it : UniqueLabelCircularConstraintVector) {
     if (it == constraint) return true;
   }
   return false;
@@ -31,13 +29,13 @@ __host__ void UniqueLabelCcCpu<State>::buildConstraintList(
     const size_t &remainingLength,
     std::vector <vid_t> *historyVertexId,
     std::vector <weight_t> *historyVertexLabel,
-    std::vector <UniqueLabelCcCpu<State>::CircularConstraint> *constraintVector) {
+    std::vector <UniqueLabelCircularConstraint> *constraintVector) {
 
   // Close the loop
   if (remainingLength == 0) {
     if (sourceVertexId != currentVertexId) return;
 
-    CircularConstraint constraint = CircularConstraint(*historyVertexId, *historyVertexLabel);
+    UniqueLabelCircularConstraint constraint = UniqueLabelCircularConstraint(*historyVertexId, *historyVertexLabel);
 
     if (!isInConstraintVector(constraint)) constraintVector->push_back(constraint);
 
@@ -90,14 +88,14 @@ UniqueLabelCcCpu<State>::preprocessPatern(const graph_t &pattern) {
                           currentCycleLength,
                           &historyVertexId,
                           &historyVertexLabel,
-                          &circularConstraintVector);
+                          &UniqueLabelCircularConstraintVector);
     }
 
     historyVertexId.pop_back();
     historyVertexLabel.pop_back();
   }
 
-  circularConstraintIterator = circularConstraintVector.begin();
+  UniqueLabelCircularConstraintIterator = UniqueLabelCircularConstraintVector.begin();
 
   return SUCCESS;
 }
@@ -106,8 +104,8 @@ template<class State>
 __host__ void UniqueLabelCcCpu<State>::printCircularConstraint(std::ostream &ostream) const {
   int currentConstraint = 0;
 
-  ostream << "Constraint number =  " << circularConstraintVector.size() << ". " << std::endl;
-  for (const auto &it : circularConstraintVector) {
+  ostream << "Constraint number =  " << UniqueLabelCircularConstraintVector.size() << ". " << std::endl;
+  for (const auto &it : UniqueLabelCircularConstraintVector) {
     ostream << "=== Current constraint = " << currentConstraint << " ===" << std::endl;
     it.print(ostream);
     ++currentConstraint;
@@ -118,7 +116,7 @@ template<class State>
 bool UniqueLabelCcCpu<State>::checkConstraint(
     const graph_t &graph,
     State *globalState,
-    const UniqueLabelCcCpu<State>::CircularConstraint &currentConstraint,
+    const UniqueLabelCircularConstraint &currentConstraint,
     const vid_t &sourceVertexId,
     const vid_t &currentVertexId,
     const size_t &startingPosition,
@@ -171,12 +169,12 @@ __host__ size_t
 UniqueLabelCcCpu<State>::compute(const graph_t &graph, State *globalState) {
   //resetState(globalState);
 
-  const auto& currentConstraint = *circularConstraintIterator;
+  const auto& currentConstraint = *UniqueLabelCircularConstraintIterator;
 
   Logger::get().log(Logger::E_LEVEL_DEBUG, "currentConstraint : ", Logger::E_OUTPUT_FILE_LOG);
   Logger::get().logFunction(Logger::E_LEVEL_DEBUG,
                             currentConstraint,
-                            &CircularConstraint::print,
+                            &UniqueLabelCircularConstraint::print,
                             Logger::E_OUTPUT_FILE_LOG);
 
   #pragma omp parallel for
@@ -215,7 +213,7 @@ UniqueLabelCcCpu<State>::compute(const graph_t &graph, State *globalState) {
 
   }
 
-  ++circularConstraintIterator;
+  ++UniqueLabelCircularConstraintIterator;
 
   size_t vertexEliminatedNumber = 0;
 
@@ -238,7 +236,7 @@ UniqueLabelCcCpu<State>::compute(const graph_t &graph, State *globalState) {
 
 template<class State>
 int UniqueLabelCcCpu<State>::getCircularConstraintNumber() const {
-  return circularConstraintVector.size();
+  return UniqueLabelCircularConstraintVector.size();
 }
 
 template<class State>
@@ -276,73 +274,4 @@ void UniqueLabelCcCpu<State>::makeMatchAtomic(State *globalState, const vid_t ve
   *address = true;
 }
 
-template<class State>
-UniqueLabelCcCpu<State>::CircularConstraint::CircularConstraint(
-    const std::vector <vid_t> &historyVertexId,
-    const std::vector <weight_t> &historyVertexLabel) {
-  auto vertexIndexVectorCopy = historyVertexId;
-  auto vertexLabelVectorCopy = historyVertexLabel;
-
-  // remove the last vertex which is the same as the first one
-  vertexIndexVectorCopy.pop_back();
-  vertexLabelVectorCopy.pop_back();
-  length = vertexIndexVectorCopy.size();
-
-  // find minimum
-  size_t minValue = vertexIndexVectorCopy[0];
-  size_t minIndex = 0;
-  size_t currentValue;
-  for (int currentIndex = 1; currentIndex < length; currentIndex++) {
-    currentValue = vertexIndexVectorCopy[currentIndex];
-    if (currentValue < minValue) {
-      minValue = currentValue;
-      minIndex = currentIndex;
-    }
-  }
-
-  // Create a full order
-  bool reverse = false;
-  if (minIndex > 0 && minIndex < length - 1) {
-    reverse = vertexIndexVectorCopy[minIndex - 1] < vertexIndexVectorCopy[minIndex + 1];
-  } else if (minIndex == 0) {
-    reverse = vertexIndexVectorCopy[length - 1] < vertexIndexVectorCopy[1];
-  } else {
-    reverse = vertexIndexVectorCopy[length - 2] < vertexIndexVectorCopy[0];
-  }
-
-  // Fill in
-  vertexIndexVector.resize(length);
-  vertexLabelVector.resize(length);
-
-  int copyPosition = minIndex;
-  for (int currentPosition = 0; currentPosition < length; currentPosition++) {
-    vertexIndexVector[currentPosition] = vertexIndexVectorCopy[copyPosition];
-    vertexLabelVector[currentPosition] = vertexLabelVectorCopy[copyPosition];
-
-    if (reverse) { --copyPosition; } else { ++copyPosition; }
-    if (copyPosition == length) copyPosition = 0;
-    if (copyPosition == -1) copyPosition = length - 1;
-  }
-
-}
-
-template<class State>
-bool UniqueLabelCcCpu<State>::CircularConstraint::operator==(const UniqueLabelCcCpu<State>::CircularConstraint &other) const {
-  return (length == other.length) && (vertexIndexVector == other.vertexIndexVector);
-}
-
-template<class State>
-void UniqueLabelCcCpu<State>::CircularConstraint::print(std::ostream &ostream) const {
-  ostream << "Vertex Index : ";
-  for (const auto &it : vertexIndexVector) {
-    ostream << it << " -> ";
-  }
-  ostream << vertexIndexVector[0] << std::endl;
-
-  ostream << "Vertex Label : ";
-  for (const auto &it : vertexLabelVector) {
-    ostream << it << " -> ";
-  }
-  ostream << vertexLabelVector[0] << std::endl;
-}
 }

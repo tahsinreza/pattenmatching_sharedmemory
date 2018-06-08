@@ -2,13 +2,11 @@
 #ifndef TOTEM_UNIQUE_LABEL_COMMON_CPU_TPP
 #define TOTEM_UNIQUE_LABEL_COMMON_CPU_TPP
 
-#include "totem_bitmap.cuh"
 #include "totem_comdef.h"
-#include "totem_comkernel.cuh"
 #include "totem_graph.h"
 #include "totem_mem.h"
 #include "totem_partition.h"
-#include "unique_label_common_cpu.cuh"
+#include "unique_label_common_cpu.h"
 
 namespace patternmatching {
 

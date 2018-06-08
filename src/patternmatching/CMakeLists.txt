@@ -20,12 +20,18 @@ set(PROJECT_CPP_SOURCES
         multiple_label_step.cc
         patternmatching_logger.cc
         patternmatching_cmd_line_option.cc
-        unique_label_step.cc)
+        unique_label_step.cc
+        multiple_label_cpu.cc
+        patternmatching_binary.cc
+        unique_label_cpu.cc
+        algorithms/unique_label_circular_constraint.cc
+        algorithms/multiple_label_path_constraint.cc
+        algorithms/multiple_label_path_constraint.h
+        algorithms/multiple_label_local_constraint.cc
+        algorithms/multiple_label_local_constraint.h
+        algorithms/multiple_label_common.h algorithms/multiple_label_circular_constraint.cc algorithms/multiple_label_circular_constraint.h)
 
-set(PROJECT_CUDA_SOURCES
-        multiple_label_cpu.cu
-        patternmatching_binary.cu
-        unique_label_cpu.cu)
+set(PROJECT_CUDA_SOURCES)
 
 add_executable(${PROJECT_NAME}
         ${PROJECT_TPP_SOURCES}
