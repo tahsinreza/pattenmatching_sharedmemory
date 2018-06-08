@@ -12,14 +12,9 @@
 #include <unordered_set>
 #include <vector>
 #include "patternmatching_logger.h"
+#include "multiple_label_common.h"
 
 namespace patternmatching {
-typedef uint32_t pvid_t;
-
-#define DEBUG_PRINT(X) std::cout << #X<< "\t" << X <<std::endl;
-#define DEBUG_PRINT_SET(X) \
-std::cout<< #X << " : ";\
-for(const auto &it : X) { std::cout << it << " ";} std::cout << std::endl;
 
 /**
  * state shared between all partitions

@@ -5,7 +5,7 @@
 #ifndef TOTEM_MULTIPLE_LABEL_CC_CPU_H
 #define TOTEM_MULTIPLE_LABEL_CC_CPU_H
 
-#include "multiple_label_common_cpu.cuh"
+#include "multiple_label_common_cpu.h"
 #include <vector>
 #include <set>
 #include <unordered_map>

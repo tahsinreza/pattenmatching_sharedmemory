@@ -7,7 +7,7 @@
 #include "multiple_label_step.h"
 #include "totem.h"
 #include "totem_mem.h"
-#include "algorithms/multiple_label_common_cpu.cuh"
+#include "algorithms/multiple_label_common_cpu.h"
 #include "algorithms/multiple_label_lcc_cpu.cuh"
 #include "algorithms/multiple_label_cc_cpu.cuh"
 #include "algorithms/multiple_label_pc_cpu.cuh"

@@ -5,7 +5,8 @@
 #ifndef TOTEM_UNIQUE_LABEL_CC_CPU_H
 #define TOTEM_UNIQUE_LABEL_CC_CPU_H
 
-#include "unique_label_common_cpu.cuh"
+#include "unique_label_common_cpu.h"
+#include "unique_label_circular_constraint.h"
 #include <vector>
 #include <set>
 #include <unordered_map>
@@ -32,18 +33,6 @@ class UniqueLabelCcCpu : public UniqueLabelCpuBase<State> {
   void resetState(State *globalState);
 
  private:
-  class CircularConstraint {
-   public:
-    CircularConstraint(
-        const std::vector <vid_t> &historyVertexId,
-        const std::vector <weight_t> &historyVertexLabel);
-    void print(std::ostream &ostream = std::cout) const;
-   public:
-    bool operator==(const CircularConstraint &other) const;
-    size_t length;
-    std::vector <vid_t> vertexIndexVector;
-    std::vector <weight_t> vertexLabelVector;
-  };
 
   void buildConstraintList(
       const graph_t &pattern,
@@ -52,18 +41,18 @@ class UniqueLabelCcCpu : public UniqueLabelCpuBase<State> {
       const size_t &remainingLength,
       std::vector <vid_t> *historyVertexId,
       std::vector <weight_t> *historyVertexLabel,
-      std::vector <UniqueLabelCcCpu<State>::CircularConstraint> *constraintVector);
+      std::vector <CircularConstraint> *constraintVector);
 
   bool checkConstraint(
       const graph_t &graph,
       State *globalState,
-      const UniqueLabelCcCpu<State>::CircularConstraint &currentConstraint,
+      const CircularConstraint &currentConstraint,
       const vid_t &sourceVertexId,
       const vid_t &currentVertexId,
       const size_t &startingPosition,
       const size_t &remainingLength);
 
-  bool isInConstraintVector(const UniqueLabelCcCpu<State>::CircularConstraint &constraint) const;
+  bool isInConstraintVector(const CircularConstraint &constraint) const;
 
   inline bool isOmitted(const State &globalState, const vid_t vertexId) const;
   inline void makeOmitted(State *globalState, const vid_t vertexId) const;

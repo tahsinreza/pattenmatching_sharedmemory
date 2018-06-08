@@ -5,7 +5,8 @@
 #ifndef TOTEM_MULTIPLE_LABEL_PC_CPU_H
 #define TOTEM_MULTIPLE_LABEL_PC_CPU_H
 
-#include "multiple_label_common_cpu.cuh"
+#include "multiple_label_common_cpu.h"
+#include "multiple_label_path_constraint.h"
 #include <vector>
 #include <set>
 #include <unordered_map>
@@ -31,19 +32,6 @@ class MultipleLabelPcCpu : public MultipleLabelCpuBase<State> {
   void resetState(State *globalState);
 
  private:
-  class PathConstraint {
-   public:
-    PathConstraint(
-        const std::vector <vid_t> &historyVertexId,
-        const std::vector <weight_t> &historyVertexLabel);
-    void print(std::ostream &ostream = std::cout) const;
-   public:
-    bool operator==(const PathConstraint &other) const;
-    size_t length;
-    weight_t initialLabel;
-    std::vector <vid_t> vertexIndexVector;
-    std::vector <weight_t> vertexLabelVector;
-  };
 
   void buildConstraintList(
       const graph_t &pattern,
@@ -52,18 +40,18 @@ class MultipleLabelPcCpu : public MultipleLabelCpuBase<State> {
       const size_t &currentLength,
       std::vector <vid_t> *historyVertexId,
       std::vector <weight_t> *historyVertexLabel,
-      std::vector <MultipleLabelPcCpu<State>::PathConstraint> *constraintVector);
+      std::vector <PathConstraint> *constraintVector);
 
   bool checkConstraint(
       const graph_t &graph,
       State *globalState,
-      const MultipleLabelPcCpu<State>::PathConstraint &currentConstraint,
+      const PathConstraint &currentConstraint,
       const bool &reverse,
       const vid_t &sourceVertexId,
       const vid_t &currentVertexId,
       const size_t &remainingLength);
 
-  bool isInConstraintVector(const MultipleLabelPcCpu<State>::PathConstraint &constraint) const;
+  bool isInConstraintVector(const PathConstraint &constraint) const;
 
   inline bool isOmitted(const State &globalState, const vid_t vertexId) const;
   inline void makeOmitted(State *globalState, const vid_t vertexId) const;

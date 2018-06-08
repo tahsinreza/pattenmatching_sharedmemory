@@ -2,7 +2,7 @@
 #include <omp.h>
 #include <iostream>
 #include <iomanip>
-#include "unique_label_cpu.cuh"
+#include "unique_label_cpu.h"
 #include "patternmatching_logger.h"
 
 namespace patternmatching {

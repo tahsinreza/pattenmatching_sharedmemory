@@ -5,7 +5,8 @@
 #ifndef TOTEM_MULTIPLE_LABEL_LCC_CPU_H
 #define TOTEM_MULTIPLE_LABEL_LCC_CPU_H
 
-#include "multiple_label_common_cpu.cuh"
+#include "multiple_label_common_cpu.h"
+#include "multiple_label_local_constraint.h"
 #include <iostream>
 #include <unordered_set>
 
@@ -23,21 +24,6 @@ class MultipleLabelLccCpu : public MultipleLabelCpuBase<State> {
   __host__ size_t compute(const graph_t &graph, State *globalState) const;
 
  private:
-  class LocalConstraint {
-   public:
-    LocalConstraint();
-    LocalConstraint(
-        const pvid_t &originVertex,
-        const weight_t &originLabel,
-        const std::unordered_map<weight_t, size_t> &localConstraint,
-        const std::unordered_set <vid_t> &localConstraintNeighborVertex_);
-    void print(std::ostream &ostream = std::cout) const;
-   public:
-    pvid_t originVertex;
-    weight_t originLabel;
-    std::unordered_map<weight_t, size_t> localConstraint;
-    std::unordered_set<vid_t> localConstraintNeighborVertex;
-  };
 
   inline void removeMatch(State *globalState, const vid_t vertexId, const pvid_t patternVertexId) const;
 

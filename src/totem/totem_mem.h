@@ -8,8 +8,10 @@
 #ifndef TOTEM_MEM_H
 #define TOTEM_MEM_H
 
+#ifdef __NVCC__
 // totem includes
 #include "totem_comkernel.cuh"
+#endif
 
 /**
  * Buffer types that can be allocated via the memory interface
@@ -34,7 +36,7 @@ typedef enum {
  * @param[out] ptr pointer to the allocated space
  * @return SUCCESS if the buffer is allocated, FALSE otherwise
  */
-error_t totem_malloc(size_t size, totem_mem_t type, void** ptr);
+error_t totem_malloc(size_t size, totem_mem_t type, void **ptr);
 
 /**
  * Similar to totem_malloc with the difference that the allocated space is
@@ -45,7 +47,7 @@ error_t totem_malloc(size_t size, totem_mem_t type, void** ptr);
  * @param[out] ptr pointer to the allocated space
  * @return SUCCESS if the buffer is allocated, FALSE otherwise
  */
-error_t totem_calloc(size_t size, totem_mem_t type, void** ptr);
+error_t totem_calloc(size_t size, totem_mem_t type, void **ptr);
 
 /**
  * Free a buffer allocated by totem_malloc or totem_calloc. Note that the type
@@ -53,7 +55,7 @@ error_t totem_calloc(size_t size, totem_mem_t type, void** ptr);
  * @param[in] ptr pointer to the buffer to be freed
  * @param[in] type type of memory to allocate
  */
-void totem_free(void* ptr, totem_mem_t type);
+void totem_free(void *ptr, totem_mem_t type);
 
 /**
  * A templatized version of memset for device buffers, the assumption is that
@@ -62,12 +64,14 @@ void totem_free(void* ptr, totem_mem_t type);
  * @param[in] value the value the buffer elements are set to
  * @param[in] size number of elements in the buffer
  */
+#ifdef __NVCC__
 template<typename T>
-__global__ void totem_memset_kernel(T* buffer, T value, uint32_t size) {
+__global__ void totem_memset_kernel(T *buffer, T value, uint32_t size) {
   uint32_t index = THREAD_GLOBAL_INDEX;
   if (index >= size) return;
   buffer[index] = value;
 }
+#endif
 
 /**
  * A templatized version of memset.
@@ -82,11 +86,14 @@ __global__ void totem_memset_kernel(T* buffer, T value, uint32_t size) {
  *                   to host buffers.
  */
 template<typename T>
-error_t totem_memset(T* ptr, T value, size_t size, totem_mem_t type, 
-                     cudaStream_t stream = 0) {
+error_t totem_memset(T *ptr, T value, size_t size, totem_mem_t type
+#ifdef __NVCC__
+    ,cudaStream_t stream = 0
+#endif
+    ) {
   switch (type) {
     case TOTEM_MEM_HOST:
-    case TOTEM_MEM_HOST_PINNED: 
+    case TOTEM_MEM_HOST_PINNED:
     case TOTEM_MEM_HOST_MAPPED: {
       #pragma omp parallel for  schedule(static)
       for (size_t i = 0; i < size; i++) {
@@ -95,14 +102,16 @@ error_t totem_memset(T* ptr, T value, size_t size, totem_mem_t type,
       break;
     }
     case TOTEM_MEM_DEVICE: {
-      dim3 blocks; dim3 threads;
+      #ifdef __NVCC__
+      dim3 blocks;
+      dim3 threads;
       KERNEL_CONFIGURE(size, blocks, threads);
-      totem_memset_kernel<<<blocks, threads, 0, stream>>>(ptr, value, size);
+      totem_memset_kernel << < blocks, threads, 0, stream >> > (ptr, value, size);
       CALL_CU_SAFE(cudaGetLastError());
+      #endif
       break;
     }
-    default:
-      fprintf(stderr, "Error: invalid memory type\n");
+    default:fprintf(stderr, "Error: invalid memory type\n");
       assert(false);
   }
   return SUCCESS;
