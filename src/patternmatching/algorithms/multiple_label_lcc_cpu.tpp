@@ -86,9 +86,9 @@ MultipleLabelLccCpu<State>::compute(const graph_t &graph, State *globalState) co
 
       // Remove edge if match is impossible
       if(!isNeighborVertexPossibleMatch) {
-        std::stringstream ss;
+        /*std::stringstream ss;
         ss << "Eliminated edge : " << neighborEdgeId;
-        Logger::get().log(Logger::E_LEVEL_DEBUG, ss.str());
+        Logger::get().log(Logger::E_LEVEL_DEBUG, ss.str());*/
         ++edgeEliminatedNumber;
         BaseClass::deactivateEdge(globalState, neighborEdgeId);
         continue;
@@ -137,9 +137,9 @@ MultipleLabelLccCpu<State>::compute(const graph_t &graph, State *globalState) co
     }
 
     if (!BaseClass::isMatch(*globalState, vertexId)) {
-      std::stringstream ss;
+      /*std::stringstream ss;
       ss << "Eliminated vertex : " << vertexId;
-      Logger::get().log(Logger::E_LEVEL_DEBUG, ss.str());
+      Logger::get().log(Logger::E_LEVEL_DEBUG, ss.str());*/
 
       BaseClass::deactivateVertex(globalState, vertexId);
       vertexEliminatedNumber += 1;

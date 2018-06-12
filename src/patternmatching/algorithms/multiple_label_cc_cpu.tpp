@@ -29,9 +29,9 @@ __host__ void MultipleLabelCcCpu<State>::buildConstraintList(
     const vid_t &sourceVertexId,
     const vid_t &currentVertexId,
     const size_t &remainingLength,
-    std::vector <vid_t> *historyVertexId,
-    std::vector <weight_t> *historyVertexLabel,
-    std::vector <MultipleLabelCircularConstraint> *constraintVector) {
+    std::vector<vid_t> *historyVertexId,
+    std::vector<weight_t> *historyVertexLabel,
+    std::vector<MultipleLabelCircularConstraint> *constraintVector) {
 
   // Close the loop
   if (remainingLength == 0) {
@@ -73,8 +73,8 @@ template<class State>
 __host__ error_t
 MultipleLabelCcCpu<State>::preprocessPatern(const graph_t &pattern) {
   // for loop
-  std::vector <vid_t> historyVertexId;
-  std::vector <weight_t> historyVertexLabel;
+  std::vector<vid_t> historyVertexId;
+  std::vector<weight_t> historyVertexLabel;
 
   for (vid_t vertexId = 0; vertexId < pattern.vertex_count; vertexId++) {
     weight_t currentLabel = pattern.values[vertexId];
@@ -124,8 +124,8 @@ bool MultipleLabelCcCpu<State>::checkConstraint(
     const size_t &startingPosition,
     const size_t &remainingLength) {
 
-  if(sourceVertexId==20) {DEBUG_PRINT(remainingLength)}
-  if(sourceVertexId==20) {DEBUG_PRINT(currentVertexId)}
+  if (sourceVertexId == 20) { DEBUG_PRINT(remainingLength) }
+  if (sourceVertexId == 20) { DEBUG_PRINT(currentVertexId) }
 
   // Verify that we closed the cycle.
   if (remainingLength == 1) {
@@ -134,7 +134,7 @@ bool MultipleLabelCcCpu<State>::checkConstraint(
       if (!BaseClass::isEdgeActive(*globalState, neighborEdgeId)) continue;
       vid_t neighborVertexId = graph.edges[neighborEdgeId];
       if (!BaseClass::isVertexActive(*globalState, neighborVertexId)) continue;
-      if(sourceVertexId==20) {DEBUG_PRINT(neighborVertexId)}
+      if (sourceVertexId == 20) { DEBUG_PRINT(neighborVertexId) }
 
       if (sourceVertexId == neighborVertexId) {
         return true;
@@ -262,6 +262,11 @@ MultipleLabelCcCpu<State>::compute(
 template<class State>
 int MultipleLabelCcCpu<State>::getCircularConstraintNumber() const {
   return circularConstraintVector.size();
+}
+
+template<class State>
+const std::vector<MultipleLabelCircularConstraint> &MultipleLabelCcCpu<State>::getCircularConstraintVector() const {
+  return circularConstraintVector;
 }
 
 template<class State>

@@ -29,6 +29,10 @@ set(PROJECT_CPP_SOURCES
         algorithms/multiple_label_path_constraint.h
         algorithms/multiple_label_local_constraint.cc
         algorithms/multiple_label_local_constraint.h
+        algorithms/multiple_label_template_constraint.cc
+        algorithms/multiple_label_template_constraint.h
+        algorithms/multiple_label_common.h algorithms/multiple_label_template_walk.cc
+        algorithms/multiple_label_common.h algorithms/multiple_label_template_edge.cc
         algorithms/multiple_label_common.h algorithms/multiple_label_circular_constraint.cc algorithms/multiple_label_circular_constraint.h)
 
 set(PROJECT_CUDA_SOURCES)

@@ -17,12 +17,14 @@ class MultipleLabelStep {
     E_END,
     E_LCC,
     E_CC,
-    E_PC
+    E_PC,
+    E_TDS
   };
 
   MultipleLabelStep();
   void initStepCc(const int circularConstraintNumber);
   void initStepPc(const int circularConstraintNumber);
+  void initStepTds(const int circularConstraintNumber);
 
   bool getNextStep(const size_t lastStepEliminatedVerticles,
                      Step* nextStep, std::string *nextStepName);
@@ -31,6 +33,7 @@ class MultipleLabelStep {
   void setStepLcc(Step* nextStep, std::string *nextStepName);
   void setStepCc(Step* nextStep, std::string *nextStepName);
   void setStepPc(Step* nextStep, std::string *nextStepName);
+  void setStepTds(Step* nextStep, std::string *nextStepName);
   void setStepEnd(Step* nextStep, std::string *nextStepName);
 
   Step currentStep;
@@ -43,6 +46,10 @@ class MultipleLabelStep {
   // pc state
   int pathConstraintNumber;
   int currentPathConstraint;
+
+  // pc state
+  int tdsConstraintNumber;
+  int currentTdsConstraint;
 
 };
 

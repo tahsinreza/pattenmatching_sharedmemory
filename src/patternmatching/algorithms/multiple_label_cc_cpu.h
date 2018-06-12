@@ -31,6 +31,8 @@ class MultipleLabelCcCpu : public MultipleLabelCpuBase<State> {
   compute(const graph_t &graph, State *globalState);
   void resetState(State *globalState);
 
+  const std::vector <MultipleLabelCircularConstraint>& getCircularConstraintVector() const;
+
  private:
 
   void buildConstraintList(

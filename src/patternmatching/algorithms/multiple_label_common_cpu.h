@@ -26,6 +26,7 @@ class MultipleLabelGlobalState {
   void resetPatternMatchLcc();
   void resetPatternMatchCc();
   void resetPatternMatchPc();
+  void resetPatternMatchTds();
 
  public:
   vid_t graphVertexCount;
@@ -40,6 +41,8 @@ class MultipleLabelGlobalState {
   std::unordered_set<pvid_t> *vertexPatternToUnmatchCc;
   uint8_t *vertexPatternOmittedCc;
   std::unordered_set<pvid_t> *vertexPatternToUnmatchPc;
+  std::unordered_set<pvid_t> *vertexPatternToUnmatchTds;
+  uint8_t *vertexPatternOmittedTds;
 
 };
 typedef MultipleLabelGlobalState<uint32_t> MultipleLabelGlobalStateInt;

@@ -31,6 +31,8 @@ class MultipleLabelPcCpu : public MultipleLabelCpuBase<State> {
   compute(const graph_t &graph, State *globalState);
   void resetState(State *globalState);
 
+  const std::vector <PathConstraint>& getPathConstraintVector() const;
+
  private:
 
   void buildConstraintList(

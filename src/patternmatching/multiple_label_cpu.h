@@ -10,6 +10,7 @@
 #include "algorithms/multiple_label_lcc_cpu.h"
 #include "algorithms/multiple_label_cc_cpu.h"
 #include "algorithms/multiple_label_pc_cpu.h"
+#include "algorithms/multiple_label_tds_cpu.h"
 
 namespace patternmatching {
 
@@ -19,6 +20,7 @@ class MultipleLabelCpu {
   typedef MultipleLabelLccCpu<StateType> LccType;
   typedef MultipleLabelCcCpu<StateType> CcType;
   typedef MultipleLabelPcCpu<StateType> PcType;
+  typedef MultipleLabelTdsCpu<StateType> TdsType;
   int runPatternMatching();
 
   error_t allocate(CmdLineOption &cmdLineOption);
@@ -45,6 +47,7 @@ class MultipleLabelCpu {
   LccType lccCpu;
   CcType ccCpu;
   PcType pcCpu;
+  TdsType tdsCpu;
 };
 
 }

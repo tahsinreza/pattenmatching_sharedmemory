@@ -286,6 +286,11 @@ int MultipleLabelPcCpu<State>::getPathConstraintNumber() const {
 }
 
 template<class State>
+const std::vector <PathConstraint>& MultipleLabelPcCpu<State>::getPathConstraintVector() const{
+  return pathConstraintVector;
+}
+
+template<class State>
 void MultipleLabelPcCpu<State>::removeMatch(State *globalState,
                                             const vid_t vertexId,
                                             const pvid_t patternVertexId) const {

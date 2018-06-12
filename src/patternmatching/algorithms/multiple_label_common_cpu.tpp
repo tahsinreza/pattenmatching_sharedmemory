@@ -69,6 +69,14 @@ error_t MultipleLabelGlobalState<VisitedType>::allocate(const vid_t _graphVertex
   vertexPatternToUnmatchPc = new std::unordered_set<pvid_t>[graphVertexCount];
   resetPatternMatchPc();
 
+
+  // TDS
+  vertexPatternToUnmatchTds = new std::unordered_set<pvid_t>[graphVertexCount];
+  totem_malloc(graphVertexCount * sizeof(uint8_t), TOTEM_MEM_HOST,
+               reinterpret_cast<void **>(&vertexPatternOmittedTds));
+  assert(vertexPatternOmittedTds != nullptr);
+  resetPatternMatchTds();
+
   return SUCCESS;
 }
 
@@ -92,6 +100,14 @@ void MultipleLabelGlobalState<VisitedType>::resetPatternMatchPc() {
   for (vid_t vertexId = 0; vertexId < graphVertexCount; vertexId++) {
     vertexPatternToUnmatchPc[vertexId].clear();
   }
+}
+
+template<typename VisitedType>
+void MultipleLabelGlobalState<VisitedType>::resetPatternMatchTds() {
+  for (vid_t vertexId = 0; vertexId < graphVertexCount; vertexId++) {
+    vertexPatternToUnmatchTds[vertexId].clear();
+  }
+  totem_memset(vertexPatternOmittedTds, static_cast<uint8_t>(false), graphVertexCount, TOTEM_MEM_HOST);
 }
 
 template<typename VisitedType>
