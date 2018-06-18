@@ -9,6 +9,7 @@
 #include "multiple_label_local_constraint.h"
 #include <iostream>
 #include <unordered_set>
+#include "bitmap.h"
 
 namespace patternmatching {
 
@@ -23,7 +24,10 @@ class MultipleLabelLccCpu : public MultipleLabelCpuBase<State> {
 
   __host__ size_t compute(const graph_t &graph, State *globalState) const;
 
+  void resetState(State *globalState);
+
  private:
+  using BitmapType = FixedBitmap<C_MAXIMUM_PATTERN_SIZE>;
 
   inline void removeMatch(State *globalState, const vid_t vertexId, const pvid_t patternVertexId) const;
 

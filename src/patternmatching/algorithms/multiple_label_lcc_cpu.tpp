@@ -46,19 +46,28 @@ __host__ void MultipleLabelLccCpu<State>::printLocalConstraint(std::ostream &ost
 }
 
 template<class State>
+void MultipleLabelLccCpu<State>::resetState(State *globalState) {
+  globalState->resetModifiedList();
+}
+
+template<class State>
 __host__ size_t
 MultipleLabelLccCpu<State>::compute(const graph_t &graph, State *globalState) const {
 
   size_t edgeEliminatedNumber = 0;
+  std::cout << "Start LCC " << std::endl;
+  std::unordered_map<weight_t, size_t> currentLocalConstraint;
+  currentLocalConstraint.reserve(10);
 
-  #pragma omp parallel for reduction(+:edgeEliminatedNumber)
+  #pragma omp parallel for reduction(+:edgeEliminatedNumber) private(currentLocalConstraint)
   for (vid_t vertexId = 0; vertexId < graph.vertex_count; vertexId++) {
     if (!BaseClass::isVertexActive(*globalState, vertexId)) continue;
+    if (!BaseClass::isVertexScheduled(*globalState, vertexId)) continue;
 
     weight_t currentLabel = graph.values[vertexId];
 
     // Build the set of possible neighbor matches
-    std::unordered_set <vid_t> neighborConstraintSet;
+    BitmapType neighborConstraintSet;
     for (const auto &it : globalState->vertexPatternMatch[vertexId]) {
       const auto &currentLocalConstraint = patternLocalConstraint[it];
       for (const auto &neighborVertexId : currentLocalConstraint.localConstraintNeighborVertex) {
@@ -67,42 +76,44 @@ MultipleLabelLccCpu<State>::compute(const graph_t &graph, State *globalState) co
     }
 
     // build local constraint
-    std::unordered_map <weight_t, size_t> currentLocalConstraint;
+    for (const auto &it : currentLocalConstraint) {
+      currentLocalConstraint[it.first] = 0;
+    }
 
     for (eid_t neighborEdgeId = graph.vertices[vertexId]; neighborEdgeId < graph.vertices[vertexId + 1];
          neighborEdgeId++) {
       if (!BaseClass::isEdgeActive(*globalState, neighborEdgeId)) continue;
       vid_t neighborVertexId = graph.edges[neighborEdgeId];
       if (!BaseClass::isVertexActive(*globalState, neighborVertexId)) continue;
+      if (!BaseClass::isVertexScheduled(*globalState, neighborVertexId)) continue;
 
       // Test if this vertex can be in the set of possible neighbor matches
       bool isNeighborVertexPossibleMatch = false;
-      for( const auto &it :  globalState->vertexPatternMatch[neighborVertexId]) {
-        if(neighborConstraintSet.find(it) !=neighborConstraintSet.end()) {
-          isNeighborVertexPossibleMatch=true;
+      for (const auto &it :  globalState->vertexPatternMatch[neighborVertexId]) {
+        if (neighborConstraintSet.isIn(it)) {
+          isNeighborVertexPossibleMatch = true;
           break;
         }
       }
 
       // Remove edge if match is impossible
-      if(!isNeighborVertexPossibleMatch) {
-        /*std::stringstream ss;
-        ss << "Eliminated edge : " << neighborEdgeId;
-        Logger::get().log(Logger::E_LEVEL_DEBUG, ss.str());*/
+      if (!isNeighborVertexPossibleMatch) {
         ++edgeEliminatedNumber;
         BaseClass::deactivateEdge(globalState, neighborEdgeId);
+        BaseClass::makeModifiedVertex(globalState, vertexId);
         continue;
       }
 
       // Else, count label
       weight_t neighborLabel = graph.values[neighborVertexId];
       if (currentLocalConstraint.find(neighborLabel) != currentLocalConstraint.end()) {
-        ++(currentLocalConstraint)[neighborLabel];
+        ++(currentLocalConstraint[neighborLabel]);
       } else {
         currentLocalConstraint[neighborLabel] = 1;
       }
     }
 
+    bool hasBeenModified = false;
     auto patternVertexIterator = globalState->vertexPatternMatch[vertexId].cbegin();
     while (patternVertexIterator != globalState->vertexPatternMatch[vertexId].cend()) {
       // Avoid removing the current iterator that would be invalidated
@@ -113,6 +124,7 @@ MultipleLabelLccCpu<State>::compute(const graph_t &graph, State *globalState) co
       // test if currentLabel is the origin label for the current localConstraint
       if (currentLabel != testLocalConstraint.originLabel) {
         removeMatch(globalState, vertexId, patternVertexId);
+        hasBeenModified = true;
         continue;
       }
 
@@ -120,34 +132,52 @@ MultipleLabelLccCpu<State>::compute(const graph_t &graph, State *globalState) co
       for (const auto &it : testLocalConstraint.localConstraint) {
         if (currentLocalConstraint[it.first] < it.second) {
           removeMatch(globalState, vertexId, patternVertexId);
+          hasBeenModified = true;
           break;
         }
       }
     }
+    if (hasBeenModified) {
+      BaseClass::makeModifiedVertex(globalState, vertexId);
+    }
   }
 
+  std::cout << "Mid LCC " << std::endl;
   size_t vertexEliminatedNumber = 0;
+  globalState->resetScheduledList();
 
   #pragma omp parallel for reduction(+:vertexEliminatedNumber)
   for (vid_t vertexId = 0; vertexId < graph.vertex_count; vertexId++) {
     if (!BaseClass::isVertexActive(*globalState, vertexId)) continue;
 
-    for(const auto& patternIndex : globalState->vertexPatternToUnmatchLcc[vertexId]) {
-      BaseClass::removeMatch(globalState, vertexId, patternIndex);
-    }
+    if (BaseClass::isVertexModified(*globalState, vertexId)) {
+      // The vertex was modified
+      for (const auto &patternIndex : globalState->vertexPatternToUnmatchLcc[vertexId]) {
+        BaseClass::removeMatch(globalState, vertexId, patternIndex);
+      }
 
-    if (!BaseClass::isMatch(*globalState, vertexId)) {
-      /*std::stringstream ss;
-      ss << "Eliminated vertex : " << vertexId;
-      Logger::get().log(Logger::E_LEVEL_DEBUG, ss.str());*/
+      if (!BaseClass::isMatch(*globalState, vertexId)) {
+        BaseClass::deactivateVertex(globalState, vertexId);
+        vertexEliminatedNumber += 1;
+      }
 
-      BaseClass::deactivateVertex(globalState, vertexId);
-      vertexEliminatedNumber += 1;
+      BaseClass::scheduleVertex(globalState, vertexId);
+    } else {
+      // Schedule vertex close to the one modified
+      for (eid_t neighborEdgeId = graph.vertices[vertexId]; neighborEdgeId < graph.vertices[vertexId + 1];
+           neighborEdgeId++) {
+        if (!BaseClass::isEdgeActive(*globalState, neighborEdgeId)) continue;
+        vid_t neighborVertexId = graph.edges[neighborEdgeId];
+        if (!BaseClass::isVertexModified(*globalState, neighborVertexId)) continue;
+
+        BaseClass::scheduleVertex(globalState, vertexId);
+      }
     }
 
     globalState->vertexPatternToUnmatchLcc[vertexId].clear();
   }
 
+  std::cout << "End LCC " << std::endl;
   std::cout << "Eliminated edges : " << edgeEliminatedNumber << std::endl;
 
   return vertexEliminatedNumber;
@@ -159,6 +189,5 @@ void MultipleLabelLccCpu<State>::removeMatch(State *globalState,
                                              const pvid_t patternVertexId) const {
   globalState->vertexPatternToUnmatchLcc[vertexId].insert(patternVertexId);
 }
-
 
 }

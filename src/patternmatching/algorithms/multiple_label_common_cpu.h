@@ -9,6 +9,7 @@
 #include "totem_partition.h"
 #include <unordered_map>
 #include <unordered_set>
+#include "bitmap.h"
 #include <vector>
 #include "patternmatching_logger.h"
 #include "multiple_label_common.h"
@@ -21,8 +22,13 @@ namespace patternmatching {
 template<typename VisitedType>
 class MultipleLabelGlobalState {
  public:
+  using BitmapType = FixedBitmap<C_MAXIMUM_PATTERN_SIZE>;
+  //using BitmapType = std::unordered_set<pvid_t >;
+ public:
   error_t allocate(const vid_t vertexCount, const eid_t edgeCount, const pvid_t patternVertexCount);
   error_t free();
+  void resetModifiedList();
+  void resetScheduledList(const bool &value=false);
   void resetPatternMatchLcc();
   void resetPatternMatchCc();
   void resetPatternMatchPc();
@@ -34,14 +40,20 @@ class MultipleLabelGlobalState {
   eid_t graphEdgeCount;
   eid_t activeEdgeCount;
   pvid_t patternVertexCount;
+
   VisitedType *vertexActiveList;
+  VisitedType *vertexModifiedList;
+  VisitedType *vertexScheduledList;
+
   VisitedType *edgeActiveList;
-  std::unordered_set<pvid_t> *vertexPatternMatch;
-  std::unordered_set<pvid_t> *vertexPatternToUnmatchLcc;
-  std::unordered_set<pvid_t> *vertexPatternToUnmatchCc;
+
+  BitmapType *vertexPatternMatch;
+
+  BitmapType *vertexPatternToUnmatchLcc;
+  BitmapType *vertexPatternToUnmatchCc;
   uint8_t *vertexPatternOmittedCc;
-  std::unordered_set<pvid_t> *vertexPatternToUnmatchPc;
-  std::unordered_set<pvid_t> *vertexPatternToUnmatchTds;
+  BitmapType *vertexPatternToUnmatchPc;
+  BitmapType *vertexPatternToUnmatchTds;
   uint8_t *vertexPatternOmittedTds;
 
 };
@@ -53,6 +65,12 @@ class MultipleLabelCpuBase {
   inline bool isVertexActive(const State &globalState, const vid_t vertexId) const;
   inline bool isVertexInactive(const State &globalState, const vid_t vertexId) const;
   inline void deactivateVertex(State *globalState, const vid_t vertexId) const;
+
+  inline void makeModifiedVertex(State *globalState, const vid_t vertexId) const;
+  inline bool isVertexModified(const State &globalState, const vid_t vertexId) const;
+
+  inline void scheduleVertex(State *globalState, const vid_t vertexId) const;
+  inline bool isVertexScheduled(const State &globalState, const vid_t vertexId) const;
 
   inline bool isEdgeActive(const State &globalState, const eid_t edgeId) const;
   inline bool isEdgeInactive(const State &globalState, const eid_t edgeId) const;

@@ -9,6 +9,7 @@
 namespace patternmatching {
 
 typedef uint32_t pvid_t;
+static const size_t C_MAXIMUM_PATTERN_SIZE = 64;
 
 #define DEBUG_PRINT(X) std::cout << #X<< "\t" << X <<std::endl;
 #define DEBUG_PRINT_SET(X) \
