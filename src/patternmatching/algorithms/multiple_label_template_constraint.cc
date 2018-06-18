@@ -129,7 +129,6 @@ void TemplateConstraint::generateWalk(Walk &walk,
 }
 
 void TemplateConstraint::generateWalkMap() {
-  //std::cin;
   for (const auto &it : vertexIndexGraph) {
     Walk currentWalk;
 
