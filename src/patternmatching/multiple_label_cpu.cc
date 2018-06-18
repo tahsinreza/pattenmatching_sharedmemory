@@ -36,7 +36,7 @@ error_t parse_vertex_list2(FILE *file_handler, graph_t *graph) {
     // Second, get the value.
     CHK((token = strtok_r(NULL, delimiters, &saveptr)) != NULL, err);
     // TODO(abdullah): Use isnumeric to verify the value.
-    weight_t value = (weight_t) atof(token);
+    weight_t value = (weight_t) atoll(token);
 
     if (vertex_id != vertex_index) {
       // Vertices must be in increasing order and less than the maximum count.
