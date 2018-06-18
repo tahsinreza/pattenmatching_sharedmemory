@@ -149,9 +149,11 @@ MultipleLabelTdsCpu<State>::preprocessSubtemplateConstraint() {
     templateConstraintList.push_back(it);
   }
 
-  while (templateConstraintList.size() > 0) {
+  size_t offset=0;
+
+  while (templateConstraintList.size() > 0 && (offset<templateConstraintList.size()-1)) {
     int mergedNumber = 0;
-    auto it = templateConstraintList.begin();
+    auto it = templateConstraintList.begin()+offset;
     auto currentTemplateConstraint = *it;
     ++it;
     while (it != templateConstraintList.end()) {
@@ -166,9 +168,12 @@ MultipleLabelTdsCpu<State>::preprocessSubtemplateConstraint() {
       }
     }
     if (mergedNumber > 0) {
+      offset=0;
       if (!isInConstraintVector(currentTemplateConstraint)) {
         templateConstraintVector.push_back(currentTemplateConstraint);
       }
+    } else {
+      offset++;
     }
   }
 }
@@ -180,9 +185,13 @@ MultipleLabelTdsCpu<State>::preprocessPatern(
     const std::vector<MultipleLabelCircularConstraint> &circularConstraintVector,
     const std::vector<PathConstraint> &pathConstraintVector) {
 
+  std::cout << 1 << std::endl;
   preprocessCircularConstraint(circularConstraintVector);
+  std::cout << 2 << std::endl;
   preprocessPathConstraint(pathConstraintVector);
+  std::cout << 3 << std::endl;
   preprocessSubtemplateConstraint();
+  std::cout << 4 << std::endl;
 
   for (auto &it : templateConstraintVector) {
     it.generateWalkMap();
