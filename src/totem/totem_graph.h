@@ -61,11 +61,13 @@
 // }
 //
 // Finally, to enable 64 bit edge ids, the code must be compiled: make EID=64
+#ifdef FEATURE_64BIT_EDGE_ID
 typedef uint32_t vid_t;
 typedef uint32_t eid_device_t;
-#ifdef FEATURE_64BIT_EDGE_ID
 typedef uint64_t eid_t;
 #else
+typedef uint32_t vid_t;
+typedef uint32_t eid_device_t;
 typedef uint32_t eid_t;
 #endif
 
@@ -86,10 +88,18 @@ const uint32_t INFINITE = UINT32_MAX;
 
 // Specifies a type for edge weights. This is useful to allow future changes in
 // the precision and value range that edge weights can hold.
+#ifdef FEATURE_64BIT_EDGE_ID
 typedef uint64_t weight_t;
+#else
+typedef uint64_t weight_t;
+#endif
 
 // Specifies the maximum value a weight can hold.
+#ifdef FEATURE_64BIT_EDGE_ID
 const weight_t WEIGHT_MAX = UINT32_MAX;
+#else
+const weight_t WEIGHT_MAX = UINT32_MAX;
+#endif
 
 // Specifies the default edge weight
 const weight_t DEFAULT_EDGE_WEIGHT =  1;
