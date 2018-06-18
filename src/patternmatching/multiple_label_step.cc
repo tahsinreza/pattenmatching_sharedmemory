@@ -35,6 +35,10 @@ bool MultipleLabelStep::getNextStep(const size_t lastStepEliminatedVerticles,
   switch (currentStep) {
     case E_START:
       // initialisation
+      setStepLcc0(nextStep, nextStepName);
+      break;
+    case E_LCC0:
+      // Start
       setStepLcc(nextStep, nextStepName);
       break;
     case E_LCC:
@@ -42,9 +46,9 @@ bool MultipleLabelStep::getNextStep(const size_t lastStepEliminatedVerticles,
       if (lastStepEliminatedVerticles > 0) {
       } else {
         // Change to CC, PC, or end
-        if (currentCircularConstraint < circularConstraintNumber && 0) {
+        if (currentCircularConstraint < circularConstraintNumber && 1) {
           setStepCc(nextStep, nextStepName);
-        } else if (currentPathConstraint < pathConstraintNumber && 0) {
+        } else if (currentPathConstraint < pathConstraintNumber && 1) {
           setStepPc(nextStep, nextStepName);
         } else if (currentTdsConstraint < tdsConstraintNumber) {
           setStepTds(nextStep, nextStepName);
@@ -74,6 +78,11 @@ bool MultipleLabelStep::getNextStep(const size_t lastStepEliminatedVerticles,
 
 }
 
+void MultipleLabelStep::setStepLcc0(Step *nextStep, std::string *nextStepName) {
+  currentStep = E_LCC0;
+  *nextStep = E_LCC0;
+  *nextStepName = "LCC0";
+}
 void MultipleLabelStep::setStepLcc(Step *nextStep, std::string *nextStepName) {
   currentStep = E_LCC;
   *nextStep = E_LCC;

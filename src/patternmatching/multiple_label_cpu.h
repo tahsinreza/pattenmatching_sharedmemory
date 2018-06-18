@@ -7,6 +7,7 @@
 #include "multiple_label_step.h"
 #include "totem_graph.h"
 #include "algorithms/multiple_label_common_cpu.h"
+#include "algorithms/multiple_label_lcc0_cpu.h"
 #include "algorithms/multiple_label_lcc_cpu.h"
 #include "algorithms/multiple_label_cc_cpu.h"
 #include "algorithms/multiple_label_pc_cpu.h"
@@ -17,6 +18,7 @@ namespace patternmatching {
 class MultipleLabelCpu {
  public:
   typedef MultipleLabelGlobalStateInt StateType;
+  typedef MultipleLabelLcc0Cpu<StateType> Lcc0Type;
   typedef MultipleLabelLccCpu<StateType> LccType;
   typedef MultipleLabelCcCpu<StateType> CcType;
   typedef MultipleLabelPcCpu<StateType> PcType;
@@ -44,6 +46,7 @@ class MultipleLabelCpu {
 
   MultipleLabelStep algorithmStep;
 
+  Lcc0Type lcc0Cpu;
   LccType lccCpu;
   CcType ccCpu;
   PcType pcCpu;

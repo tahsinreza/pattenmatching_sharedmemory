@@ -98,7 +98,7 @@ error_t MultipleLabelCpu::allocate(CmdLineOption &cmdLineOption) {
     FILE *file_handler = fopen(cmdLineOption.getInputVertexMetadataFilePath().c_str(), "r");
     if (file_handler != NULL) parse_vertex_list2(file_handler, graph);
   }
-  //graph_store_binary(graph, (cmdLineOption.getInputGraphFilePath()+".bin").c_str());
+  //graph_store_binary(graph, (cmdLineOption.getInputGraphFilePath()+".test2_3.bin").c_str());
 
   // Load pattern
   Logger::get().log(Logger::E_LEVEL_INFO, "Loading pattern");
@@ -117,25 +117,34 @@ error_t MultipleLabelCpu::allocate(CmdLineOption &cmdLineOption) {
   // Initialise algorithms
   Logger::get().log(Logger::E_LEVEL_INFO, "Initialize LCC, CC, PC, and Step algorithms");
 
+  Logger::get().log(Logger::E_LEVEL_INFO, "Initialize LCC0");
+  lcc0Cpu.preprocessPatern(*pattern);
+  Logger::get().logFunction(Logger::E_LEVEL_INFO, lcc0Cpu, &Lcc0Type::printLocalConstraint, Logger::E_OUTPUT_FILE_LOG);
+
+  Logger::get().log(Logger::E_LEVEL_INFO, "Initialize LCC");
   lccCpu.preprocessPatern(*pattern);
   Logger::get().logFunction(Logger::E_LEVEL_INFO, lccCpu, &LccType::printLocalConstraint, Logger::E_OUTPUT_FILE_LOG);
   Logger::get().logFunction(Logger::E_LEVEL_DEBUG, lccCpu, &LccType::printLocalConstraint, Logger::E_OUTPUT_COUT);
 
+  Logger::get().log(Logger::E_LEVEL_INFO, "Initialize CC");
   ccCpu.init(*graph, *pattern);
   ccCpu.preprocessPatern(*pattern);
   Logger::get().logFunction(Logger::E_LEVEL_INFO, ccCpu, &CcType::printCircularConstraint, Logger::E_OUTPUT_FILE_LOG);
   Logger::get().logFunction(Logger::E_LEVEL_DEBUG, ccCpu, &CcType::printCircularConstraint, Logger::E_OUTPUT_COUT);
 
+  Logger::get().log(Logger::E_LEVEL_INFO, "Initialize PC");
   pcCpu.init(*graph, *pattern);
   pcCpu.preprocessPatern(*pattern);
   Logger::get().logFunction(Logger::E_LEVEL_INFO, pcCpu, &PcType::printPathConstraint, Logger::E_OUTPUT_FILE_LOG);
   Logger::get().logFunction(Logger::E_LEVEL_DEBUG, pcCpu, &PcType::printPathConstraint, Logger::E_OUTPUT_COUT);
 
+  Logger::get().log(Logger::E_LEVEL_INFO, "Initialize TDS");
   tdsCpu.init(*graph, *pattern);
   tdsCpu.preprocessPatern(*pattern, ccCpu.getCircularConstraintVector(), pcCpu.getPathConstraintVector());
   Logger::get().logFunction(Logger::E_LEVEL_INFO, tdsCpu, &TdsType::printTemplateConstraint, Logger::E_OUTPUT_FILE_LOG);
   Logger::get().logFunction(Logger::E_LEVEL_DEBUG, tdsCpu, &TdsType::printTemplateConstraint, Logger::E_OUTPUT_COUT);
 
+  Logger::get().log(Logger::E_LEVEL_INFO, "Initialize STEPS");
   algorithmStep.initStepCc(ccCpu.getCircularConstraintNumber());
   algorithmStep.initStepPc(pcCpu.getPathConstraintNumber());
   algorithmStep.initStepTds(tdsCpu.getTemplateConstraintNumber());
@@ -182,6 +191,9 @@ int MultipleLabelCpu::runPatternMatching() {
     stopwatch_start(&stopwatch);
 
     switch (currentStep) {
+      case MultipleLabelStep::E_LCC0 :
+        currentStepVertexEliminated = lcc0Cpu.compute(*graph, &patternmatchingState);
+        break;
       case MultipleLabelStep::E_LCC :
         currentStepVertexEliminated = lccCpu.compute(*graph, &patternmatchingState);
         break;

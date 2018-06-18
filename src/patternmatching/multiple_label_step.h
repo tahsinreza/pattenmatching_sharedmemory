@@ -15,6 +15,7 @@ class MultipleLabelStep {
   enum Step {
     E_START,
     E_END,
+    E_LCC0,
     E_LCC,
     E_CC,
     E_PC,
@@ -30,6 +31,7 @@ class MultipleLabelStep {
                      Step* nextStep, std::string *nextStepName);
 
  private:
+  void setStepLcc0(Step* nextStep, std::string *nextStepName);
   void setStepLcc(Step* nextStep, std::string *nextStepName);
   void setStepCc(Step* nextStep, std::string *nextStepName);
   void setStepPc(Step* nextStep, std::string *nextStepName);
