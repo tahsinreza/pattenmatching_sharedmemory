@@ -5,6 +5,11 @@
 #include "multiple_label_circular_constraint.h"
 namespace patternmatching {
 
+MultipleLabelCircularConstraint::MultipleLabelCircularConstraint()
+  : length(0) {
+  vertexIndexVector.clear();
+  vertexLabelVector.clear();
+}
 MultipleLabelCircularConstraint::MultipleLabelCircularConstraint(
     const std::vector <vid_t> &historyVertexId,
     const std::vector <weight_t> &historyVertexLabel) {

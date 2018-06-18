@@ -13,6 +13,7 @@ namespace patternmatching {
 
 class MultipleLabelCircularConstraint {
  public:
+  MultipleLabelCircularConstraint();
   MultipleLabelCircularConstraint(
       const std::vector <vid_t> &historyVertexId,
       const std::vector <weight_t> &historyVertexLabel);
