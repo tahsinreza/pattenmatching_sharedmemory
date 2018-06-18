@@ -7,7 +7,7 @@
 
 #include "multiple_label_common_cpu.h"
 #include <vector>
-#include <set>
+#include <unordered_set>
 #include <unordered_map>
 #include <iostream>
 #include "multiple_label_circular_constraint.h"
@@ -60,7 +60,7 @@ class MultipleLabelCcCpu : public MultipleLabelCpuBase<State> {
   inline void removeMatch(State *globalState, const vid_t vertexId, const pvid_t patternVertexId) const;
 
   std::vector <std::unordered_map<vid_t, size_t>> sourceTraversalVector;
-  std::vector <std::set<vid_t>> patternTraversalVector;
+  std::vector <std::unordered_set<vid_t>> patternTraversalVector;
   std::vector <MultipleLabelCircularConstraint> circularConstraintVector;
   typename std::vector<MultipleLabelCircularConstraint>::const_iterator circularConstraintIterator;
 };

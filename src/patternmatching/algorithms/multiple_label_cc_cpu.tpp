@@ -124,9 +124,6 @@ bool MultipleLabelCcCpu<State>::checkConstraint(
     const size_t &startingPosition,
     const size_t &remainingLength) {
 
-  if (sourceVertexId == 20) { DEBUG_PRINT(remainingLength) }
-  if (sourceVertexId == 20) { DEBUG_PRINT(currentVertexId) }
-
   // Verify that we closed the cycle.
   if (remainingLength == 1) {
     for (eid_t neighborEdgeId = graph.vertices[currentVertexId]; neighborEdgeId < graph.vertices[currentVertexId + 1];
@@ -134,7 +131,6 @@ bool MultipleLabelCcCpu<State>::checkConstraint(
       if (!BaseClass::isEdgeActive(*globalState, neighborEdgeId)) continue;
       vid_t neighborVertexId = graph.edges[neighborEdgeId];
       if (!BaseClass::isVertexActive(*globalState, neighborVertexId)) continue;
-      if (sourceVertexId == 20) { DEBUG_PRINT(neighborVertexId) }
 
       if (sourceVertexId == neighborVertexId) {
         return true;
@@ -248,9 +244,9 @@ MultipleLabelCcCpu<State>::compute(
     }
 
     if (!BaseClass::isMatch(*globalState, vertexId)) {
-      std::stringstream ss;
+      /*std::stringstream ss;
       ss << "Removed Vertex : " << vertexId << std::endl;
-      Logger::get().log(Logger::E_LEVEL_DEBUG, ss.str());
+      Logger::get().log(Logger::E_LEVEL_DEBUG, ss.str());*/
       BaseClass::deactivateVertex(globalState, vertexId);
       vertexEliminatedNumber += 1;
     }
