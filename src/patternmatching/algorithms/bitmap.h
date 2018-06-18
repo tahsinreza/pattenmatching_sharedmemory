@@ -43,6 +43,9 @@ class FixedBitmap {
   bool isIn(const size_t &value) const;
 
   void insert(const size_t &value);
+  template <class InputIterator>
+  void insert ( InputIterator first, InputIterator last );
+
   void erase(const size_t &value);
   void clear();
   void fill();

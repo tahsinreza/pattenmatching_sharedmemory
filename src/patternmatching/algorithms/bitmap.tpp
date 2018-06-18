@@ -63,7 +63,7 @@ size_t FixedBitmap<MaxSize>::size() const {
 template<size_t MaxSize>
 typename FixedBitmap<MaxSize>::const_iterator FixedBitmap<MaxSize>::find(const size_t &value) const {
   if (map[getBitmapIndex(value)] & (1 << getBitmapSubindex(value))) return const_iterator(this, value);
-  return 0;
+  return cend();
 }
 
 template<size_t MaxSize>
@@ -80,7 +80,13 @@ template<size_t MaxSize>
 void FixedBitmap<MaxSize>::insert(const size_t &value) {
   map[getBitmapIndex(value)] |= 1 << getBitmapSubindex(value);
 }
-
+template<size_t MaxSize>
+template<class InputIterator>
+void FixedBitmap<MaxSize>::insert(InputIterator first, InputIterator last) {
+  for (auto it = first; it != last; ++it) {
+    insert(*it);
+  }
+}
 template<size_t MaxSize>
 void FixedBitmap<MaxSize>::erase(const size_t &value) {
   map[getBitmapIndex(value)] &= ~(1 << getBitmapSubindex(value));
@@ -128,12 +134,6 @@ typename FixedBitmap<MaxSize>::const_iterator end(FixedBitmap <MaxSize> &obj) {
 
 template<size_t MaxSize>
 bool FixedBitmap<MaxSize>::getBit(const size_t &value) const {
-  /*std::cout << value << std::endl;
-  std::cout << getBitmapIndex(value) << std::endl;
-  std::cout << getBitmapSubindex(value) << std::endl;
-  std::cout << (map[getBitmapIndex(value)] ) << std::endl;
-  std::cout << ((1 << getBitmapSubindex(value))) << std::endl;
-  std::cout << (map[getBitmapIndex(value)] & (1 << getBitmapSubindex(value))) << std::endl;*/
   return (map[getBitmapIndex(value)] & (1 << getBitmapSubindex(value))) > 0;
 }
 
@@ -191,7 +191,7 @@ typename BitsetIterator<MaxSize, Type, Const>::reference BitsetIterator<MaxSize,
 }
 
 template<size_t MaxSize, typename Type, bool Const>
-BitsetIterator<MaxSize, Type, Const> &BitsetIterator<MaxSize, Type, Const>::operator--() {
+BitsetIterator <MaxSize, Type, Const> &BitsetIterator<MaxSize, Type, Const>::operator--() {
   do {
     index--;
     if (pFixedBitset->getBit(index)) return *this;
@@ -202,14 +202,14 @@ BitsetIterator<MaxSize, Type, Const> &BitsetIterator<MaxSize, Type, Const>::oper
 }
 
 template<size_t MaxSize, typename Type, bool Const>
-BitsetIterator<MaxSize, Type, Const> BitsetIterator<MaxSize, Type, Const>::operator--(int) {
+BitsetIterator <MaxSize, Type, Const> BitsetIterator<MaxSize, Type, Const>::operator--(int) {
   const BitsetIterator old(*this);
   --(*this);
   return old;
 }
 
 template<size_t MaxSize, typename Type, bool Const>
-BitsetIterator<MaxSize, Type, Const> &BitsetIterator<MaxSize, Type, Const>::operator++() {
+BitsetIterator <MaxSize, Type, Const> &BitsetIterator<MaxSize, Type, Const>::operator++() {
   do {
     index++;
     if (pFixedBitset->getBit(index)) return *this;
@@ -220,7 +220,7 @@ BitsetIterator<MaxSize, Type, Const> &BitsetIterator<MaxSize, Type, Const>::oper
 }
 
 template<size_t MaxSize, typename Type, bool Const>
-BitsetIterator<MaxSize, Type, Const> BitsetIterator<MaxSize, Type, Const>::operator++(int) {
+BitsetIterator <MaxSize, Type, Const> BitsetIterator<MaxSize, Type, Const>::operator++(int) {
   // Use operator++()
   const BitsetIterator old(*this);
   ++(*this);
