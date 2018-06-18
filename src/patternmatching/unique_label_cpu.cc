@@ -96,6 +96,9 @@ error_t UniqueLabelCpu::allocate(CmdLineOption &cmdLineOption) {
     FILE *file_handler = fopen(cmdLineOption.getInputVertexMetadataFilePath().c_str(), "r");
     if (file_handler != NULL) parse_vertex_list(file_handler, graph);
   }
+  //graph_store_binary(graph, (cmdLineOption.getInputGraphFilePath()+".bin").c_str());
+
+
 
   // Load pattern
   Logger::get().log(Logger::E_LEVEL_INFO, "Loading pattern");
@@ -128,7 +131,9 @@ error_t UniqueLabelCpu::allocate(CmdLineOption &cmdLineOption) {
 }
 
 error_t UniqueLabelCpu::free() {
+  #if 0
   totem_finalize();
+    #endif
   patternmatchingState.free();
   graph_finalize(graph);
 
