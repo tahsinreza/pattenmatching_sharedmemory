@@ -48,6 +48,7 @@ class MultipleLabelCcCpu : public MultipleLabelCpuBase<State> {
       const graph_t &graph,
       State *globalState,
       const MultipleLabelCircularConstraint &currentConstraint,
+      std::unordered_map<vid_t, FixedBitmapType> &sourceTraversalMap,
       const vid_t &sourceVertexId,
       const vid_t &currentVertexId,
       const size_t &startingPosition,
