@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.10)
 project(patternmatching LANGUAGES CXX CUDA)
 
+add_subdirectory(test)
+
 include_directories(
         ${PROJECT_SOURCE_DIR}
         ${PROJECT_SOURCE_DIR}/algorithms
@@ -24,6 +26,8 @@ set(PROJECT_CPP_SOURCES
         multiple_label_cpu.cc
         patternmatching_binary.cc
         unique_label_cpu.cc
+        algorithms/bitmap.h
+        algorithms/bitmap.tpp
         algorithms/unique_label_circular_constraint.cc
         algorithms/multiple_label_path_constraint.cc
         algorithms/multiple_label_path_constraint.h
