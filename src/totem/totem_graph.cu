@@ -271,20 +271,22 @@ PRIVATE error_t graph_initialize_binary(FILE* fh, bool load_weights,
   CHK(fread(&weighted, sizeof(bool), 1, fh) == 1, err);
   bool directed;
   CHK(fread(&directed, sizeof(bool), 1, fh) == 1, err);
-  graph_allocate(vertex_count, edge_count, directed, load_weights, valued,
-                 graph);
+
+  STOPWATCH_FUNC(graph_allocate(vertex_count, edge_count, directed, load_weights, valued,
+                 graph));
+
 
   // Load the vertices and their values if any.
-  CHK(fread((*graph)->vertices, sizeof(eid_t), vertex_count + 1, fh) ==
-      (vertex_count + 1), err_free);
+  STOPWATCH_FUNC(CHK(fread((*graph)->vertices, sizeof(eid_t), vertex_count + 1, fh) ==
+      (vertex_count + 1), err_free));
   if (valued) {
     CHK(fread((*graph)->values, sizeof(weight_t), vertex_count, fh) ==
         vertex_count, err_free);
   }
 
   // Load the edges and their weights if any.
-  CHK(fread((*graph)->edges, sizeof(vid_t), edge_count, fh) ==
-      edge_count, err_free);
+  STOPWATCH_FUNC(CHK(fread((*graph)->edges, sizeof(vid_t), edge_count, fh) ==
+      edge_count, err_free));
   if (load_weights) {
     if (weighted) {
       CHK(fread((*graph)->weights, sizeof(weight_t), edge_count, fh) ==
