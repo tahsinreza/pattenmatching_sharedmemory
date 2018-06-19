@@ -58,6 +58,8 @@ class MultipleLabelCcCpu : public MultipleLabelCpuBase<State> {
 
   inline bool isOmitted(const State &globalState, const vid_t vertexId) const;
   inline void makeOmitted(State *globalState, const vid_t vertexId) const;
+  inline bool isMatchAtomic(const State &globalState, const vid_t vertexId, const size_t patternVertexId) const;
+  inline void makeMatchAtomic(State *globalState, const vid_t vertexId, const size_t patternVertexId) const;
   inline void removeMatch(State *globalState, const vid_t vertexId, const pvid_t patternVertexId) const;
 
   std::vector <std::unordered_map<vid_t, size_t>> sourceTraversalVector;

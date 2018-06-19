@@ -6,10 +6,12 @@
 #define PROJECT_MULTIPLE_LABEL_COMMON_H
 
 #include "totem_comdef.h"
+#include "bitmap.h"
 namespace patternmatching {
 
 typedef uint32_t pvid_t;
 static const size_t C_MAXIMUM_PATTERN_SIZE = 64;
+using FixedBitmapType = FixedBitmap<C_MAXIMUM_PATTERN_SIZE>;
 
 #define DEBUG_PRINT(X) std::cout << #X<< "\t" << X <<std::endl;
 #define DEBUG_PRINT_SET(X) \

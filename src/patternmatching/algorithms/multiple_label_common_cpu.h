@@ -51,6 +51,7 @@ class MultipleLabelGlobalState {
 
   BitmapType *vertexPatternToUnmatchLcc;
   BitmapType *vertexPatternToUnmatchCc;
+  BitmapType *vertexPatternMatchedCc;
   uint8_t *vertexPatternOmittedCc;
   BitmapType *vertexPatternToUnmatchPc;
   BitmapType *vertexPatternToUnmatchTds;

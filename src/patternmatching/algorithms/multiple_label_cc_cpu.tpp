@@ -160,6 +160,7 @@ bool MultipleLabelCcCpu<State>::checkConstraint(
       sourceTraversalMap[neighborVertexId].insert(nextConstraintVertexIndex);
       if (checkConstraint(graph, globalState, currentConstraint, sourceTraversalMap, sourceVertexId,
                           neighborVertexId, startingPosition, remainingLength - 1)) {
+        makeMatchAtomic(globalState, neighborVertexId, nextConstraintVertexIndex);
         return true;
       }
     }
@@ -211,6 +212,10 @@ MultipleLabelCcCpu<State>::compute(
       if (globalState->vertexPatternMatch[vertexId].isIn(*it)) {
         constraintFound = true;
         startingPositionInConstraint = constraintIndex;
+        if(isMatchAtomic(*globalState, vertexId, *it)) {
+          hasBeenModified = true;
+          continue;
+        }
 
         // Check cycle
         sourceTraversalMap.clear();
@@ -298,6 +303,16 @@ bool MultipleLabelCcCpu<State>::isOmitted(const State &globalState, const vid_t 
 template<class State>
 void MultipleLabelCcCpu<State>::makeOmitted(State *globalState, const vid_t vertexId) const {
   globalState->vertexPatternOmittedCc[vertexId] = true;
+}
+
+template<class State>
+bool MultipleLabelCcCpu<State>::isMatchAtomic(const State &globalState, const vid_t vertexId, const size_t patternVertexId) const {
+  return globalState.vertexPatternMatchedCc[vertexId].isInAtomic(patternVertexId);
+}
+
+template<class State>
+void MultipleLabelCcCpu<State>::makeMatchAtomic(State *globalState, const vid_t vertexId, const size_t patternVertexId) const {
+  globalState->vertexPatternMatchedCc[vertexId].insertAtomic(patternVertexId);
 }
 
 template<class State>

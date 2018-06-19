@@ -71,6 +71,7 @@ error_t MultipleLabelGlobalState<VisitedType>::allocate(const vid_t _graphVertex
 
   // CC
   vertexPatternToUnmatchCc = new BitmapType[graphVertexCount];
+  vertexPatternMatchedCc = new BitmapType[graphVertexCount];
   totem_malloc(graphVertexCount * sizeof(uint8_t), TOTEM_MEM_HOST,
                reinterpret_cast<void **>(&vertexPatternOmittedCc));
   assert(vertexPatternOmittedCc != nullptr);
@@ -114,6 +115,7 @@ void MultipleLabelGlobalState<VisitedType>::resetPatternMatchCc() {
   #pragma omp parallel for schedule(static)
   for (vid_t vertexId = 0; vertexId < graphVertexCount; vertexId++) {
     vertexPatternToUnmatchCc[vertexId].clear();
+    vertexPatternMatchedCc[vertexId].clear();
   }
   totem_memset(vertexPatternOmittedCc, static_cast<uint8_t>(false), graphVertexCount, TOTEM_MEM_HOST);
 }
