@@ -62,7 +62,7 @@ size_t FixedBitmap<MaxSize>::size() const {
 
 template<size_t MaxSize>
 typename FixedBitmap<MaxSize>::const_iterator FixedBitmap<MaxSize>::find(const size_t &value) const {
-  if (map[getBitmapIndex(value)] & (1 << getBitmapSubindex(value))) return const_iterator(this, value);
+  if (map[getBitmapIndex(value)] & (static_cast<BitmapType>(1) << getBitmapSubindex(value))) return const_iterator(this, value);
   return cend();
 }
 
@@ -75,10 +75,20 @@ template<size_t MaxSize>
 bool FixedBitmap<MaxSize>::isIn(const size_t &value) const {
   return getBit(value);
 }
+template<size_t MaxSize>
+bool FixedBitmap<MaxSize>::isInAtomic(const size_t &value) const {
+  return getBitAtomic(value);
+}
 
 template<size_t MaxSize>
 void FixedBitmap<MaxSize>::insert(const size_t &value) {
-  map[getBitmapIndex(value)] |= 1 << getBitmapSubindex(value);
+  map[getBitmapIndex(value)] |= static_cast<BitmapType>(1) << getBitmapSubindex(value);
+}
+template<size_t MaxSize>
+void FixedBitmap<MaxSize>::insertAtomic(const size_t &value) {
+  BitmapType mask = static_cast<BitmapType>(1) << getBitmapSubindex(value);
+  auto addr = &(map[getBitmapIndex(value)]);
+  __sync_fetch_and_or(addr, mask);
 }
 template<size_t MaxSize>
 template<class InputIterator>
@@ -89,7 +99,7 @@ void FixedBitmap<MaxSize>::insert(InputIterator first, InputIterator last) {
 }
 template<size_t MaxSize>
 void FixedBitmap<MaxSize>::erase(const size_t &value) {
-  map[getBitmapIndex(value)] &= ~(1 << getBitmapSubindex(value));
+  map[getBitmapIndex(value)] &= ~(static_cast<BitmapType>(1) << getBitmapSubindex(value));
 }
 template<size_t MaxSize>
 void FixedBitmap<MaxSize>::clear() {
@@ -135,6 +145,14 @@ typename FixedBitmap<MaxSize>::const_iterator end(FixedBitmap <MaxSize> &obj) {
 template<size_t MaxSize>
 bool FixedBitmap<MaxSize>::getBit(const size_t &value) const {
   return (map[getBitmapIndex(value)] & (1 << getBitmapSubindex(value))) > 0;
+}
+template<size_t MaxSize>
+bool FixedBitmap<MaxSize>::getBitAtomic(const size_t &value) const {
+  BitmapType mapValue;
+  auto addr = &(map[getBitmapIndex(value)]);
+  #pragma omp atomic read
+  mapValue = *addr;
+  return (mapValue & (static_cast<BitmapType>(1) << getBitmapSubindex(value))) > 0;
 }
 
 template<size_t MaxSize>

@@ -41,8 +41,10 @@ class FixedBitmap {
   const_iterator find(const size_t &value) const;
   size_t count(const size_t &value) const;
   bool isIn(const size_t &value) const;
+  bool isInAtomic(const size_t &value) const;
 
   void insert(const size_t &value);
+  void insertAtomic(const size_t &value);
   template <class InputIterator>
   void insert ( InputIterator first, InputIterator last );
 
@@ -57,6 +59,7 @@ class FixedBitmap {
 
  public:
   inline bool getBit(const size_t &value) const;
+  inline bool getBitAtomic(const size_t &value) const;
   inline size_t getBitmapIndex(const size_t &value) const;
   inline size_t getBitmapSubindex(const size_t &value) const;
 
