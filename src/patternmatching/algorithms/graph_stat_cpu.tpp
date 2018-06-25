@@ -9,14 +9,14 @@
 
 namespace patternmatching {
 
-template<class State>
-void GraphStatCpu<State>::printGraphStat(std::ostream &ostream) const {
+template<class State, class BaseClass>
+void GraphStatCpu<State, BaseClass>::printGraphStat(std::ostream &ostream) const {
   graphStat.print(ostream);
 }
 
-template<class State>
+template<class State, class BaseClass>
 size_t
-GraphStatCpu<State>::compute(const graph_t &graph, State *globalState) {
+GraphStatCpu<State, BaseClass>::compute(const graph_t &graph, State *globalState) {
 
   std::cout << "Start Graph Stat " << std::endl;
 

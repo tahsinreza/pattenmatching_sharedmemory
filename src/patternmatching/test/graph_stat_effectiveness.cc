@@ -3,9 +3,8 @@
 //
 
 #include "patternmatching_cmd_line_option.h"
-#include "unique_label_cpu.h"
-#include "multiple_label_cpu.h"
 #include "patternmatching_logger.h"
+#include "graph_stat_effectiveness_cpu.h"
 
 using namespace patternmatching;
 

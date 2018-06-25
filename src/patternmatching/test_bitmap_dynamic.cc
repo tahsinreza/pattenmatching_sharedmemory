@@ -2,7 +2,7 @@
 // Created by qiu on 17/06/18.
 //
 
-#include "bitmap_dynamic.h"
+#include "utils/bitmap_dynamic.h"
 #include <iostream>
 #include <vector>
 

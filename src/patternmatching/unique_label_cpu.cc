@@ -114,8 +114,8 @@ error_t UniqueLabelCpu::allocate(CmdLineOption &cmdLineOption) {
 
   patternmatchingState.allocate(graph->vertex_count);
 
-  // Initialise algorithms
-  Logger::get().log(Logger::E_LEVEL_INFO, "Initialize LCC, CC, and Step algorithms");
+  // Initialise unique_label
+  Logger::get().log(Logger::E_LEVEL_INFO, "Initialize LCC, CC, and Step unique_label");
 
   lccCpu.preprocessPatern(*pattern);
   Logger::get().logFunction(Logger::E_LEVEL_INFO, lccCpu, &LccType::printLocalConstraint, Logger::E_OUTPUT_FILE_LOG);

@@ -4,7 +4,7 @@
 #include <iomanip>
 
 #include "totem.h"
-#include "multiple_label_cpu.h"
+#include "graph_stat_effectiveness_cpu.h"
 #include "patternmatching_logger.h"
 
 namespace patternmatching {
@@ -94,8 +94,8 @@ error_t GraphStatEffectivenessCpu::allocate(CmdLineOption &cmdLineOption) {
   patternmatchingState.allocate(graph->vertex_count, graph->edge_count, pattern->vertex_count);
   patternMatchingStateTemporary.allocate(graph->vertex_count, graph->edge_count, pattern->vertex_count);
 
-  // Initialise algorithms
-  Logger::get().log(Logger::E_LEVEL_INFO, "Initialize LCC, CC, PC, and Step algorithms");
+  // Initialise unique_label
+  Logger::get().log(Logger::E_LEVEL_INFO, "Initialize LCC, CC, PC, and Step unique_label");
 
   Logger::get().log(Logger::E_LEVEL_INFO, "Initialize LCC0");
   lcc0Cpu.preprocessPatern(*pattern);

@@ -2,15 +2,15 @@ cmake_minimum_required(VERSION 3.10)
 
 project(patternmatching_test LANGUAGES CXX CUDA)
 
+
 include_directories(
         ${PROJECT_SOURCE_DIR}
-        ${PROJECT_SOURCE_DIR}/..
-        ${PROJECT_SOURCE_DIR}/../algorithms
+        ${PATTERNMATCHING_INCLUDE_DIR}
         ${SOURCE_ROOT_DIR}/totem)
 
 add_executable(${PROJECT_NAME}_bitmap_fixed
-        ${PROJECT_SOURCE_DIR}/../algorithms/bitmap_fixed.h
-        ${PROJECT_SOURCE_DIR}/../algorithms/bitmap_fixed.tpp
+        ${PATTERNMATCHING_SOURCE_DIR}/utils/bitmap_fixed.h
+        ${PATTERNMATCHING_SOURCE_DIR}/utils/bitmap_fixed.tpp
         bitmap_fixed.cc)
 
 target_link_libraries(${PROJECT_NAME}_bitmap_fixed
@@ -21,7 +21,7 @@ target_link_libraries(${PROJECT_NAME}_bitmap_fixed
         ${CUDA_LIBRARIES})
 
 add_executable(${PROJECT_NAME}_bitmap_dynamic
-        ../algorithms/bitmap_dynamic.cc
+        ${PATTERNMATCHING_SOURCE_DIR}/utils/bitmap_dynamic.cc
         bitmap_dynamic.cc)
 
 target_link_libraries(${PROJECT_NAME}_bitmap_dynamic

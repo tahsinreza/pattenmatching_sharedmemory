@@ -62,27 +62,6 @@ error_t parse_vertex_list2(FILE *file_handler, graph_t *graph) {
 }
 
 void MultipleLabelCpu::initialiseTotem() {
-  #if 0
-  attributeCpu = TOTEM_DEFAULT_ATTR;
-  attributeCpu.platform = PLATFORM_CPU;
-  attributeCpu.par_algo = PAR_RANDOM;
-  attributeCpu.cpu_par_share = 1.0;
-  attributeCpu.lambda = 0;
-  attributeCpu.gpu_count = 0;
-  attributeCpu.gpu_graph_mem = GPU_GRAPH_MEM_DEVICE;
-  attributeCpu.gpu_par_randomized = false;
-  attributeCpu.sorted = false;
-  attributeCpu.edge_sort_by_degree = false;
-  attributeCpu.edge_sort_dsc = false;
-  attributeCpu.separate_singletons = false;
-  attributeCpu.compressed_vertices_supported = false;
-  attributeCpu.push_msg_size = MSG_SIZE_WORD;
-  attributeCpu.pull_msg_size = MSG_SIZE_ZERO;
-  attributeCpu.alloc_func = NULL;
-  attributeCpu.free_func = NULL;
-  CALL_SAFE(totem_init(graph, &attributeCpu));
-    #endif
-
   // Configure OpenMP.
   omp_set_num_threads(omp_get_max_threads());
   omp_set_schedule(omp_sched_guided, 0);
@@ -114,55 +93,61 @@ error_t MultipleLabelCpu::allocate(CmdLineOption &cmdLineOption) {
 
   patternmatchingState.allocate(graph->vertex_count, graph->edge_count, pattern->vertex_count);
 
-  // Initialise algorithms
-  Logger::get().log(Logger::E_LEVEL_INFO, "Initialize LCC, CC, PC, and Step algorithms");
+  // Generate pattern
+  Logger::get().log(Logger::E_LEVEL_INFO, "Generate pattern multiple_label");
 
-  Logger::get().log(Logger::E_LEVEL_INFO, "Initialize LCC0");
-  lcc0Cpu.preprocessPatern(*pattern);
-  Logger::get().logFunction(Logger::E_LEVEL_INFO, lcc0Cpu, &Lcc0Type::printLocalConstraint, Logger::E_OUTPUT_FILE_LOG);
+  Logger::get().log(Logger::E_LEVEL_INFO, "Generate Local constraint");
+  generateLocal.preprocessPatern(*pattern);
+  Logger::get().logFunction(Logger::E_LEVEL_INFO,
+                            generateLocal, &MultipleLabelGenerateConstraintLocal::print, Logger::E_OUTPUT_FILE_LOG);
 
-  Logger::get().log(Logger::E_LEVEL_INFO, "Initialize LCC");
-  lccCpu.preprocessPatern(*pattern);
-  Logger::get().logFunction(Logger::E_LEVEL_INFO, lccCpu, &LccType::printLocalConstraint, Logger::E_OUTPUT_FILE_LOG);
-  Logger::get().logFunction(Logger::E_LEVEL_DEBUG, lccCpu, &LccType::printLocalConstraint, Logger::E_OUTPUT_COUT);
+  Logger::get().log(Logger::E_LEVEL_INFO, "Generate Circular constraint");
+  generateCircular.preprocessPatern(*pattern);
+  Logger::get().logFunction(Logger::E_LEVEL_INFO,
+                            generateCircular, &MultipleLabelGenerateConstraintCircular::print, Logger::E_OUTPUT_FILE_LOG);
 
-  Logger::get().log(Logger::E_LEVEL_INFO, "Initialize CC");
-  ccCpu.init(*graph, *pattern);
-  ccCpu.preprocessPatern(*pattern);
-  Logger::get().logFunction(Logger::E_LEVEL_INFO, ccCpu, &CcType::printCircularConstraint, Logger::E_OUTPUT_FILE_LOG);
-  Logger::get().logFunction(Logger::E_LEVEL_DEBUG, ccCpu, &CcType::printCircularConstraint, Logger::E_OUTPUT_COUT);
+  Logger::get().log(Logger::E_LEVEL_INFO, "Generate Path constraint");
+  generatePath.preprocessPatern(*pattern);
+  Logger::get().logFunction(Logger::E_LEVEL_INFO,
+                            generatePath, &MultipleLabelGenerateConstraintPath::print, Logger::E_OUTPUT_FILE_LOG);
+  Logger::get().logFunction(Logger::E_LEVEL_INFO,
+                            generatePath, &MultipleLabelGenerateConstraintPath::print, Logger::E_OUTPUT_COUT);
 
-  Logger::get().log(Logger::E_LEVEL_INFO, "Initialize PC");
-  pcCpu.init(*graph, *pattern);
-  pcCpu.preprocessPatern(*pattern);
-  Logger::get().logFunction(Logger::E_LEVEL_INFO, pcCpu, &PcType::printPathConstraint, Logger::E_OUTPUT_FILE_LOG);
-  Logger::get().logFunction(Logger::E_LEVEL_DEBUG, pcCpu, &PcType::printPathConstraint, Logger::E_OUTPUT_COUT);
+  Logger::get().log(Logger::E_LEVEL_INFO, "Generate Template constraint");
+  generateTemplate.preprocessPatern(*pattern, generateCircular.getConstraintVector(), generatePath.getConstraintVector());
+  Logger::get().logFunction(Logger::E_LEVEL_INFO,
+                            generateTemplate, &MultipleLabelGenerateConstraintTemplate::print, Logger::E_OUTPUT_FILE_LOG);
 
-  Logger::get().log(Logger::E_LEVEL_INFO, "Initialize TDS");
-  tdsCpu.init(*graph, *pattern);
-  tdsCpu.preprocessPatern(*pattern, ccCpu.getCircularConstraintVector(), pcCpu.getPathConstraintVector());
-  Logger::get().logFunction(Logger::E_LEVEL_INFO, tdsCpu, &TdsType::printTemplateConstraint, Logger::E_OUTPUT_FILE_LOG);
-  Logger::get().logFunction(Logger::E_LEVEL_DEBUG, tdsCpu, &TdsType::printTemplateConstraint, Logger::E_OUTPUT_COUT);
+  Logger::get().log(Logger::E_LEVEL_INFO, "Generate Enumeration constraint");
+  generateEnumeration.preprocessPatern(*pattern);
+  Logger::get().logFunction(Logger::E_LEVEL_INFO,
+                            generateEnumeration, &MultipleLabelGenerateConstraintEnumeration::print, Logger::E_OUTPUT_FILE_LOG);
 
-  Logger::get().log(Logger::E_LEVEL_INFO, "Initialize Enumeration");
-  enumerationCpu.init(*graph, *pattern);
-  enumerationCpu.preprocessPatern(*pattern);
-  Logger::get().logFunction(Logger::E_LEVEL_INFO, enumerationCpu, &EnumerationType::printTemplateConstraint, Logger::E_OUTPUT_FILE_LOG);
-  Logger::get().logFunction(Logger::E_LEVEL_DEBUG, enumerationCpu, &EnumerationType::printTemplateConstraint, Logger::E_OUTPUT_COUT);
+  // Initialise unique_label
+  Logger::get().log(Logger::E_LEVEL_INFO, "Initialize LCC0, LCC, CC, PC, TDS, and Enumeration");
+  lcc0Cpu.setConstraintVector(generateLocal.getConstraintVector());
+  lccCpu.setConstraintVector(generateLocal.getConstraintVector());
+  ccCpu.setConstraintVector(generateCircular.getConstraintVector());
+  ccBacktrackCpu.setConstraintVector(generateCircular.getConstraintVector());
+  ccStrictCpu.setConstraintVector(generateCircular.getConstraintVector());
+  pcCpu.setConstraintVector(generatePath.getConstraintVector());
+  pcBacktrackCpu.setConstraintVector(generatePath.getConstraintVector());
+  pcStrictCpu.setConstraintVector(generatePath.getConstraintVector());
+  tdsCpu.setConstraintVector(generateTemplate.getConstraintVector());
+  tdsBacktrackCpu.setConstraintVector(generateTemplate.getConstraintVector());
+  tdsStrictCpu.setConstraintVector(generateTemplate.getConstraintVector());
+  enumerationCpu.setConstraint(generateEnumeration.getConstraint());
 
   Logger::get().log(Logger::E_LEVEL_INFO, "Initialize STEPS");
-  algorithmStep.initStepCc(ccCpu.getCircularConstraintNumber());
-  algorithmStep.initStepPc(pcCpu.getPathConstraintNumber());
-  algorithmStep.initStepTds(tdsCpu.getTemplateConstraintNumber());
+  algorithmStep.initStepCc(generateCircular.getConstraintNumber());
+  algorithmStep.initStepPc(generatePath.getConstraintNumber());
+  algorithmStep.initStepTds(generateTemplate.getConstraintNumber());
 
   Logger::get().log(Logger::E_LEVEL_INFO, "End of initialisation");
   return SUCCESS;
 }
 
 error_t MultipleLabelCpu::free() {
-  #if 0
-  totem_finalize();
-    #endif
   patternmatchingState.free();
   graph_finalize(graph);
 
@@ -191,6 +176,7 @@ int MultipleLabelCpu::runPatternMatching() {
         break;
       default:break;
     }
+    std::cout << "Start "<< currentStepName << std::endl;
 
     totem_timing_reset();
     stopwatch_t stopwatch;

@@ -13,10 +13,8 @@
 namespace patternmatching {
 
 
-template <class State>
-class GraphStatCpu : MultipleLabelCpuBase<State> {
- protected:
-  typedef MultipleLabelCpuBase<State> BaseClass;
+template <class State, class BaseClass>
+class GraphStatCpu : BaseClass {
  public:
   void printGraphStat(std::ostream &ostream = std::cout) const;
 

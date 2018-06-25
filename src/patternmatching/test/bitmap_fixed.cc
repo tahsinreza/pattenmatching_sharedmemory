@@ -2,7 +2,7 @@
 // Created by qiu on 17/06/18.
 //
 
-#include "bitmap_fixed.h"
+#include "utils/bitmap_fixed.h"
 #include <iostream>
 #include <vector>
 

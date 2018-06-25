@@ -1,18 +1,24 @@
 
 
-#ifndef TOTEM_MULTIPLE_LABEL_CPU_CUH
-#define TOTEM_MULTIPLE_LABEL_CPU_CUH
+#ifndef TOTEM_GRAPH_EFFECTIVENESS_CPU_CUH
+#define TOTEM_GRAPH_EFFECTIVENESS_CPU_CUH
 
 #include "patternmatching_cmd_line_option.h"
 #include "multiple_label_step.h"
 #include "totem_graph.h"
-#include "algorithms/multiple_label_common_cpu.h"
-#include "algorithms/multiple_label_lcc0_cpu.h"
-#include "algorithms/multiple_label_lcc_cpu.h"
-#include "algorithms/multiple_label_cc_cpu.h"
-#include "algorithms/multiple_label_pc_cpu.h"
-#include "algorithms/multiple_label_tds_cpu.h"
-#include "algorithms/graph_stat_cpu.h"
+#include "multiple_label_common_cpu.h"
+#include "multiple_label_lcc0_cpu.h"
+#include "multiple_label_lcc_cpu.h"
+#include "multiple_label_cc_cpu.h"
+#include "multiple_label_cc_backtrack_cpu.h"
+#include "multiple_label_cc_strict_cpu.h"
+#include "multiple_label_pc_cpu.h"
+#include "multiple_label_pc_backtrack_cpu.h"
+#include "multiple_label_pc_strict_cpu.h"
+#include "multiple_label_tds_cpu.h"
+#include "multiple_label_tds_backtrack_cpu.h"
+#include "multiple_label_tds_strict_cpu.h"
+#include "graph_stat_cpu.h"
 
 namespace patternmatching {
 
@@ -24,7 +30,7 @@ class GraphStatEffectivenessCpu {
   typedef MultipleLabelCcCpu<StateType> CcType;
   typedef MultipleLabelPcCpu<StateType> PcType;
   typedef MultipleLabelTdsCpu<StateType> TdsType;
-  typedef GraphStatCpu<StateType> GraphStatType;
+  typedef GraphStatCpu<StateType, MultipleLabelCpuBase<StateType>> GraphStatType;
   int runPatternMatching();
 
   error_t allocate(CmdLineOption &cmdLineOption);
