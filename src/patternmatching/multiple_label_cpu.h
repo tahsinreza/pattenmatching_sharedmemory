@@ -9,7 +9,7 @@
 #include "algorithms/multiple_label_common_cpu.h"
 #include "algorithms/multiple_label_lcc0_cpu.h"
 #include "algorithms/multiple_label_lcc_cpu.h"
-//#include "algorithms/multiple_label_cc_cpu.h"
+#include "algorithms/multiple_label_cc_cpu.h"
 #include "algorithms/multiple_label_cc_backtrack_cpu.h"
 #include "algorithms/multiple_label_cc_strict_cpu.h"
 #include "algorithms/multiple_label_pc_cpu.h"
@@ -23,8 +23,8 @@ class MultipleLabelCpu {
   typedef MultipleLabelLcc0Cpu<StateType> Lcc0Type;
   typedef MultipleLabelLccCpu<StateType> LccType;
   //typedef MultipleLabelCcBacktrackCpu<StateType> CcType;
-  typedef MultipleLabelCcStrictCpu<StateType> CcType;
-  //typedef MultipleLabelCcCpu<StateType> CcType;
+  //typedef MultipleLabelCcStrictCpu<StateType> CcType;
+  typedef MultipleLabelCcCpu<StateType> CcType;
   typedef MultipleLabelPcCpu<StateType> PcType;
   typedef MultipleLabelTdsCpu<StateType> TdsType;
   int runPatternMatching();

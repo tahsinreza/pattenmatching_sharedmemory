@@ -11,6 +11,7 @@
 #include <unordered_map>
 #include <iostream>
 #include "multiple_label_circular_constraint.h"
+#include "utils.h"
 
 namespace patternmatching {
 
@@ -18,6 +19,7 @@ template<class State>
 class MultipleLabelCcCpu : public MultipleLabelCpuBase<State> {
  protected:
   typedef MultipleLabelCpuBase<State> BaseClass;
+  using sourceTraversalMapType = std::unordered_map<std::pair<vid_t, vid_t>, FixedBitmapType, PairHash>;
  public:
   void init(const graph_t &graph, const graph_t &pattern);
 
@@ -50,10 +52,8 @@ class MultipleLabelCcCpu : public MultipleLabelCpuBase<State> {
       const graph_t &graph,
       State *globalState,
       const MultipleLabelCircularConstraint &currentConstraint,
-      std::unordered_map<vid_t, std::unordered_map<vid_t, FixedBitmapType> > &sourceTraversalMap,
-      std::vector<vid_t> &historyIndexVector,
+      sourceTraversalMapType &sourceTraversalMap,
       const vid_t &sourceVertexId,
-      const vid_t &previousVertexId,
       const vid_t &currentVertexId,
       const size_t &startingPosition,
       const size_t &remainingLength);

@@ -9,6 +9,7 @@
 #include <unordered_map>
 #include <unordered_set>
 #include "bitmap_fixed.h"
+#include "bitmap_dynamic.h"
 #include <vector>
 #include "patternmatching_logger.h"
 #include "multiple_label_common.h"

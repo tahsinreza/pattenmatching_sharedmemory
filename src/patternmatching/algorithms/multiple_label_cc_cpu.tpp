@@ -114,49 +114,37 @@ __host__ void MultipleLabelCcCpu<State>::printCircularConstraint(std::ostream &o
   }
 }
 
-#define DBG_SOURCE 20
-
 template<class State>
 bool MultipleLabelCcCpu<State>::checkConstraint(
     const graph_t &graph,
     State *globalState,
     const MultipleLabelCircularConstraint &currentConstraint,
-    std::unordered_map<vid_t, FixedBitmapType> &sourceTraversalMap,
-    std::vector<vid_t> &historyIndexVector,
+    sourceTraversalMapType &sourceTraversalMap,
     const vid_t &sourceVertexId,
-    const vid_t &previousVertexId,
     const vid_t &currentVertexId,
     const size_t &startingPosition,
     const size_t &remainingLength) {
 
   // Verify that we closed the cycle.
   if (remainingLength == 1) {
-    if(sourceVertexId==DBG_SOURCE) std::cout << "remainingLength : " << remainingLength << std::endl;
     for (eid_t neighborEdgeId = graph.vertices[currentVertexId]; neighborEdgeId < graph.vertices[currentVertexId + 1];
          neighborEdgeId++) {
       if (!BaseClass::isEdgeActive(*globalState, neighborEdgeId)) continue;
       vid_t neighborVertexId = graph.edges[neighborEdgeId];
       if (!BaseClass::isVertexActive(*globalState, neighborVertexId)) continue;
 
-      if(sourceVertexId==DBG_SOURCE) std::cout << "neighborVertexId : " << neighborVertexId << std::endl;
-      if(sourceVertexId==DBG_SOURCE) std::cout << "sourceVertexId : " << sourceVertexId << std::endl;
       if (sourceVertexId == neighborVertexId) {
         return true;
       }
     }
   } else {
     // Find next position in constraint
+    size_t currentPositionInConstraint = (startingPosition + currentConstraint.length - (remainingLength ))
+        % currentConstraint.vertexLabelVector.size();
     size_t nextPositionInConstraint = (startingPosition + currentConstraint.length - (remainingLength - 1))
         % currentConstraint.vertexLabelVector.size();
 
-    if(sourceVertexId==DBG_SOURCE) {
-      std::cout << "historyIndexVector";
-      for (const auto &it : historyIndexVector)
-        std::cout << " " << it;
-      std::cout << std::endl;
-    }
     const auto &nextConstraintVertexIndex = currentConstraint.vertexIndexVector[nextPositionInConstraint];
-    if(sourceVertexId==DBG_SOURCE) DEBUG_PRINT(nextConstraintVertexIndex)
 
     for (eid_t neighborEdgeId = graph.vertices[currentVertexId]; neighborEdgeId < graph.vertices[currentVertexId + 1];
          neighborEdgeId++) {
@@ -167,23 +155,20 @@ bool MultipleLabelCcCpu<State>::checkConstraint(
       if (!globalState->vertexPatternMatch[neighborVertexId].isIn(nextConstraintVertexIndex))
         continue;
 
-      if(sourceVertexId==DBG_SOURCE) std::cout << "neighborVertexId : " << neighborVertexId << std::endl;
+      const auto &edge = (currentVertexId>neighborVertexId) ? std::make_pair(currentVertexId,neighborVertexId)
+                                                   : std::make_pair(neighborVertexId,currentVertexId);
 
-      if (sourceTraversalMap.find(neighborVertexId) != sourceTraversalMap.end()
-          && sourceTraversalMap[neighborVertexId].isIn(nextConstraintVertexIndex)) {
-        if(sourceVertexId==DBG_SOURCE) std::cout << "AGG : " << neighborVertexId<< std::endl;
+      if (sourceTraversalMap.find(edge)!=sourceTraversalMap.end()
+          && sourceTraversalMap[edge].isIn(currentPositionInConstraint))  {
         continue;
       }
 
-      //sourceTraversalMap[neighborVertexId].insert(nextConstraintVertexIndex);
-      historyIndexVector.push_back(neighborVertexId);
-      if(sourceVertexId==DBG_SOURCE) std::cout << "Go Up : " << neighborVertexId << std::endl;
-      if (checkConstraint(graph, globalState, currentConstraint, sourceTraversalMap, historyIndexVector, sourceVertexId,
-                          currentVertexId, neighborVertexId, startingPosition, remainingLength - 1)) {
+      sourceTraversalMap[edge].insert(nextConstraintVertexIndex);
+      if (checkConstraint(graph, globalState, currentConstraint, sourceTraversalMap, sourceVertexId,
+                          neighborVertexId, startingPosition, remainingLength - 1)) {
         BaseClass::makeAlreadyMatchedAtomic(globalState, neighborVertexId, nextConstraintVertexIndex);
         return true;
       }
-      historyIndexVector.pop_back();
     }
   }
   return false;
@@ -210,13 +195,12 @@ MultipleLabelCcCpu<State>::compute(
                             &MultipleLabelCircularConstraint::print,
                             Logger::E_OUTPUT_FILE_LOG);
 
-  //#pragma omp parallel
+  #pragma omp parallel
   {
-    std::unordered_map<vid_t, FixedBitmapType> sourceTraversalMap;
-    std::unordered_map<vid_t, std::unordered_set<vid_t> > sourceTraversalMap2;
-    std::vector<vid_t> historyIndexVector;
+    sourceTraversalMapType sourceTraversalMap;
+    //sourceTraversalMap.allocate(globalState->graphEdgeCount);
 
-    //#pragma omp for
+    #pragma omp for
     for (vid_t vertexId = 0; vertexId < graph.vertex_count; vertexId++) {
       if (!BaseClass::isVertexActive(*globalState, vertexId)) continue;
 
@@ -229,27 +213,22 @@ MultipleLabelCcCpu<State>::compute(
            ++it, ++constraintIndex) {
 
         if (globalState->vertexPatternMatch[vertexId].isIn(*it)) {
-          /*if (BaseClass::isAlreadyMatchedAtomic(*globalState, vertexId, *it)) {
+          if (BaseClass::isAlreadyMatchedAtomic(*globalState, vertexId, *it)) {
             hasBeenModified = true;
             continue;
-          }*/
+          }
 
           startingPositionInConstraint = constraintIndex;
           // Check cycle
           sourceTraversalMap.clear();
-          historyIndexVector.clear();
-          historyIndexVector.push_back(vertexId);
-
           if (!checkConstraint(graph,
                                globalState,
                                currentConstraint,
                                sourceTraversalMap,
-                               historyIndexVector,
                                vertexId,
                                vertexId,
                                startingPositionInConstraint,
                                currentConstraint.length)) {
-            if(vertexId==DBG_SOURCE) std::cout << "Pattern removed : " << *it << std::endl;
             BaseClass::makeToUnmatch(globalState, vertexId, *it);
             hasBeenModified = true;
           }
