@@ -20,6 +20,7 @@ namespace patternmatching {
 class TemplateConstraint {
  public:
   enum TemplateConstraintOrigin {
+    E_EMPTY,
     E_CC,
     E_PC,
     E_TDS_CC,
@@ -28,6 +29,7 @@ class TemplateConstraint {
     E_TDS_FULL
   };
 
+  TemplateConstraint();
   TemplateConstraint(const graph_t &pattern);
   TemplateConstraint(const MultipleLabelCircularConstraint &circularConstraint);
   TemplateConstraint(const PathConstraint &pathConstraint);

@@ -180,6 +180,8 @@ MultipleLabelLccCpu<State>::compute(const graph_t &graph, State *globalState) co
     }
   }
 
+  globalState->graphActiveVertexCount-=vertexEliminatedNumber;
+  globalState->graphActiveEdgeCount-=edgeEliminatedNumber;
   //std::cout << "End LCC " << std::endl;
   std::cout << "Eliminated edges : " << edgeEliminatedNumber << std::endl;
 

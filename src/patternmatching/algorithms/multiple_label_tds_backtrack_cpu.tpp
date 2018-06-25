@@ -329,6 +329,10 @@ MultipleLabelTdsBacktrackCpu<State>::compute(const graph_t &graph, State *global
                             &TemplateConstraint::print,
                             Logger::E_OUTPUT_FILE_LOG);
 
+  size_t stepCompleted=0;
+  size_t stepMax=globalState->graphActiveVertexCount;
+  size_t stepSize=1000;
+
   SourceTraversalMapType sourceTraversalMap;
   std::vector<vid_t> historyIndexVector;
   TraversalHypothesis traversalHypothesis;
@@ -370,6 +374,16 @@ MultipleLabelTdsBacktrackCpu<State>::compute(const graph_t &graph, State *global
     if (hasBeenModified) {
       BaseClass::makeModifiedVertex(globalState, vertexId);
     }
+
+    #pragma omp atomic
+    ++stepCompleted;
+
+    if(stepCompleted%stepSize==0) {
+      #pragma omp critical
+      {
+        std::cout << "Progression : " << stepCompleted << "/" << stepMax << std::endl;
+      }
+    }
   }
 
   size_t vertexEliminatedNumber = 0;
@@ -386,8 +400,8 @@ MultipleLabelTdsBacktrackCpu<State>::compute(const graph_t &graph, State *global
       if (!BaseClass::isMatch(*globalState, vertexId)) {
         /*std::stringstream ss;
         ss << "Removed Vertex : " << vertexId << std::endl;
-        Logger::get().log(Logger::E_LEVEL_DEBUG, ss.str());
-        BaseClass::deactivateVertex(globalState, vertexId);*/
+        Logger::get().log(Logger::E_LEVEL_DEBUG, ss.str());*/
+        BaseClass::deactivateVertex(globalState, vertexId);
         vertexEliminatedNumber += 1;
       }
       BaseClass::scheduleVertex(globalState, vertexId);
@@ -406,6 +420,7 @@ MultipleLabelTdsBacktrackCpu<State>::compute(const graph_t &graph, State *global
     }
   }
 
+  globalState->graphActiveVertexCount-=vertexEliminatedNumber;
   return vertexEliminatedNumber;
 }
 

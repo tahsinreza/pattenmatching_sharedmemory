@@ -38,7 +38,9 @@ class MultipleLabelGlobalState {
 
  public:
   vid_t graphVertexCount;
+  vid_t graphActiveVertexCount;
   eid_t graphEdgeCount;
+  vid_t graphActiveEdgeCount;
   pvid_t patternVertexCount;
 
   VisitedType *vertexActiveList;

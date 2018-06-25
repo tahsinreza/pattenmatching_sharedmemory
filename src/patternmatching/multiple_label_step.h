@@ -19,7 +19,8 @@ class MultipleLabelStep {
     E_LCC,
     E_CC,
     E_PC,
-    E_TDS
+    E_TDS,
+    E_ENUMERATION,
   };
 
   MultipleLabelStep();
@@ -36,6 +37,7 @@ class MultipleLabelStep {
   void setStepCc(Step* nextStep, std::string *nextStepName);
   void setStepPc(Step* nextStep, std::string *nextStepName);
   void setStepTds(Step* nextStep, std::string *nextStepName);
+  void setStepEnumeration(Step* nextStep, std::string *nextStepName);
   void setStepEnd(Step* nextStep, std::string *nextStepName);
 
   Step currentStep;

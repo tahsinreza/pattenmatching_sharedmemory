@@ -280,6 +280,7 @@ MultipleLabelCcStrictCpu<State>::compute(
 
   }
 
+  globalState->graphActiveVertexCount-=vertexEliminatedNumber;
   ++circularConstraintIterator;
 
   std::cout << "Match eliminated : " << matchEliminatedNumber << std::endl;

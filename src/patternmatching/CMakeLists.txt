@@ -69,6 +69,8 @@ set(PROJECT_CPP_SOURCES
         algorithms/multiple_label_tds_cpu.tpp
         algorithms/multiple_label_tds_strict_cpu.h
         algorithms/multiple_label_tds_strict_cpu.tpp
+        algorithms/multiple_label_tds_enumeration_cpu.h
+        algorithms/multiple_label_tds_enumeration_cpu.tpp
         algorithms/multiple_label_template_constraint.cc
         algorithms/multiple_label_template_constraint.h
         algorithms/multiple_label_template_edge.cc

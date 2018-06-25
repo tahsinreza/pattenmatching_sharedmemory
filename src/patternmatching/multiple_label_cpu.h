@@ -18,6 +18,7 @@
 #include "algorithms/multiple_label_tds_cpu.h"
 #include "algorithms/multiple_label_tds_backtrack_cpu.h"
 #include "algorithms/multiple_label_tds_strict_cpu.h"
+#include "algorithms/multiple_label_tds_enumeration_cpu.h"
 
 namespace patternmatching {
 
@@ -35,6 +36,7 @@ class MultipleLabelCpu {
   typedef MultipleLabelTdsCpu<StateType> TdsType;
   //typedef MultipleLabelTdsBacktrackCpu<StateType> TdsType;
   //typedef MultipleLabelTdsStrictCpu<StateType> TdsType;
+  typedef MultipleLabelTdsEnumerationCpu<StateType> EnumerationType;
   int runPatternMatching();
 
   error_t allocate(CmdLineOption &cmdLineOption);
@@ -63,6 +65,7 @@ class MultipleLabelCpu {
   CcType ccCpu;
   PcType pcCpu;
   TdsType tdsCpu;
+  EnumerationType enumerationCpu;
 };
 
 }

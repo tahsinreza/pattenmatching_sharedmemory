@@ -31,6 +31,7 @@ class Walk {
   void print(std::ostream &ostream = std::cout) const;
  public:
   size_t length;
+  size_t vertexLength;
   std::vector<MoveType> moveVector;
   std::vector<vid_t> vertexIndexVector;
   std::vector<size_t> moveBackIndexVector;

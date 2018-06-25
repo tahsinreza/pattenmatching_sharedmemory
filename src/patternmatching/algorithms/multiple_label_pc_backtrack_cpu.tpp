@@ -285,6 +285,7 @@ MultipleLabelPcBacktrackCpu<State>::compute(const graph_t &graph, State *globalS
   }
   ++pathConstraintIterator;
 
+  globalState->graphActiveVertexCount-=vertexEliminatedNumber;
   return vertexEliminatedNumber;
 }
 

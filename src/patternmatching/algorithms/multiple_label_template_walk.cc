@@ -9,7 +9,7 @@ namespace patternmatching {
 
 
 Walk::Walk()
-: length(0), moveVector(), vertexIndexVector(), moveBackIndexVector()
+: length(0), vertexLength(0), moveVector(), vertexIndexVector(), moveBackIndexVector()
 {
 }
 
@@ -32,15 +32,16 @@ void Walk::addVertex(const vid_t &vertexIndex) {
   vertexIndexVector.push_back(vertexIndex);
   moveBackIndexVector.push_back(0);
   ++length;
+  ++vertexLength;
 }
 
 void Walk::computeStoredVertex() {
   std::vector<vid_t> storedVertexId;
-  for (int i = 0; i < length; i++) {
+  for (size_t i = 0; i < length; i++) {
     if(moveVector[i]==E_VERTEX_NO_STORE) {
       bool isInRemainingVector=false;
-      for (int j = i+1; i < length; j++) {
-        if(vertexIndexVector[j]==vertexIndexVector[i]) {
+      for (size_t j = i+1; j < length; j++) {
+        if(vertexIndexVector[j]==vertexIndexVector[i] && moveVector[j]==E_CHECK) {
           isInRemainingVector=true;
           break;
         }

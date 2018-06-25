@@ -343,11 +343,16 @@ MultipleLabelTdsCpu<State>::compute(const graph_t &graph, State *globalState) {
                             &TemplateConstraint::print,
                             Logger::E_OUTPUT_FILE_LOG);
 
+  size_t stepCompleted=0;
+  size_t stepMax=globalState->graphActiveVertexCount;
+  size_t stepSize=1000;
+
   SourceTraversalMapType sourceTraversalMap;
   SourceTraversalEdgeMapType sourceTraversalEdgeMap;
   std::vector<vid_t> historyIndexVector;
   TraversalHypothesis traversalHypothesis;
 
+  std::cout << "vertex count : " << graph.vertex_count <<std::endl;
   #pragma omp parallel for private(sourceTraversalMap, sourceTraversalEdgeMap, historyIndexVector, traversalHypothesis)
   for (vid_t vertexId = 0; vertexId < graph.vertex_count; vertexId++) {
     if (!BaseClass::isVertexActive(*globalState, vertexId)) continue;
@@ -388,7 +393,17 @@ MultipleLabelTdsCpu<State>::compute(const graph_t &graph, State *globalState) {
     if (hasBeenModified) {
       BaseClass::makeModifiedVertex(globalState, vertexId);
     }
-  }
+
+    #pragma omp atomic
+    ++stepCompleted;
+
+    if(stepCompleted%stepSize==0) {
+      #pragma omp critical
+      {
+        std::cout << "Progression : " << stepCompleted << "/" << stepMax << std::endl;
+      }
+    }
+  };
 
   size_t vertexEliminatedNumber = 0;
 
@@ -404,8 +419,8 @@ MultipleLabelTdsCpu<State>::compute(const graph_t &graph, State *globalState) {
       if (!BaseClass::isMatch(*globalState, vertexId)) {
         /*std::stringstream ss;
         ss << "Removed Vertex : " << vertexId << std::endl;
-        Logger::get().log(Logger::E_LEVEL_DEBUG, ss.str());
-        BaseClass::deactivateVertex(globalState, vertexId);*/
+        Logger::get().log(Logger::E_LEVEL_DEBUG, ss.str());*/
+        BaseClass::deactivateVertex(globalState, vertexId);
         vertexEliminatedNumber += 1;
       }
       BaseClass::scheduleVertex(globalState, vertexId);
@@ -424,6 +439,7 @@ MultipleLabelTdsCpu<State>::compute(const graph_t &graph, State *globalState) {
     }
   }
 
+  globalState->graphActiveVertexCount-=vertexEliminatedNumber;
   return vertexEliminatedNumber;
 }
 

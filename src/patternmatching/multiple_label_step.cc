@@ -53,8 +53,7 @@ bool MultipleLabelStep::getNextStep(const size_t lastStepEliminatedVerticles,
         } else if (currentTdsConstraint < tdsConstraintNumber && 1) {
           setStepTds(nextStep, nextStepName);
         } else {
-          finished = true;
-          setStepEnd(nextStep, nextStepName);
+          setStepEnumeration(nextStep, nextStepName);
         }
       }
       break;
@@ -69,6 +68,10 @@ bool MultipleLabelStep::getNextStep(const size_t lastStepEliminatedVerticles,
     case E_TDS:
       currentTdsConstraint += 1;
       setStepLcc(nextStep, nextStepName);
+      break;
+    case E_ENUMERATION:
+      finished = true;
+      setStepEnd(nextStep, nextStepName);
       break;
     case E_END:
     default:break;
@@ -103,6 +106,11 @@ void MultipleLabelStep::setStepTds(Step *nextStep, std::string *nextStepName) {
   currentStep = E_TDS;
   *nextStep = E_TDS;
   *nextStepName = "TDS";
+}
+void MultipleLabelStep::setStepEnumeration(Step *nextStep, std::string *nextStepName) {
+  currentStep = E_ENUMERATION;
+  *nextStep = E_ENUMERATION;
+  *nextStepName = "ENUMERATION";
 }
 void MultipleLabelStep::setStepEnd(Step *nextStep, std::string *nextStepName) {
   currentStep = E_END;

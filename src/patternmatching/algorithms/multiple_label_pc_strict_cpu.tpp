@@ -283,6 +283,7 @@ MultipleLabelPcStrictCpu<State>::compute(const graph_t &graph, State *globalStat
   }
   ++pathConstraintIterator;
 
+  globalState->graphActiveVertexCount-=vertexEliminatedNumber;
   return vertexEliminatedNumber;
 }
 

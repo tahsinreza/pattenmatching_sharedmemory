@@ -22,7 +22,9 @@ error_t MultipleLabelGlobalState<VisitedType>::allocate(const vid_t _graphVertex
                                                         const eid_t _graphEdgeCount,
                                                         const vid_t _patternVertexCount) {
   graphVertexCount = _graphVertexCount;
+  graphActiveVertexCount = _graphVertexCount;
   graphEdgeCount = _graphEdgeCount;
+  graphActiveEdgeCount = _graphEdgeCount;
   patternVertexCount = _patternVertexCount;
 
   // Vertex and Edge active list

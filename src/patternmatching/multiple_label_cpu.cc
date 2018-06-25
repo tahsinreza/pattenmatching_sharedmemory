@@ -144,6 +144,12 @@ error_t MultipleLabelCpu::allocate(CmdLineOption &cmdLineOption) {
   Logger::get().logFunction(Logger::E_LEVEL_INFO, tdsCpu, &TdsType::printTemplateConstraint, Logger::E_OUTPUT_FILE_LOG);
   Logger::get().logFunction(Logger::E_LEVEL_DEBUG, tdsCpu, &TdsType::printTemplateConstraint, Logger::E_OUTPUT_COUT);
 
+  Logger::get().log(Logger::E_LEVEL_INFO, "Initialize Enumeration");
+  enumerationCpu.init(*graph, *pattern);
+  enumerationCpu.preprocessPatern(*pattern);
+  Logger::get().logFunction(Logger::E_LEVEL_INFO, enumerationCpu, &EnumerationType::printTemplateConstraint, Logger::E_OUTPUT_FILE_LOG);
+  Logger::get().logFunction(Logger::E_LEVEL_DEBUG, enumerationCpu, &EnumerationType::printTemplateConstraint, Logger::E_OUTPUT_COUT);
+
   Logger::get().log(Logger::E_LEVEL_INFO, "Initialize STEPS");
   algorithmStep.initStepCc(ccCpu.getCircularConstraintNumber());
   algorithmStep.initStepPc(pcCpu.getPathConstraintNumber());
@@ -205,6 +211,9 @@ int MultipleLabelCpu::runPatternMatching() {
         break;
       case MultipleLabelStep::E_TDS :
         currentStepVertexEliminated = tdsCpu.compute(*graph, &patternmatchingState);
+        break;
+      case MultipleLabelStep::E_ENUMERATION :
+        currentStepVertexEliminated = enumerationCpu.compute(*graph, &patternmatchingState);
         break;
       default:break;
     }

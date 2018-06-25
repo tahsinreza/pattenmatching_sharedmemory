@@ -6,6 +6,10 @@
 
 namespace patternmatching {
 
+TemplateConstraint::TemplateConstraint()
+    : templateConstraintOrigin(E_EMPTY), length(0) {
+}
+
 TemplateConstraint::TemplateConstraint(const MultipleLabelCircularConstraint &circularConstraint)
     : templateConstraintOrigin(E_CC) {
   length = circularConstraint.length;
@@ -66,16 +70,17 @@ TemplateConstraint::TemplateConstraint(const TemplateConstraint &templateConstra
 
 TemplateConstraint::TemplateConstraint(const graph_t &pattern) {
   templateConstraintOrigin = E_TDS_FULL;
-/*
-  length = templateConstraint1.length;
-  vertexIndexGraph = templateConstraint1.vertexIndexGraph;
 
-  for (const auto &it : templateConstraint2.vertexIndexGraph) {
-    if (vertexIndexGraph.count(it.first) == 0) ++length;
-    for (const auto &subit : it.second) {
-      vertexIndexGraph[it.first].insert(subit);
+  length = pattern.vertex_count;
+  for (vid_t vertexId = 0; vertexId < pattern.vertex_count; vertexId++) {
+    for (eid_t neighborEdgeId = pattern.vertices[vertexId];
+         neighborEdgeId < pattern.vertices[vertexId + 1];
+         neighborEdgeId++) {
+      vid_t neighborVertexId = pattern.edges[neighborEdgeId];
+      vertexIndexGraph[vertexId].insert(neighborVertexId);
+      vertexIndexGraph[neighborVertexId].insert(vertexId);
     }
-  }*/
+  }
 }
 
 size_t TemplateConstraint::historyFindIndex(const std::vector<vid_t> &historyIndex,
@@ -104,7 +109,7 @@ void TemplateConstraint::generateWalk(Walk &walk,
                                       std::vector<UndirectedEdge> &historyEdgeIndex,
                                       const vid_t &currentVertexIndex) const {
   bool first = true;
-  auto currentWalkIndex = walk.length - 1;
+  auto currentWalkIndex = walk.vertexLength - 1;
   for (const auto &neighborVertex : vertexIndexGraph.at(currentVertexIndex)) {
     auto previousIndex = historyFindIndex(historyVertexIndex, neighborVertex);
     if (previousIndex != historyVertexIndex.size()) {
@@ -112,19 +117,21 @@ void TemplateConstraint::generateWalk(Walk &walk,
 
       if (!first) {
         walk.addMoveBack(currentVertexIndex, currentWalkIndex);
+        first = true;
       }
       historyEdgeIndex.emplace_back(currentVertexIndex, neighborVertex);
       walk.addCheck(neighborVertex, previousIndex);
     } else {
       if (!first) {
         walk.addMoveBack(currentVertexIndex, currentWalkIndex);
+        first = true;
       }
       historyEdgeIndex.emplace_back(currentVertexIndex, neighborVertex);
       historyVertexIndex.push_back(neighborVertex);
       walk.addVertex(neighborVertex);
       generateWalk(walk, historyVertexIndex, historyEdgeIndex, neighborVertex);
+      first = false;
     }
-    first = false;
   }
 }
 

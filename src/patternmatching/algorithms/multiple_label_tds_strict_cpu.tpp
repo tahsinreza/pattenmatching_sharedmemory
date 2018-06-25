@@ -313,6 +313,10 @@ MultipleLabelTdsStrictCpu<State>::compute(const graph_t &graph, State *globalSta
                             &TemplateConstraint::print,
                             Logger::E_OUTPUT_FILE_LOG);
 
+  size_t stepCompleted=0;
+  size_t stepMax=globalState->graphActiveVertexCount;
+  size_t stepSize=1000;
+
   std::vector<vid_t> historyIndexVector;
 
   #pragma omp parallel for private(historyIndexVector)
@@ -348,6 +352,16 @@ MultipleLabelTdsStrictCpu<State>::compute(const graph_t &graph, State *globalSta
 
     if (hasBeenModified) {
       BaseClass::makeModifiedVertex(globalState, vertexId);
+    }
+
+    #pragma omp atomic
+    ++stepCompleted;
+
+    if(stepCompleted%stepSize==0) {
+      #pragma omp critical
+      {
+        std::cout << "Progression : " << stepCompleted << "/" << stepMax << std::endl;
+      }
     }
   }
 
@@ -385,6 +399,7 @@ MultipleLabelTdsStrictCpu<State>::compute(const graph_t &graph, State *globalSta
     }
   }
 
+  globalState->graphActiveVertexCount-=vertexEliminatedNumber;
   return vertexEliminatedNumber;
 }
 
