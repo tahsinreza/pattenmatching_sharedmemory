@@ -2,8 +2,8 @@
 // Created by qiu on 17/05/18.
 //
 
-#ifndef TOTEM_MULTIPLE_LABEL_TDS_CPU_H
-#define TOTEM_MULTIPLE_LABEL_TDS_CPU_H
+#ifndef TOTEM_MULTIPLE_LABEL_TDS_BACKTRACK_CPU_H
+#define TOTEM_MULTIPLE_LABEL_TDS_BACKTRACK_CPU_H
 
 #include "multiple_label_common_cpu.h"
 #include "multiple_label_template_constraint.h"
@@ -17,12 +17,11 @@
 namespace patternmatching {
 
 template<class State>
-class MultipleLabelTdsCpu : public MultipleLabelCpuBase<State> {
+class MultipleLabelTdsBacktrackCpu : public MultipleLabelCpuBase<State> {
  protected:
   typedef MultipleLabelCpuBase<State> BaseClass;
   using TraversalHypothesis = std::vector< vid_t >;
   using SourceTraversalMapType = std::unordered_map< vid_t, std::unordered_map<pvid_t, std::vector<TraversalHypothesis > > >;
-  using SourceTraversalEdgeMapType = std::unordered_map<std::pair<vid_t, vid_t>, FixedBitmapType, PairHash>;
  public:
   void init(const graph_t &graph, const graph_t &pattern);
 
@@ -52,7 +51,6 @@ class MultipleLabelTdsCpu : public MultipleLabelCpuBase<State> {
       State *globalState,
       const Walk &walk,
       SourceTraversalMapType &sourceTraversalMap,
-      SourceTraversalEdgeMapType &sourceTraversalEdgeMap,
       std::vector<vid_t> &historyIndexVector,
       TraversalHypothesis &traversalHypothesis,
       const vid_t &sourceVertexId,
@@ -68,6 +66,6 @@ class MultipleLabelTdsCpu : public MultipleLabelCpuBase<State> {
 
 }
 
-#include "multiple_label_tds_cpu.tpp"
+#include "multiple_label_tds_backtrack_cpu.tpp"
 
 #endif //TOTEM_MULTIPLE_LABEL_TDS_CPU_H

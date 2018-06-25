@@ -2,19 +2,19 @@
 // Created by qiu on 17/05/18.
 //
 #include "totem_util.h"
-#include "multiple_label_pc_cpu.h"
+#include "multiple_label_pc_backtrack_cpu.h"
 #include <iostream>
 #include "utils.h"
 
 namespace patternmatching {
 
 template<class State>
-void MultipleLabelPcCpu<State>::init(const graph_t &graph, const graph_t &pattern) {
+void MultipleLabelPcBacktrackCpu<State>::init(const graph_t &graph, const graph_t &pattern) {
   patternTraversalVector.resize(pattern.vertex_count);
 }
 
 template<class State>
-bool MultipleLabelPcCpu<State>::isInConstraintVector(const PathConstraint &constraint) const {
+bool MultipleLabelPcBacktrackCpu<State>::isInConstraintVector(const PathConstraint &constraint) const {
   for (const auto &it : pathConstraintVector) {
     if (it == constraint) return true;
   }
@@ -22,7 +22,7 @@ bool MultipleLabelPcCpu<State>::isInConstraintVector(const PathConstraint &const
 }
 
 template<class State>
-__host__ void MultipleLabelPcCpu<State>::buildConstraintList(
+__host__ void MultipleLabelPcBacktrackCpu<State>::buildConstraintList(
     const graph_t &pattern,
     const vid_t &sourceVertexId,
     const vid_t &currentVertexId,
@@ -72,7 +72,7 @@ __host__ void MultipleLabelPcCpu<State>::buildConstraintList(
 
 template<class State>
 __host__ error_t
-MultipleLabelPcCpu<State>::preprocessPatern(const graph_t &pattern) {
+MultipleLabelPcBacktrackCpu<State>::preprocessPatern(const graph_t &pattern) {
   // for loop
   std::vector<vid_t> historyVertexId;
   std::vector<weight_t> historyVertexLabel;
@@ -103,7 +103,7 @@ MultipleLabelPcCpu<State>::preprocessPatern(const graph_t &pattern) {
 }
 
 template<class State>
-__host__ void MultipleLabelPcCpu<State>::printPathConstraint(std::ostream &ostream) const {
+__host__ void MultipleLabelPcBacktrackCpu<State>::printPathConstraint(std::ostream &ostream) const {
   int currentConstraint = 0;
 
   ostream << "Constraint number =  " << pathConstraintVector.size() << ". " << std::endl;
@@ -115,18 +115,15 @@ __host__ void MultipleLabelPcCpu<State>::printPathConstraint(std::ostream &ostre
 }
 
 template<class State>
-bool MultipleLabelPcCpu<State>::checkConstraint(
+bool MultipleLabelPcBacktrackCpu<State>::checkConstraint(
     const graph_t &graph,
     State *globalState,
     const PathConstraint &currentConstraint,
     const bool &reverse,
-    sourceTraversalMapType &sourceTraversalMap,
+    std::unordered_map<vid_t, FixedBitmapType> &sourceTraversalMap,
     const vid_t &sourceVertexId,
     const vid_t &currentVertexId,
     const size_t &remainingLength) {
-
-  size_t currentPositionInConstraint = reverse ? remainingLength :
-                                    (currentConstraint.length - remainingLength-1);
 
   size_t nextPositionInConstraint = reverse ? remainingLength - 1 :
                                     (currentConstraint.length - remainingLength);
@@ -142,6 +139,10 @@ bool MultipleLabelPcCpu<State>::checkConstraint(
       const auto &nextConstraintVertexIndex = currentConstraint.vertexIndexVector[nextPositionInConstraint];
       if (globalState->vertexPatternMatch[neighborVertexId].find(nextConstraintVertexIndex)
           == globalState->vertexPatternMatch[neighborVertexId].end())
+        continue;
+
+      if (sourceTraversalMap.find(neighborVertexId) != sourceTraversalMap.end()
+          && sourceTraversalMap[neighborVertexId].isIn(nextConstraintVertexIndex))
         continue;
 
       if (sourceVertexId != neighborVertexId) {
@@ -161,16 +162,11 @@ bool MultipleLabelPcCpu<State>::checkConstraint(
       if (!globalState->vertexPatternMatch[neighborVertexId].isIn(nextConstraintVertexIndex))
         continue;
 
-
-      const auto &edge = (currentVertexId>neighborVertexId) ? std::make_pair(currentVertexId,neighborVertexId)
-                                                            : std::make_pair(neighborVertexId,currentVertexId);
-
-      if (sourceTraversalMap.find(edge)!=sourceTraversalMap.end()
-          && sourceTraversalMap[edge].isIn(currentPositionInConstraint))  {
+      if (sourceTraversalMap.find(neighborVertexId) != sourceTraversalMap.end()
+          && sourceTraversalMap[neighborVertexId].isIn(nextConstraintVertexIndex))
         continue;
-      }
 
-      sourceTraversalMap[edge].insert(nextConstraintVertexIndex);
+      sourceTraversalMap[neighborVertexId].insert(nextConstraintVertexIndex);
       if (checkConstraint(graph, globalState, currentConstraint, reverse, sourceTraversalMap, sourceVertexId,
                           neighborVertexId, remainingLength - 1)) {
         return true;
@@ -181,13 +177,13 @@ bool MultipleLabelPcCpu<State>::checkConstraint(
 }
 
 template<class State>
-__host__ void MultipleLabelPcCpu<State>::resetState(State *globalState) {
+__host__ void MultipleLabelPcBacktrackCpu<State>::resetState(State *globalState) {
   globalState->resetModifiedList();
 }
 
 template<class State>
 __host__ size_t
-MultipleLabelPcCpu<State>::compute(const graph_t &graph, State *globalState) {
+MultipleLabelPcBacktrackCpu<State>::compute(const graph_t &graph, State *globalState) {
   //resetState(globalState);
 
   const auto &currentConstraint = *pathConstraintIterator;
@@ -198,7 +194,7 @@ MultipleLabelPcCpu<State>::compute(const graph_t &graph, State *globalState) {
                             &PathConstraint::print,
                             Logger::E_OUTPUT_FILE_LOG);
 
-  sourceTraversalMapType sourceTraversalMap;
+  std::unordered_map<vid_t, FixedBitmapType> sourceTraversalMap;
 
   #pragma omp parallel for private(sourceTraversalMap)
   for (vid_t vertexId = 0; vertexId < graph.vertex_count; vertexId++) {
@@ -293,12 +289,12 @@ MultipleLabelPcCpu<State>::compute(const graph_t &graph, State *globalState) {
 }
 
 template<class State>
-int MultipleLabelPcCpu<State>::getPathConstraintNumber() const {
+int MultipleLabelPcBacktrackCpu<State>::getPathConstraintNumber() const {
   return pathConstraintVector.size();
 }
 
 template<class State>
-const std::vector<PathConstraint> &MultipleLabelPcCpu<State>::getPathConstraintVector() const {
+const std::vector<PathConstraint> &MultipleLabelPcBacktrackCpu<State>::getPathConstraintVector() const {
   return pathConstraintVector;
 }
 

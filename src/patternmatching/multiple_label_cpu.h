@@ -13,7 +13,11 @@
 #include "algorithms/multiple_label_cc_backtrack_cpu.h"
 #include "algorithms/multiple_label_cc_strict_cpu.h"
 #include "algorithms/multiple_label_pc_cpu.h"
+#include "algorithms/multiple_label_pc_backtrack_cpu.h"
+#include "algorithms/multiple_label_pc_strict_cpu.h"
 #include "algorithms/multiple_label_tds_cpu.h"
+#include "algorithms/multiple_label_tds_backtrack_cpu.h"
+#include "algorithms/multiple_label_tds_strict_cpu.h"
 
 namespace patternmatching {
 
@@ -26,7 +30,11 @@ class MultipleLabelCpu {
   //typedef MultipleLabelCcStrictCpu<StateType> CcType;
   typedef MultipleLabelCcCpu<StateType> CcType;
   typedef MultipleLabelPcCpu<StateType> PcType;
+  //typedef MultipleLabelPcBacktrackCpu<StateType> PcType;
+  //typedef MultipleLabelPcStrictCpu<StateType> PcType;
   typedef MultipleLabelTdsCpu<StateType> TdsType;
+  //typedef MultipleLabelTdsBacktrackCpu<StateType> TdsType;
+  //typedef MultipleLabelTdsStrictCpu<StateType> TdsType;
   int runPatternMatching();
 
   error_t allocate(CmdLineOption &cmdLineOption);

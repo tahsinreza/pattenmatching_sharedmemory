@@ -2,19 +2,19 @@
 // Created by qiu on 17/05/18.
 //
 #include "totem_util.h"
-#include "multiple_label_pc_cpu.h"
+#include "multiple_label_pc_strict_cpu.h"
 #include <iostream>
 #include "utils.h"
 
 namespace patternmatching {
 
 template<class State>
-void MultipleLabelPcCpu<State>::init(const graph_t &graph, const graph_t &pattern) {
+void MultipleLabelPcStrictCpu<State>::init(const graph_t &graph, const graph_t &pattern) {
   patternTraversalVector.resize(pattern.vertex_count);
 }
 
 template<class State>
-bool MultipleLabelPcCpu<State>::isInConstraintVector(const PathConstraint &constraint) const {
+bool MultipleLabelPcStrictCpu<State>::isInConstraintVector(const PathConstraint &constraint) const {
   for (const auto &it : pathConstraintVector) {
     if (it == constraint) return true;
   }
@@ -22,7 +22,7 @@ bool MultipleLabelPcCpu<State>::isInConstraintVector(const PathConstraint &const
 }
 
 template<class State>
-__host__ void MultipleLabelPcCpu<State>::buildConstraintList(
+__host__ void MultipleLabelPcStrictCpu<State>::buildConstraintList(
     const graph_t &pattern,
     const vid_t &sourceVertexId,
     const vid_t &currentVertexId,
@@ -72,7 +72,7 @@ __host__ void MultipleLabelPcCpu<State>::buildConstraintList(
 
 template<class State>
 __host__ error_t
-MultipleLabelPcCpu<State>::preprocessPatern(const graph_t &pattern) {
+MultipleLabelPcStrictCpu<State>::preprocessPatern(const graph_t &pattern) {
   // for loop
   std::vector<vid_t> historyVertexId;
   std::vector<weight_t> historyVertexLabel;
@@ -103,7 +103,7 @@ MultipleLabelPcCpu<State>::preprocessPatern(const graph_t &pattern) {
 }
 
 template<class State>
-__host__ void MultipleLabelPcCpu<State>::printPathConstraint(std::ostream &ostream) const {
+__host__ void MultipleLabelPcStrictCpu<State>::printPathConstraint(std::ostream &ostream) const {
   int currentConstraint = 0;
 
   ostream << "Constraint number =  " << pathConstraintVector.size() << ". " << std::endl;
@@ -115,18 +115,15 @@ __host__ void MultipleLabelPcCpu<State>::printPathConstraint(std::ostream &ostre
 }
 
 template<class State>
-bool MultipleLabelPcCpu<State>::checkConstraint(
+bool MultipleLabelPcStrictCpu<State>::checkConstraint(
     const graph_t &graph,
     State *globalState,
     const PathConstraint &currentConstraint,
     const bool &reverse,
-    sourceTraversalMapType &sourceTraversalMap,
+    std::vector<vid_t> &historyIndexVector,
     const vid_t &sourceVertexId,
     const vid_t &currentVertexId,
     const size_t &remainingLength) {
-
-  size_t currentPositionInConstraint = reverse ? remainingLength :
-                                    (currentConstraint.length - remainingLength-1);
 
   size_t nextPositionInConstraint = reverse ? remainingLength - 1 :
                                     (currentConstraint.length - remainingLength);
@@ -143,6 +140,8 @@ bool MultipleLabelPcCpu<State>::checkConstraint(
       if (globalState->vertexPatternMatch[neighborVertexId].find(nextConstraintVertexIndex)
           == globalState->vertexPatternMatch[neighborVertexId].end())
         continue;
+
+      if(isInVector(historyIndexVector, neighborVertexId)) continue;
 
       if (sourceVertexId != neighborVertexId) {
         BaseClass::makeAlreadyMatchedAtomic(globalState, neighborVertexId, nextConstraintVertexIndex);
@@ -161,33 +160,27 @@ bool MultipleLabelPcCpu<State>::checkConstraint(
       if (!globalState->vertexPatternMatch[neighborVertexId].isIn(nextConstraintVertexIndex))
         continue;
 
+      if(isInVector(historyIndexVector, neighborVertexId)) continue;
 
-      const auto &edge = (currentVertexId>neighborVertexId) ? std::make_pair(currentVertexId,neighborVertexId)
-                                                            : std::make_pair(neighborVertexId,currentVertexId);
-
-      if (sourceTraversalMap.find(edge)!=sourceTraversalMap.end()
-          && sourceTraversalMap[edge].isIn(currentPositionInConstraint))  {
-        continue;
-      }
-
-      sourceTraversalMap[edge].insert(nextConstraintVertexIndex);
-      if (checkConstraint(graph, globalState, currentConstraint, reverse, sourceTraversalMap, sourceVertexId,
+      historyIndexVector.push_back(neighborVertexId);
+      if (checkConstraint(graph, globalState, currentConstraint, reverse, historyIndexVector, sourceVertexId,
                           neighborVertexId, remainingLength - 1)) {
         return true;
       }
+      historyIndexVector.pop_back();
     }
   }
   return false;
 }
 
 template<class State>
-__host__ void MultipleLabelPcCpu<State>::resetState(State *globalState) {
+__host__ void MultipleLabelPcStrictCpu<State>::resetState(State *globalState) {
   globalState->resetModifiedList();
 }
 
 template<class State>
 __host__ size_t
-MultipleLabelPcCpu<State>::compute(const graph_t &graph, State *globalState) {
+MultipleLabelPcStrictCpu<State>::compute(const graph_t &graph, State *globalState) {
   //resetState(globalState);
 
   const auto &currentConstraint = *pathConstraintIterator;
@@ -198,9 +191,9 @@ MultipleLabelPcCpu<State>::compute(const graph_t &graph, State *globalState) {
                             &PathConstraint::print,
                             Logger::E_OUTPUT_FILE_LOG);
 
-  sourceTraversalMapType sourceTraversalMap;
+  std::vector<vid_t> historyIndexVector;
 
-  #pragma omp parallel for private(sourceTraversalMap)
+  #pragma omp parallel for private(historyIndexVector)
   for (vid_t vertexId = 0; vertexId < graph.vertex_count; vertexId++) {
     if (!BaseClass::isVertexActive(*globalState, vertexId)) continue;
     weight_t vertexLabel = graph.values[vertexId];
@@ -208,18 +201,18 @@ MultipleLabelPcCpu<State>::compute(const graph_t &graph, State *globalState) {
 
     bool hasBeenModified = false;
 
-
     // Check first index
-    size_t constraintPatternIndex = currentConstraint.vertexIndexVector[0];
+    auto constraintPatternIndex = currentConstraint.vertexIndexVector[0];
     if (globalState->vertexPatternMatch[vertexId].isIn(constraintPatternIndex)) {
       if (!BaseClass::isAlreadyMatchedAtomic(*globalState, vertexId, constraintPatternIndex)) {
         // Check cycle
-        sourceTraversalMap.clear();
+        historyIndexVector.clear();
+        historyIndexVector.push_back(vertexId);
         if (!checkConstraint(graph,
                              globalState,
                              currentConstraint,
                              false,
-                             sourceTraversalMap,
+                             historyIndexVector,
                              vertexId,
                              vertexId,
                              currentConstraint.length - 1)) {
@@ -234,12 +227,13 @@ MultipleLabelPcCpu<State>::compute(const graph_t &graph, State *globalState) {
     if (globalState->vertexPatternMatch[vertexId].isIn(constraintPatternIndex)) {
       if (!BaseClass::isAlreadyMatchedAtomic(*globalState, vertexId, constraintPatternIndex)) {
         // Check cycle
-        sourceTraversalMap.clear();
+        historyIndexVector.clear();
+        historyIndexVector.push_back(vertexId);
         if (!checkConstraint(graph,
                              globalState,
                              currentConstraint,
                              true,
-                             sourceTraversalMap,
+                             historyIndexVector,
                              vertexId,
                              vertexId,
                              currentConstraint.length - 1)) {
@@ -293,12 +287,12 @@ MultipleLabelPcCpu<State>::compute(const graph_t &graph, State *globalState) {
 }
 
 template<class State>
-int MultipleLabelPcCpu<State>::getPathConstraintNumber() const {
+int MultipleLabelPcStrictCpu<State>::getPathConstraintNumber() const {
   return pathConstraintVector.size();
 }
 
 template<class State>
-const std::vector<PathConstraint> &MultipleLabelPcCpu<State>::getPathConstraintVector() const {
+const std::vector<PathConstraint> &MultipleLabelPcStrictCpu<State>::getPathConstraintVector() const {
   return pathConstraintVector;
 }
 

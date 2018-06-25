@@ -2,7 +2,7 @@
 // Created by qiu on 17/05/18.
 //
 #include "totem_util.h"
-#include "multiple_label_tds_cpu.h"
+#include "multiple_label_tds_strict_cpu.h"
 #include "multiple_label_template_constraint.h"
 #include <iostream>
 #include <deque>
@@ -11,12 +11,12 @@
 namespace patternmatching {
 
 template<class State>
-void MultipleLabelTdsCpu<State>::init(const graph_t &graph, const graph_t &pattern) {
+void MultipleLabelTdsStrictCpu<State>::init(const graph_t &graph, const graph_t &pattern) {
   patternTraversalVector.resize(pattern.vertex_count);
 }
 
 template<class State>
-bool MultipleLabelTdsCpu<State>::isInConstraintVector(const TemplateConstraint &constraint) const {
+bool MultipleLabelTdsStrictCpu<State>::isInConstraintVector(const TemplateConstraint &constraint) const {
   for (const auto &it : templateConstraintVector) {
     if (it == constraint) return true;
   }
@@ -24,7 +24,7 @@ bool MultipleLabelTdsCpu<State>::isInConstraintVector(const TemplateConstraint &
 }
 
 template<class State>
-bool MultipleLabelTdsCpu<State>::haveCommonVector(const TemplateConstraint &constraint1,
+bool MultipleLabelTdsStrictCpu<State>::haveCommonVector(const TemplateConstraint &constraint1,
                                                   const TemplateConstraint &constraint2) const {
   for (const auto &it : constraint1.vertexIndexGraph) {
     if (constraint2.vertexIndexGraph.count(it.first) > 0) {
@@ -35,7 +35,7 @@ bool MultipleLabelTdsCpu<State>::haveCommonVector(const TemplateConstraint &cons
 }
 
 template<class State>
-bool MultipleLabelTdsCpu<State>::haveCommonEdge(const TemplateConstraint &constraint1,
+bool MultipleLabelTdsStrictCpu<State>::haveCommonEdge(const TemplateConstraint &constraint1,
                                                 const TemplateConstraint &constraint2) const {
   for (const auto &it : constraint1.vertexIndexGraph) {
     if (constraint2.vertexIndexGraph.count(it.first) > 0) {
@@ -53,7 +53,7 @@ bool MultipleLabelTdsCpu<State>::haveCommonEdge(const TemplateConstraint &constr
 
 template<class State>
 __host__ void
-MultipleLabelTdsCpu<State>::preprocessCircularConstraint(
+MultipleLabelTdsStrictCpu<State>::preprocessCircularConstraint(
     const std::vector<MultipleLabelCircularConstraint> &circularConstraintVector) {
 
   std::deque<TemplateConstraint> templateConstraintList;
@@ -93,7 +93,7 @@ MultipleLabelTdsCpu<State>::preprocessCircularConstraint(
 
 template<class State>
 __host__ void
-MultipleLabelTdsCpu<State>::preprocessPathConstraint(
+MultipleLabelTdsStrictCpu<State>::preprocessPathConstraint(
     const std::vector<PathConstraint> &pathConstraintVector) {
 
   std::unordered_map<weight_t, std::deque<TemplateConstraint> > templateConstraintListLabelMap;
@@ -138,7 +138,7 @@ MultipleLabelTdsCpu<State>::preprocessPathConstraint(
 
 template<class State>
 __host__ void
-MultipleLabelTdsCpu<State>::preprocessSubtemplateConstraint() {
+MultipleLabelTdsStrictCpu<State>::preprocessSubtemplateConstraint() {
 
   std::deque<TemplateConstraint> templateConstraintList;
 
@@ -178,7 +178,7 @@ MultipleLabelTdsCpu<State>::preprocessSubtemplateConstraint() {
 
 template<class State>
 __host__ error_t
-MultipleLabelTdsCpu<State>::preprocessPatern(
+MultipleLabelTdsStrictCpu<State>::preprocessPatern(
     const graph_t &pattern,
     const std::vector<MultipleLabelCircularConstraint> &circularConstraintVector,
     const std::vector<PathConstraint> &pathConstraintVector) {
@@ -196,7 +196,7 @@ MultipleLabelTdsCpu<State>::preprocessPatern(
 }
 
 template<class State>
-__host__ void MultipleLabelTdsCpu<State>::printTemplateConstraint(std::ostream &ostream) const {
+__host__ void MultipleLabelTdsStrictCpu<State>::printTemplateConstraint(std::ostream &ostream) const {
   int currentConstraint = 0;
 
   ostream << "Constraint number =  " << templateConstraintVector.size() << ". " << std::endl;
@@ -208,27 +208,28 @@ __host__ void MultipleLabelTdsCpu<State>::printTemplateConstraint(std::ostream &
   }
 }
 
+#define DEBUG_VID 19
+
 template<class State>
-bool MultipleLabelTdsCpu<State>::checkConstraint(
+bool MultipleLabelTdsStrictCpu<State>::checkConstraint(
     const graph_t &graph,
     State *globalState,
     const Walk &walk,
-    SourceTraversalMapType &sourceTraversalMap,
-    SourceTraversalEdgeMapType &sourceTraversalEdgeMap,
     std::vector<vid_t> &historyIndexVector,
-    TraversalHypothesis &traversalHypothesis,
     const vid_t &sourceVertexId,
     const vid_t &currentVertexId,
     const size_t &currentPositionInConstraint) {
 
   // Close the recursion
-  if (currentPositionInConstraint == walk.length) return true;
+  if (currentPositionInConstraint == walk.length) {
+    return true;
+  }
 
   auto currentWalkMove = walk.moveVector[currentPositionInConstraint];
 
   if (currentWalkMove == Walk::E_VERTEX_NO_STORE || currentWalkMove == Walk::E_VERTEX_STORE) {
-    auto currentWalkVertexIndex = walk.vertexIndexVector[currentPositionInConstraint-1];
     auto nextWalkVertexIndex = walk.vertexIndexVector[currentPositionInConstraint];
+
     for (eid_t neighborEdgeId = graph.vertices[currentVertexId]; neighborEdgeId < graph.vertices[currentVertexId + 1];
          neighborEdgeId++) {
       if (!BaseClass::isEdgeActive(*globalState, neighborEdgeId)) continue;
@@ -238,35 +239,13 @@ bool MultipleLabelTdsCpu<State>::checkConstraint(
       if (!globalState->vertexPatternMatch[neighborVertexId].isIn(nextWalkVertexIndex))
         continue;
 
-      //if (isInVector(historyIndexVector, neighborVertexId)) continue;
+      if (isInVector(historyIndexVector, neighborVertexId)) continue;
 
-      const auto &edge = (currentVertexId>neighborVertexId) ? std::make_pair(currentVertexId,neighborVertexId)
-                                                            : std::make_pair(neighborVertexId,currentVertexId);
-
-      if (sourceTraversalEdgeMap.find(edge)!=sourceTraversalEdgeMap.end()
-          && sourceTraversalEdgeMap[edge].isIn(currentWalkVertexIndex))  {
-        continue;
-      }
-
-      if (sourceTraversalMap.find(neighborVertexId) != sourceTraversalMap.end()
-          && sourceTraversalMap[neighborVertexId].find(nextWalkVertexIndex) != sourceTraversalMap[neighborVertexId].end()
-          && isInVector(sourceTraversalMap[neighborVertexId][nextWalkVertexIndex], traversalHypothesis))
-        continue;
-
-      if(currentWalkMove == Walk::E_VERTEX_STORE) {
-        traversalHypothesis.push_back(neighborVertexId);
-      }
-
-      sourceTraversalMap[neighborVertexId][nextWalkVertexIndex].push_back(traversalHypothesis);
       historyIndexVector.push_back(neighborVertexId);
-      sourceTraversalEdgeMap[edge].insert(nextWalkVertexIndex);
       if (checkConstraint(graph,
                           globalState,
                           walk,
-                          sourceTraversalMap,
-                          sourceTraversalEdgeMap,
                           historyIndexVector,
-                          traversalHypothesis,
                           sourceVertexId,
                           neighborVertexId,
                           currentPositionInConstraint + 1)) {
@@ -275,9 +254,6 @@ bool MultipleLabelTdsCpu<State>::checkConstraint(
       }
       historyIndexVector.pop_back();
 
-      if(currentWalkMove == Walk::E_VERTEX_STORE) {
-        traversalHypothesis.pop_back();
-      }
     }
   } else if (currentWalkMove == Walk::E_CHECK) {
     auto nextWalkMoveBackIndex = walk.moveBackIndexVector[currentPositionInConstraint];
@@ -294,10 +270,7 @@ bool MultipleLabelTdsCpu<State>::checkConstraint(
       if (checkConstraint(graph,
                           globalState,
                           walk,
-                          sourceTraversalMap,
-                          sourceTraversalEdgeMap,
                           historyIndexVector,
-                          traversalHypothesis,
                           sourceVertexId,
                           currentVertexId,
                           currentPositionInConstraint + 1)) {
@@ -311,10 +284,7 @@ bool MultipleLabelTdsCpu<State>::checkConstraint(
     if (checkConstraint(graph,
                         globalState,
                         walk,
-                        sourceTraversalMap,
-                        sourceTraversalEdgeMap,
                         historyIndexVector,
-                        traversalHypothesis,
                         sourceVertexId,
                         historyIndexVector[nextWalkMoveBackIndex],
                         currentPositionInConstraint + 1)) {
@@ -325,13 +295,13 @@ bool MultipleLabelTdsCpu<State>::checkConstraint(
 }
 
 template<class State>
-__host__ void MultipleLabelTdsCpu<State>::resetState(State *globalState) {
+__host__ void MultipleLabelTdsStrictCpu<State>::resetState(State *globalState) {
   globalState->resetModifiedList();
 }
 
 template<class State>
 __host__ size_t
-MultipleLabelTdsCpu<State>::compute(const graph_t &graph, State *globalState) {
+MultipleLabelTdsStrictCpu<State>::compute(const graph_t &graph, State *globalState) {
   //resetState(globalState);
   Logger::get().log(Logger::E_LEVEL_DEBUG, "TDS Start : ", Logger::E_OUTPUT_DEBUG);
 
@@ -343,12 +313,9 @@ MultipleLabelTdsCpu<State>::compute(const graph_t &graph, State *globalState) {
                             &TemplateConstraint::print,
                             Logger::E_OUTPUT_FILE_LOG);
 
-  SourceTraversalMapType sourceTraversalMap;
-  SourceTraversalEdgeMapType sourceTraversalEdgeMap;
   std::vector<vid_t> historyIndexVector;
-  TraversalHypothesis traversalHypothesis;
 
-  #pragma omp parallel for private(sourceTraversalMap, sourceTraversalEdgeMap, historyIndexVector, traversalHypothesis)
+  #pragma omp parallel for private(historyIndexVector)
   for (vid_t vertexId = 0; vertexId < graph.vertex_count; vertexId++) {
     if (!BaseClass::isVertexActive(*globalState, vertexId)) continue;
 
@@ -363,18 +330,12 @@ MultipleLabelTdsCpu<State>::compute(const graph_t &graph, State *globalState) {
         if (!BaseClass::isAlreadyMatchedAtomic(*globalState, vertexId, (*it).first)) {
 
           // Check cycle
-          sourceTraversalMap.clear();
-          sourceTraversalEdgeMap.clear();
           historyIndexVector.clear();
           historyIndexVector.push_back(vertexId);
-          traversalHypothesis.clear();
           if (!checkConstraint(graph,
                                globalState,
                                (*it).second,
-                               sourceTraversalMap,
-                               sourceTraversalEdgeMap,
                                historyIndexVector,
-                               traversalHypothesis,
                                vertexId,
                                vertexId,
                                1)) {
@@ -404,8 +365,8 @@ MultipleLabelTdsCpu<State>::compute(const graph_t &graph, State *globalState) {
       if (!BaseClass::isMatch(*globalState, vertexId)) {
         /*std::stringstream ss;
         ss << "Removed Vertex : " << vertexId << std::endl;
-        Logger::get().log(Logger::E_LEVEL_DEBUG, ss.str());
-        BaseClass::deactivateVertex(globalState, vertexId);*/
+        Logger::get().log(Logger::E_LEVEL_DEBUG, ss.str());*/
+        BaseClass::deactivateVertex(globalState, vertexId);
         vertexEliminatedNumber += 1;
       }
       BaseClass::scheduleVertex(globalState, vertexId);
@@ -428,7 +389,7 @@ MultipleLabelTdsCpu<State>::compute(const graph_t &graph, State *globalState) {
 }
 
 template<class State>
-int MultipleLabelTdsCpu<State>::getTemplateConstraintNumber() const {
+int MultipleLabelTdsStrictCpu<State>::getTemplateConstraintNumber() const {
   return templateConstraintVector.size();
 }
 

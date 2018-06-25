@@ -2,8 +2,8 @@
 // Created by qiu on 17/05/18.
 //
 
-#ifndef TOTEM_MULTIPLE_LABEL_PC_CPU_H
-#define TOTEM_MULTIPLE_LABEL_PC_CPU_H
+#ifndef TOTEM_MULTIPLE_LABEL_PC_BACKTRACK_CPU_H
+#define TOTEM_MULTIPLE_LABEL_PC_BACKTRACK_CPU_H
 
 #include "multiple_label_common_cpu.h"
 #include "multiple_label_path_constraint.h"
@@ -15,10 +15,9 @@
 namespace patternmatching {
 
 template<class State>
-class MultipleLabelPcCpu : public MultipleLabelCpuBase<State> {
+class MultipleLabelPcBacktrackCpu : public MultipleLabelCpuBase<State> {
  protected:
   typedef MultipleLabelCpuBase<State> BaseClass;
-  using sourceTraversalMapType = std::unordered_map<std::pair<vid_t, vid_t>, FixedBitmapType, PairHash>;
  public:
   void init(const graph_t &graph, const graph_t &pattern);
 
@@ -50,7 +49,7 @@ class MultipleLabelPcCpu : public MultipleLabelCpuBase<State> {
       State *globalState,
       const PathConstraint &currentConstraint,
       const bool &reverse,
-      sourceTraversalMapType &sourceTraversalMap,
+      std::unordered_map<vid_t, FixedBitmapType> &sourceTraversalMap,
       const vid_t &sourceVertexId,
       const vid_t &currentVertexId,
       const size_t &remainingLength);
@@ -64,6 +63,6 @@ class MultipleLabelPcCpu : public MultipleLabelCpuBase<State> {
 
 }
 
-#include "multiple_label_pc_cpu.tpp"
+#include "multiple_label_pc_backtrack_cpu.tpp"
 
 #endif //TOTEM_MULTIPLE_LABEL_PC_CPU_H

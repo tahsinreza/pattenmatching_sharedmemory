@@ -39,7 +39,7 @@ void Walk::computeStoredVertex() {
   for (int i = 0; i < length; i++) {
     if(moveVector[i]==E_VERTEX_NO_STORE) {
       bool isInRemainingVector=false;
-      for (int j = i+1; i < length; i++) {
+      for (int j = i+1; i < length; j++) {
         if(vertexIndexVector[j]==vertexIndexVector[i]) {
           isInRemainingVector=true;
           break;
@@ -47,7 +47,7 @@ void Walk::computeStoredVertex() {
       }
       if(isInRemainingVector && !isInVector(storedVertexId, vertexIndexVector[i])) {
         moveVector[i]=E_VERTEX_STORE;
-        storedVertexId.push_back(moveVector[i]);
+        storedVertexId.push_back(vertexIndexVector[i]);
       }
     }
   }
@@ -58,7 +58,17 @@ void Walk::print(std::ostream &ostream) const {
   for (int i = 0; i < length; i++) {
     if (first) first = false;
     else ostream << " -> ";
-    ostream << "[" << moveVector[i] << "," << vertexIndexVector[i] << "," << moveBackIndexVector[i] << "]";
+    std::string move;
+    if(moveVector[i]==E_CHECK) {
+      move="CK";
+    } else if(moveVector[i]==E_MOVE_BACK) {
+      move="MB";
+    } else if(moveVector[i]==E_VERTEX_STORE) {
+      move="VS";
+    } else if(moveVector[i]==E_VERTEX_NO_STORE) {
+      move="VN";
+    }
+    ostream << "[" << move << "," << vertexIndexVector[i] << "," << moveBackIndexVector[i] << "]";
   }
   ostream << std::endl;
 }

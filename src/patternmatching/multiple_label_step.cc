@@ -46,11 +46,11 @@ bool MultipleLabelStep::getNextStep(const size_t lastStepEliminatedVerticles,
       if (lastStepEliminatedVerticles > 0) {
       } else {
         // Change to CC, PC, or end
-        if (currentCircularConstraint < circularConstraintNumber && 1) {
+        if (currentCircularConstraint < circularConstraintNumber && 0) {
           setStepCc(nextStep, nextStepName);
         } else if (currentPathConstraint < pathConstraintNumber && 0) {
           setStepPc(nextStep, nextStepName);
-        } else if (currentTdsConstraint < tdsConstraintNumber && 0) {
+        } else if (currentTdsConstraint < tdsConstraintNumber && 1) {
           setStepTds(nextStep, nextStepName);
         } else {
           finished = true;
