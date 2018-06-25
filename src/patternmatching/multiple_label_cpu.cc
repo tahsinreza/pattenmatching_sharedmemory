@@ -212,7 +212,7 @@ int MultipleLabelCpu::runPatternMatching() {
     currentStepTime = stopwatch_elapsed(&stopwatch);
     totalStepTime += currentStepTime;
 
-    logResults(currentIteration, true);
+    logResults(currentIteration, false);
 
     finished = algorithmStep.getNextStep(currentStepVertexEliminated, &currentStep, &currentStepName);
     currentIteration++;

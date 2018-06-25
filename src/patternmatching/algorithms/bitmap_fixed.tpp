@@ -1,4 +1,4 @@
-#include "bitmap.h"
+#include "bitmap_fixed.h"
 #include <bitset>
 
 namespace patternmatching {
@@ -166,81 +166,81 @@ size_t FixedBitmap<MaxSize>::getBitmapSubindex(const size_t &value) const {
 }
 
 template<size_t MaxSize, typename Type, bool Const>
-BitsetIterator<MaxSize, Type, Const>::BitsetIterator() : pFixedBitset(nullptr), index(MaxSize) {};
+FixedBitmapIterator<MaxSize, Type, Const>::FixedBitmapIterator() : pFixedBitset(nullptr), index(0) {};
 
 template<size_t MaxSize, typename Type, bool Const>
-BitsetIterator<MaxSize, Type, Const>::BitsetIterator(Type pFixedBitset_) : pFixedBitset(pFixedBitset_), index(0) {
+FixedBitmapIterator<MaxSize, Type, Const>::FixedBitmapIterator(Type pFixedBitset_) : pFixedBitset(pFixedBitset_), index(0) {
   while (index < MaxSize) {
     if (pFixedBitset->getBit(index) == 0) index++;
     else return;
   }
-  index = MaxSize;
+  index = 0;
   pFixedBitset = nullptr;
 };
 
 template<size_t MaxSize, typename Type, bool Const>
-BitsetIterator<MaxSize, Type, Const>::BitsetIterator(Type pFixedBitset_, size_t index_)
+FixedBitmapIterator<MaxSize, Type, Const>::FixedBitmapIterator(Type pFixedBitset_, size_t index_)
     : pFixedBitset(pFixedBitset_), index(index_) {
   while (index < MaxSize) {
     if (pFixedBitset->getBit(index) == 0) index++;
     else return;
   }
-  index = MaxSize;
+  index = 0;
   pFixedBitset = nullptr;
 };
 
 template<size_t MaxSize, typename Type, bool Const>
-BitsetIterator<MaxSize, Type, Const>::BitsetIterator(const BitsetIterator<MaxSize, Type, false> &other)
+FixedBitmapIterator<MaxSize, Type, Const>::FixedBitmapIterator(const FixedBitmapIterator<MaxSize, Type, false> &other)
     : pFixedBitset(other.pFixedBitset), index(other.index) {};
 
 template<size_t MaxSize, typename Type, bool Const>
-bool BitsetIterator<MaxSize, Type, Const>::operator==(const BitsetIterator &other) const {
+bool FixedBitmapIterator<MaxSize, Type, Const>::operator==(const FixedBitmapIterator &other) const {
   return (pFixedBitset == other.pFixedBitset) && (index == other.index);
 }
 
 template<size_t MaxSize, typename Type, bool Const>
-bool BitsetIterator<MaxSize, Type, Const>::operator!=(const BitsetIterator &other) const {
+bool FixedBitmapIterator<MaxSize, Type, Const>::operator!=(const FixedBitmapIterator &other) const {
   return (pFixedBitset != other.pFixedBitset) || (index != other.index);
 }
 
 template<size_t MaxSize, typename Type, bool Const>
-typename BitsetIterator<MaxSize, Type, Const>::reference BitsetIterator<MaxSize, Type, Const>::operator*() {
+typename FixedBitmapIterator<MaxSize, Type, Const>::reference FixedBitmapIterator<MaxSize, Type, Const>::operator*() {
   return index;
 }
 
 template<size_t MaxSize, typename Type, bool Const>
-BitsetIterator <MaxSize, Type, Const> &BitsetIterator<MaxSize, Type, Const>::operator--() {
+FixedBitmapIterator <MaxSize, Type, Const> &FixedBitmapIterator<MaxSize, Type, Const>::operator--() {
   do {
     index--;
     if (pFixedBitset->getBit(index)) return *this;
   } while (index > 0);
-  index = MaxSize;
+  index = 0;
   pFixedBitset = nullptr;
   return *this;
 }
 
 template<size_t MaxSize, typename Type, bool Const>
-BitsetIterator <MaxSize, Type, Const> BitsetIterator<MaxSize, Type, Const>::operator--(int) {
-  const BitsetIterator old(*this);
+FixedBitmapIterator <MaxSize, Type, Const> FixedBitmapIterator<MaxSize, Type, Const>::operator--(int) {
+  const FixedBitmapIterator old(*this);
   --(*this);
   return old;
 }
 
 template<size_t MaxSize, typename Type, bool Const>
-BitsetIterator <MaxSize, Type, Const> &BitsetIterator<MaxSize, Type, Const>::operator++() {
+FixedBitmapIterator <MaxSize, Type, Const> &FixedBitmapIterator<MaxSize, Type, Const>::operator++() {
   do {
     index++;
     if (pFixedBitset->getBit(index)) return *this;
   } while (index < MaxSize - 1);
-  index = MaxSize;
+  index = 0;
   pFixedBitset = nullptr;
   return *this;
 }
 
 template<size_t MaxSize, typename Type, bool Const>
-BitsetIterator <MaxSize, Type, Const> BitsetIterator<MaxSize, Type, Const>::operator++(int) {
+FixedBitmapIterator <MaxSize, Type, Const> FixedBitmapIterator<MaxSize, Type, Const>::operator++(int) {
   // Use operator++()
-  const BitsetIterator old(*this);
+  const FixedBitmapIterator old(*this);
   ++(*this);
   return old;
 }

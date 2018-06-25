@@ -2,7 +2,6 @@
 #ifndef TOTEM_MULTIPLE_LABEL_COMMON_CPU_H
 #define TOTEM_MULTIPLE_LABEL_COMMON_CPU_H
 
-
 #include "totem_comdef.h"
 #include "totem_graph.h"
 #include "totem_mem.h"
@@ -27,18 +26,18 @@ class MultipleLabelGlobalState {
  public:
   error_t allocate(const vid_t vertexCount, const eid_t edgeCount, const pvid_t patternVertexCount);
   error_t free();
+  void resetActiveList();
   void resetModifiedList();
-  void resetScheduledList(const bool &value=false);
-  void resetPatternMatchLcc();
-  void resetPatternMatchCc();
-  void resetPatternMatchPc();
-  void resetPatternMatchTds();
+  void resetScheduledList(const bool &value = false);
+  void resetPatternMatch();
+  void resetPatternAlreadyMatched();
+  void resetPatternToUnmatch();
+
+  MultipleLabelGlobalState &operator=(const MultipleLabelGlobalState &);
 
  public:
   vid_t graphVertexCount;
-  vid_t activeVertexCount;
   eid_t graphEdgeCount;
-  eid_t activeEdgeCount;
   pvid_t patternVertexCount;
 
   VisitedType *vertexActiveList;
@@ -48,14 +47,8 @@ class MultipleLabelGlobalState {
   VisitedType *edgeActiveList;
 
   BitmapType *vertexPatternMatch;
-
-  BitmapType *vertexPatternToUnmatchLcc;
-  BitmapType *vertexPatternToUnmatchCc;
-  BitmapType *vertexPatternMatchedCc;
-  uint8_t *vertexPatternOmittedCc;
-  BitmapType *vertexPatternToUnmatchPc;
-  BitmapType *vertexPatternToUnmatchTds;
-  uint8_t *vertexPatternOmittedTds;
+  BitmapType *vertexPatternAlreadyMatched;
+  BitmapType *vertexPatternToUnmatch;
 
 };
 typedef MultipleLabelGlobalState<uint32_t> MultipleLabelGlobalStateInt;
@@ -71,6 +64,7 @@ class MultipleLabelCpuBase {
   inline bool isVertexModified(const State &globalState, const vid_t vertexId) const;
 
   inline void scheduleVertex(State *globalState, const vid_t vertexId) const;
+  inline void unscheduleVertex(State *globalState, const vid_t vertexId) const;
   inline bool isVertexScheduled(const State &globalState, const vid_t vertexId) const;
 
   inline bool isEdgeActive(const State &globalState, const eid_t edgeId) const;
@@ -79,6 +73,15 @@ class MultipleLabelCpuBase {
 
   inline bool isMatch(const State &globalState, const vid_t vertexId) const;
   inline void removeMatch(State *globalState, const vid_t vertexId, const pvid_t patternVertexId) const;
+
+  inline bool isAlreadyMatchedAtomic(const State &globalState, const vid_t vertexId, const pvid_t patternVertexId) const;
+  inline void makeAlreadyMatchedAtomic(State *globalState, const vid_t vertexId, const pvid_t patternVertexId) const;
+  inline void removeAlreadyMatched(State *globalState, const vid_t vertexId, const pvid_t patternVertexId) const;
+  inline void clearAlreadyMatched(State *globalState, const vid_t vertexId) const;
+
+  inline void clearToUnmatch(State *globalState, const vid_t vertexId) const;
+  inline void makeToUnmatch(State *globalState, const vid_t vertexId, const pvid_t patternVertexId) const;
+  inline void removeToUnmatch(State *globalState, const vid_t vertexId, const pvid_t patternVertexId) const;
 
 };
 

@@ -22,74 +22,82 @@ error_t MultipleLabelGlobalState<VisitedType>::allocate(const vid_t _graphVertex
                                                         const eid_t _graphEdgeCount,
                                                         const vid_t _patternVertexCount) {
   graphVertexCount = _graphVertexCount;
-  activeVertexCount = _graphVertexCount;
   graphEdgeCount = _graphEdgeCount;
-  activeEdgeCount = _graphEdgeCount;
   patternVertexCount = _patternVertexCount;
 
-  // Temporary list of all possible pattern
-  std::vector<pvid_t> tmpPatternMatch;
-  for (pvid_t patternVertexId = 0; patternVertexId < patternVertexCount; patternVertexId++) {
-    tmpPatternMatch.push_back(patternVertexId);
-  }
-
-  // Vertex active list
-  totem_malloc(graphVertexCount * sizeof(VisitedType), TOTEM_MEM_HOST,
-               reinterpret_cast<void **>(&vertexActiveList));
-  assert(vertexActiveList != nullptr);
-  totem_memset(vertexActiveList, static_cast<VisitedType>(true), graphVertexCount, TOTEM_MEM_HOST);
+  // Vertex and Edge active list
+  vertexActiveList = new VisitedType[graphVertexCount];
+  edgeActiveList = new VisitedType[graphEdgeCount];
+  resetActiveList();
 
   // Vertex modified list
-  totem_malloc(graphVertexCount * sizeof(VisitedType), TOTEM_MEM_HOST,
-               reinterpret_cast<void **>(&vertexModifiedList));
-  assert(vertexModifiedList != nullptr);
+  vertexModifiedList = new VisitedType[graphVertexCount];
   resetModifiedList();
 
   // Vertex scheduled list
-  totem_malloc(graphVertexCount * sizeof(VisitedType), TOTEM_MEM_HOST,
-               reinterpret_cast<void **>(&vertexScheduledList));
-  assert(vertexScheduledList != nullptr);
+  vertexScheduledList = new VisitedType[graphVertexCount];
   resetScheduledList(true);
 
-  // Edge active list
-  totem_malloc(graphEdgeCount * sizeof(VisitedType), TOTEM_MEM_HOST,
-               reinterpret_cast<void **>(&edgeActiveList));
-  assert(edgeActiveList != nullptr);
-  totem_memset(edgeActiveList, static_cast<VisitedType>(true), graphEdgeCount, TOTEM_MEM_HOST);
 
   // Pattern match list
   vertexPatternMatch = new BitmapType[graphVertexCount];
+  resetPatternMatch();
 
-  for (vid_t vertexId = 0; vertexId < graphVertexCount; vertexId++) {
-    vertexPatternMatch[vertexId].insert(tmpPatternMatch.cbegin(), tmpPatternMatch.cend());
-  }
+  // Pattern matched list
+  vertexPatternAlreadyMatched = new BitmapType[graphVertexCount];
+  resetPatternAlreadyMatched();
 
-
-  // LCC
-  vertexPatternToUnmatchLcc = new BitmapType[graphVertexCount];
-  resetPatternMatchLcc();
-
-  // CC
-  vertexPatternToUnmatchCc = new BitmapType[graphVertexCount];
-  vertexPatternMatchedCc = new BitmapType[graphVertexCount];
-  totem_malloc(graphVertexCount * sizeof(uint8_t), TOTEM_MEM_HOST,
-               reinterpret_cast<void **>(&vertexPatternOmittedCc));
-  assert(vertexPatternOmittedCc != nullptr);
-  resetPatternMatchCc();
-
-  // PC
-  vertexPatternToUnmatchPc = new BitmapType[graphVertexCount];
-  resetPatternMatchPc();
-
-
-  // TDS
-  vertexPatternToUnmatchTds = new BitmapType[graphVertexCount];
-  totem_malloc(graphVertexCount * sizeof(uint8_t), TOTEM_MEM_HOST,
-               reinterpret_cast<void **>(&vertexPatternOmittedTds));
-  assert(vertexPatternOmittedTds != nullptr);
-  resetPatternMatchTds();
+  // To unmatch
+  vertexPatternToUnmatch = new BitmapType[graphVertexCount];
+  resetPatternToUnmatch();
 
   return SUCCESS;
+}
+
+template<typename VisitedType>
+error_t MultipleLabelGlobalState<VisitedType>::free() {
+  delete[] vertexActiveList;
+  delete[] edgeActiveList;
+  delete[] vertexModifiedList;
+  delete[] vertexScheduledList;
+  delete[] vertexPatternMatch;
+  delete[] vertexPatternAlreadyMatched;
+  delete[] vertexPatternToUnmatch;
+
+  graphVertexCount = 0;
+  graphEdgeCount = 0;
+  patternVertexCount = 0;
+
+  return SUCCESS;
+}
+
+template<typename VisitedType>
+MultipleLabelGlobalState <VisitedType> &MultipleLabelGlobalState<VisitedType>::operator=(const MultipleLabelGlobalState <VisitedType> &other) {
+  if (graphVertexCount != other.graphVertexCount
+      || graphEdgeCount != other.graphEdgeCount
+      || patternVertexCount != other.patternVertexCount) {
+    free();
+    allocate(other.graphVertexCount, other.graphEdgeCount, other.patternVertexCount);
+  }
+
+  for (vid_t vertexId = 0; vertexId < graphVertexCount; vertexId++) {
+    vertexActiveList[vertexId] = other.vertexActiveList[vertexId];
+    vertexModifiedList[vertexId] = other.vertexModifiedList[vertexId];
+    vertexScheduledList[vertexId] = other.vertexScheduledList[vertexId];
+    vertexPatternMatch[vertexId] = other.vertexPatternMatch[vertexId];
+    vertexPatternToUnmatch[vertexId] = other.vertexPatternToUnmatch[vertexId];
+  }
+  for (eid_t edgeId = 0; edgeId < graphEdgeCount; edgeId++) {
+    edgeActiveList[edgeId] = other.edgeActiveList[edgeId];
+  }
+
+  return *this;
+}
+
+template<typename VisitedType>
+void MultipleLabelGlobalState<VisitedType>::resetActiveList() {
+  totem_memset(vertexActiveList, static_cast<VisitedType>(true), graphVertexCount, TOTEM_MEM_HOST);
+  totem_memset(edgeActiveList, static_cast<VisitedType>(true), graphEdgeCount, TOTEM_MEM_HOST);
 }
 
 template<typename VisitedType>
@@ -103,52 +111,34 @@ void MultipleLabelGlobalState<VisitedType>::resetScheduledList(const bool &value
 }
 
 template<typename VisitedType>
-void MultipleLabelGlobalState<VisitedType>::resetPatternMatchLcc() {
-  #pragma omp parallel for schedule(static)
+void MultipleLabelGlobalState<VisitedType>::resetPatternMatch() {
+
+  // Temporary list of all possible pattern
+  std::vector<pvid_t> tmpPatternMatch;
+  for (pvid_t patternVertexId = 0; patternVertexId < patternVertexCount; patternVertexId++) {
+    tmpPatternMatch.push_back(patternVertexId);
+  }
+
   for (vid_t vertexId = 0; vertexId < graphVertexCount; vertexId++) {
-    vertexPatternToUnmatchLcc[vertexId].clear();
+    vertexPatternMatch[vertexId].insert(tmpPatternMatch.cbegin(), tmpPatternMatch.cend());
   }
 }
 
 template<typename VisitedType>
-void MultipleLabelGlobalState<VisitedType>::resetPatternMatchCc() {
+void MultipleLabelGlobalState<VisitedType>::resetPatternAlreadyMatched() {
   #pragma omp parallel for schedule(static)
   for (vid_t vertexId = 0; vertexId < graphVertexCount; vertexId++) {
-    vertexPatternToUnmatchCc[vertexId].clear();
-    vertexPatternMatchedCc[vertexId].clear();
-  }
-  totem_memset(vertexPatternOmittedCc, static_cast<uint8_t>(false), graphVertexCount, TOTEM_MEM_HOST);
-}
-
-template<typename VisitedType>
-void MultipleLabelGlobalState<VisitedType>::resetPatternMatchPc() {
-  #pragma omp parallel for schedule(static)
-  for (vid_t vertexId = 0; vertexId < graphVertexCount; vertexId++) {
-    vertexPatternToUnmatchPc[vertexId].clear();
+    vertexPatternAlreadyMatched[vertexId].clear();
   }
 }
 
+
 template<typename VisitedType>
-void MultipleLabelGlobalState<VisitedType>::resetPatternMatchTds() {
+void MultipleLabelGlobalState<VisitedType>::resetPatternToUnmatch() {
   #pragma omp parallel for schedule(static)
   for (vid_t vertexId = 0; vertexId < graphVertexCount; vertexId++) {
-    vertexPatternToUnmatchTds[vertexId].clear();
+    vertexPatternToUnmatch[vertexId].clear();
   }
-  totem_memset(vertexPatternOmittedTds, static_cast<uint8_t>(false), graphVertexCount, TOTEM_MEM_HOST);
-}
-
-template<typename VisitedType>
-error_t MultipleLabelGlobalState<VisitedType>::free() {
-  totem_free(reinterpret_cast<void *>(vertexActiveList), TOTEM_MEM_HOST);
-  totem_free(reinterpret_cast<void *>(edgeActiveList), TOTEM_MEM_HOST);
-  totem_free(reinterpret_cast<void *>(vertexPatternOmittedCc), TOTEM_MEM_HOST);
-  delete[] vertexPatternToUnmatchLcc;
-  delete[] vertexPatternToUnmatchCc;
-
-  graphVertexCount = 0;
-  activeVertexCount = 0;
-
-  return SUCCESS;
 }
 
 template<class State>
@@ -163,7 +153,6 @@ template<class State>
 void MultipleLabelCpuBase<State>::deactivateVertex(State *globalState, const vid_t vertexId) const {
   globalState->vertexActiveList[vertexId] = false;
 }
-
 
 template<class State>
 void MultipleLabelCpuBase<State>::makeModifiedVertex(State *globalState, const vid_t vertexId) const {
@@ -181,6 +170,10 @@ bool MultipleLabelCpuBase<State>::isVertexScheduled(const State &globalState, co
 template<class State>
 void MultipleLabelCpuBase<State>::scheduleVertex(State *globalState, const vid_t vertexId) const {
   globalState->vertexScheduledList[vertexId] = true;
+}
+template<class State>
+void MultipleLabelCpuBase<State>::unscheduleVertex(State *globalState, const vid_t vertexId) const {
+  globalState->vertexScheduledList[vertexId] = false;
 }
 
 template<class State>
@@ -205,6 +198,49 @@ void MultipleLabelCpuBase<State>::removeMatch(State *globalState,
                                               const vid_t vertexId,
                                               const pvid_t patternVertexId) const {
   globalState->vertexPatternMatch[vertexId].erase(patternVertexId);
+}
+
+template<class State>
+bool MultipleLabelCpuBase<State>::isAlreadyMatchedAtomic(const State &globalState, const vid_t vertexId,
+                                                         const pvid_t patternVertexId) const {
+  return !globalState.vertexPatternAlreadyMatched[vertexId].isInAtomic(patternVertexId);
+}
+template<class State>
+void MultipleLabelCpuBase<State>::makeAlreadyMatchedAtomic(State *globalState,
+                                                           const vid_t vertexId,
+                                                           const pvid_t patternVertexId) const {
+  globalState->vertexPatternAlreadyMatched[vertexId].insertAtomic(patternVertexId);
+}
+template<class State>
+void MultipleLabelCpuBase<State>::removeAlreadyMatched(State *globalState,
+                                                       const vid_t vertexId,
+                                                       const pvid_t patternVertexId) const {
+  globalState->vertexPatternAlreadyMatched[vertexId].erase(patternVertexId);
+}
+template<class State>
+void MultipleLabelCpuBase<State>::clearAlreadyMatched(State *globalState,
+                                                       const vid_t vertexId) const {
+  globalState->vertexPatternAlreadyMatched[vertexId].clear();
+}
+
+template<class State>
+void MultipleLabelCpuBase<State>::clearToUnmatch(State *globalState,
+                                                 const vid_t vertexId) const {
+  globalState->vertexPatternToUnmatch[vertexId].clear();
+}
+
+template<class State>
+void MultipleLabelCpuBase<State>::makeToUnmatch(State *globalState,
+                                                const vid_t vertexId,
+                                                const pvid_t patternVertexId) const {
+  globalState->vertexPatternToUnmatch[vertexId].insert(patternVertexId);
+}
+
+template<class State>
+void MultipleLabelCpuBase<State>::removeToUnmatch(State *globalState,
+                                                  const vid_t vertexId,
+                                                  const pvid_t patternVertexId) const {
+  globalState->vertexPatternToUnmatch[vertexId].erase(patternVertexId);
 }
 
 }

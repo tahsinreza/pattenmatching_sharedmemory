@@ -27,10 +27,6 @@ class MultipleLabelLccCpu : public MultipleLabelCpuBase<State> {
   void resetState(State *globalState);
 
  private:
-  using BitmapType = FixedBitmap<C_MAXIMUM_PATTERN_SIZE>;
-
-  inline void removeMatch(State *globalState, const vid_t vertexId, const pvid_t patternVertexId) const;
-
 
   std::vector<LocalConstraint > patternLocalConstraint;
 

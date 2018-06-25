@@ -56,11 +56,6 @@ class MultipleLabelTdsCpu : public MultipleLabelCpuBase<State> {
   bool isInConstraintVector(const TemplateConstraint &constraint) const;
   bool isInHistoryIndexVector(const std::vector<vid_t> &historyIndexVector, const vid_t &vertex) const;
 
-  inline bool isOmitted(const State &globalState, const vid_t vertexId) const;
-  inline void makeOmitted(State *globalState, const vid_t vertexId) const;
-  inline void removeMatch(State *globalState, const vid_t vertexId, const pvid_t patternVertexId) const;
-
-  std::vector <std::unordered_map<vid_t, size_t>> sourceTraversalVector;
   std::vector <std::set<vid_t>> patternTraversalVector;
   std::vector <TemplateConstraint> templateConstraintVector;
   typename std::vector<TemplateConstraint>::const_iterator templateConstraintIterator;

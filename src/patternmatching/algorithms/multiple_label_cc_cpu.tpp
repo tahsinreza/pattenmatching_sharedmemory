@@ -11,7 +11,6 @@ namespace patternmatching {
 
 template<class State>
 void MultipleLabelCcCpu<State>::init(const graph_t &graph, const graph_t &pattern) {
-  sourceTraversalVector.resize(graph.vertex_count);
   patternTraversalVector.resize(pattern.vertex_count);
 }
 
@@ -145,11 +144,10 @@ bool MultipleLabelCcCpu<State>::checkConstraint(
     for (eid_t neighborEdgeId = graph.vertices[currentVertexId]; neighborEdgeId < graph.vertices[currentVertexId + 1];
          neighborEdgeId++) {
       if (!BaseClass::isEdgeActive(*globalState, neighborEdgeId)) continue;
-      vid_t neighborVertexId = graph.edges[neighborEdgeId];
+      const vid_t &neighborVertexId = graph.edges[neighborEdgeId];
       if (!BaseClass::isVertexActive(*globalState, neighborVertexId)) continue;
 
-
-      auto nextConstraintVertexIndex=currentConstraint.vertexIndexVector[nextPositionInConstraint];
+      const auto &nextConstraintVertexIndex=currentConstraint.vertexIndexVector[nextPositionInConstraint];
       if (!globalState->vertexPatternMatch[neighborVertexId].isIn(nextConstraintVertexIndex))
         continue;
 
@@ -160,7 +158,7 @@ bool MultipleLabelCcCpu<State>::checkConstraint(
       sourceTraversalMap[neighborVertexId].insert(nextConstraintVertexIndex);
       if (checkConstraint(graph, globalState, currentConstraint, sourceTraversalMap, sourceVertexId,
                           neighborVertexId, startingPosition, remainingLength - 1)) {
-        makeMatchAtomic(globalState, neighborVertexId, nextConstraintVertexIndex);
+        BaseClass::makeAlreadyMatchedAtomic(globalState, neighborVertexId, nextConstraintVertexIndex);
         return true;
       }
     }
@@ -171,10 +169,7 @@ bool MultipleLabelCcCpu<State>::checkConstraint(
 template<class State>
 __host__ void MultipleLabelCcCpu<State>::resetState(State *globalState) {
   globalState->resetModifiedList();
-  globalState->resetPatternMatchCc();
-  for (auto &it : sourceTraversalVector) {
-    it.clear();
-  }
+  //globalState->resetPatternMatch();
 }
 
 template<class State>
@@ -200,7 +195,6 @@ MultipleLabelCcCpu<State>::compute(
   for (vid_t vertexId = 0; vertexId < graph.vertex_count; vertexId++) {
     if (!BaseClass::isVertexActive(*globalState, vertexId)) continue;
 
-    bool constraintFound = false;
     size_t startingPositionInConstraint = 0;
     size_t constraintIndex = 0;
     bool hasBeenModified = false;
@@ -208,12 +202,11 @@ MultipleLabelCcCpu<State>::compute(
     for (auto it = currentConstraint.vertexIndexVector.cbegin();
          it != currentConstraint.vertexIndexVector.cend();
          ++it, ++constraintIndex) {
+      //if(it!=currentConstraint.vertexIndexVector.cbegin()) break;
 
       if (globalState->vertexPatternMatch[vertexId].isIn(*it)) {
-        constraintFound = true;
         startingPositionInConstraint = constraintIndex;
-        if(isMatchAtomic(*globalState, vertexId, *it)) {
-          hasBeenModified = true;
+        if(BaseClass::isAlreadyMatchedAtomic(*globalState, vertexId, *it)) {
           continue;
         }
 
@@ -227,7 +220,7 @@ MultipleLabelCcCpu<State>::compute(
                              vertexId,
                              startingPositionInConstraint,
                              currentConstraint.length)) {
-          removeMatch(globalState, vertexId, *it);
+          BaseClass::makeToUnmatch(globalState, vertexId, *it);
           hasBeenModified = true;
         }
       }
@@ -236,27 +229,22 @@ MultipleLabelCcCpu<State>::compute(
     if (hasBeenModified) {
       BaseClass::makeModifiedVertex(globalState, vertexId);
     }
-
-    // If the constraint has nothing to do with our vertex
-    if (!constraintFound) {
-      makeOmitted(globalState, vertexId);
-      continue;
-    }
   }
 
   ++circularConstraintIterator;
   //std::cout << "Mid CC " << std::endl;
 
   size_t vertexEliminatedNumber = 0;
+  size_t matchEliminatedNumber = 0;
 
-  #pragma omp parallel for reduction(+:vertexEliminatedNumber)
+  #pragma omp parallel for reduction(+:vertexEliminatedNumber, matchEliminatedNumber)
   for (vid_t vertexId = 0; vertexId < graph.vertex_count; vertexId++) {
     if (!BaseClass::isVertexActive(*globalState, vertexId)) continue;
-    if (isOmitted(*globalState, vertexId)) continue;
 
     if (BaseClass::isVertexModified(*globalState, vertexId)) {
-      for (const auto &patternIndex : globalState->vertexPatternToUnmatchCc[vertexId]) {
+      for (const auto &patternIndex : globalState->vertexPatternToUnmatch[vertexId]) {
         BaseClass::removeMatch(globalState, vertexId, patternIndex);
+        matchEliminatedNumber+=1;
       }
 
       if (!BaseClass::isMatch(*globalState, vertexId)) {
@@ -265,11 +253,14 @@ MultipleLabelCcCpu<State>::compute(
         Logger::get().log(Logger::E_LEVEL_DEBUG, ss.str());*/
         BaseClass::deactivateVertex(globalState, vertexId);
         vertexEliminatedNumber += 1;
-      } else {
-        BaseClass::scheduleVertex(globalState, vertexId);
       }
+
+      BaseClass::scheduleVertex(globalState, vertexId);
+      BaseClass::clearToUnmatch(globalState, vertexId);
+      BaseClass::clearAlreadyMatched(globalState, vertexId);
     } else {
       // Schedule vertex close to the one modified
+      bool hasBeenScheduled=false;
       for (eid_t neighborEdgeId = graph.vertices[vertexId]; neighborEdgeId < graph.vertices[vertexId + 1];
            neighborEdgeId++) {
         if (!BaseClass::isEdgeActive(*globalState, neighborEdgeId)) continue;
@@ -277,10 +268,18 @@ MultipleLabelCcCpu<State>::compute(
         if (!BaseClass::isVertexModified(*globalState, neighborVertexId)) continue;
 
         BaseClass::scheduleVertex(globalState, vertexId);
+        hasBeenScheduled=true;
+        break;
+      }
+      if(!hasBeenScheduled) {
+        BaseClass::unscheduleVertex(globalState, vertexId);
       }
     }
+
+
   }
 
+  std::cout << "Match eliminated : " << matchEliminatedNumber << std::endl;
   //std::cout << "End CC " << std::endl;
   return vertexEliminatedNumber;
 }
@@ -296,30 +295,8 @@ const std::vector<MultipleLabelCircularConstraint> &MultipleLabelCcCpu<State>::g
 }
 
 template<class State>
-bool MultipleLabelCcCpu<State>::isOmitted(const State &globalState, const vid_t vertexId) const {
-  return globalState.vertexPatternOmittedCc[vertexId] == true;
+void MultipleLabelCcCpu<State>::setCircularConstraintIterator(
+    const typename std::vector<MultipleLabelCircularConstraint>::const_iterator& it) {
+  circularConstraintIterator=it;
 }
-
-template<class State>
-void MultipleLabelCcCpu<State>::makeOmitted(State *globalState, const vid_t vertexId) const {
-  globalState->vertexPatternOmittedCc[vertexId] = true;
-}
-
-template<class State>
-bool MultipleLabelCcCpu<State>::isMatchAtomic(const State &globalState, const vid_t vertexId, const size_t patternVertexId) const {
-  return globalState.vertexPatternMatchedCc[vertexId].isInAtomic(patternVertexId);
-}
-
-template<class State>
-void MultipleLabelCcCpu<State>::makeMatchAtomic(State *globalState, const vid_t vertexId, const size_t patternVertexId) const {
-  globalState->vertexPatternMatchedCc[vertexId].insertAtomic(patternVertexId);
-}
-
-template<class State>
-void MultipleLabelCcCpu<State>::removeMatch(State *globalState,
-                                            const vid_t vertexId,
-                                            const pvid_t patternVertexId) const {
-  globalState->vertexPatternToUnmatchCc[vertexId].insert(patternVertexId);
-}
-
 }

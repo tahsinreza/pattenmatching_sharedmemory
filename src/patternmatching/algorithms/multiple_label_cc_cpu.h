@@ -32,6 +32,8 @@ class MultipleLabelCcCpu : public MultipleLabelCpuBase<State> {
   void resetState(State *globalState);
 
   const std::vector <MultipleLabelCircularConstraint>& getCircularConstraintVector() const;
+  void setCircularConstraintIterator(
+      const typename std::vector<MultipleLabelCircularConstraint>::const_iterator& it);
 
  private:
 
@@ -56,13 +58,6 @@ class MultipleLabelCcCpu : public MultipleLabelCpuBase<State> {
 
   bool isInConstraintVector(const MultipleLabelCircularConstraint &constraint) const;
 
-  inline bool isOmitted(const State &globalState, const vid_t vertexId) const;
-  inline void makeOmitted(State *globalState, const vid_t vertexId) const;
-  inline bool isMatchAtomic(const State &globalState, const vid_t vertexId, const size_t patternVertexId) const;
-  inline void makeMatchAtomic(State *globalState, const vid_t vertexId, const size_t patternVertexId) const;
-  inline void removeMatch(State *globalState, const vid_t vertexId, const pvid_t patternVertexId) const;
-
-  std::vector <std::unordered_map<vid_t, size_t>> sourceTraversalVector;
   std::vector <std::unordered_set<vid_t>> patternTraversalVector;
   std::vector <MultipleLabelCircularConstraint> circularConstraintVector;
   typename std::vector<MultipleLabelCircularConstraint>::const_iterator circularConstraintIterator;

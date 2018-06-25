@@ -72,7 +72,7 @@ MultipleLabelLcc0Cpu<State>::compute(const graph_t &graph, State *globalState) c
 
     if(neighborConstraintSet.empty()) {
       for (const auto &it : globalState->vertexPatternMatch[vertexId]) {
-        removeMatch(globalState, vertexId, it);
+        BaseClass::makeToUnmatch(globalState, vertexId, it);
       }
       continue;
     }
@@ -112,14 +112,14 @@ MultipleLabelLcc0Cpu<State>::compute(const graph_t &graph, State *globalState) c
 
       // test if currentLabel is the origin label for the current localConstraint
       if (currentLabel != testLocalConstraint.originLabel) {
-        removeMatch(globalState, vertexId, patternVertexId);
+        BaseClass::makeToUnmatch(globalState, vertexId, patternVertexId);
         continue;
       }
 
       // test local constraint
       for (const auto &it : testLocalConstraint.localConstraint) {
         if (currentLocalConstraint[it.first] < it.second) {
-          removeMatch(globalState, vertexId, patternVertexId);
+          BaseClass::makeToUnmatch(globalState, vertexId, patternVertexId);
           break;
         }
       }
@@ -134,7 +134,7 @@ MultipleLabelLcc0Cpu<State>::compute(const graph_t &graph, State *globalState) c
   for (vid_t vertexId = 0; vertexId < graph.vertex_count; vertexId++) {
     if (!BaseClass::isVertexActive(*globalState, vertexId)) continue;
 
-    for(const auto& patternIndex : globalState->vertexPatternToUnmatchLcc[vertexId]) {
+    for(const auto& patternIndex : globalState->vertexPatternToUnmatch[vertexId]) {
       BaseClass::removeMatch(globalState, vertexId, patternIndex);
     }
 
@@ -147,20 +147,13 @@ MultipleLabelLcc0Cpu<State>::compute(const graph_t &graph, State *globalState) c
       vertexEliminatedNumber += 1;
     }
 
-    globalState->vertexPatternToUnmatchLcc[vertexId].clear();
+    BaseClass::clearToUnmatch(globalState, vertexId);
   }
 
   std::cout << "End LCC 0 " << std::endl;
   std::cout << "Eliminated edges : " << edgeEliminatedNumber << std::endl;
 
   return vertexEliminatedNumber;
-}
-
-template<class State>
-void MultipleLabelLcc0Cpu<State>::removeMatch(State *globalState,
-                                             const vid_t vertexId,
-                                             const pvid_t patternVertexId) const {
-  globalState->vertexPatternToUnmatchLcc[vertexId].insert(patternVertexId);
 }
 
 

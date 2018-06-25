@@ -10,6 +10,7 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <iostream>
+#include "bitmap.h"
 
 
 namespace patternmatching {
@@ -21,13 +22,13 @@ class LocalConstraint {
       const pvid_t &originVertex,
       const weight_t &originLabel,
       const std::unordered_map<weight_t, size_t> &localConstraint,
-      const std::unordered_set <vid_t> &localConstraintNeighborVertex_);
+      const FixedBitmapType &localConstraintNeighborVertex_);
   void print(std::ostream &ostream = std::cout) const;
  public:
   pvid_t originVertex;
   weight_t originLabel;
   std::unordered_map<weight_t, size_t> localConstraint;
-  std::unordered_set<vid_t> localConstraintNeighborVertex;
+  FixedBitmapType localConstraintNeighborVertex;
 };
 }
 

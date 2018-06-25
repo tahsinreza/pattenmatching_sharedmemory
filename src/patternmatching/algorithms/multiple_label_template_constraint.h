@@ -35,6 +35,7 @@ class TemplateConstraint {
   void generateWalkMap();
 
   void print(std::ostream &ostream = std::cout) const;
+  void printWalk(std::ostream &ostream = std::cout) const;
  public:
 
   bool operator==(const TemplateConstraint &other) const;

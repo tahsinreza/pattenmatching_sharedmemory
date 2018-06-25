@@ -25,9 +25,6 @@ class MultipleLabelLcc0Cpu : public MultipleLabelCpuBase<State> {
 
  private:
 
-  inline void removeMatch(State *globalState, const vid_t vertexId, const pvid_t patternVertexId) const;
-
-
   std::vector<LocalConstraint > patternLocalConstraint;
 
   //std::vector<std::unordered_map<weight_t, size_t> > patternLocalConstraint;

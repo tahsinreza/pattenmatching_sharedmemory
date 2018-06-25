@@ -19,18 +19,23 @@ else ()
     message(FATAL_ERROR "OpenMP not found")
 endif ()
 
-
 # add CUDA
+enable_language(CUDA)
 find_package(CUDA REQUIRED)
 if (CUDA_FOUND)
     message("Found CUDA!")
+
+    set(CMAKE_CUDA_STANDARD 14)
+    set(CMAKE_CUDA_STANDARD_REQUIRED OFF)
+    set(CMAKE_CUDA_EXTENSIONS OFF)
+
     set(CUDA_SEPARABLE_COMPILATION ON)
     set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xptxas -dlcm=cg")
     #set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xptxas -dlcm=cg -dc")
     set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xcompiler \"${OpenMP_CXX_FLAGS}\"")
     set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -g")
     set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -DFEATURE_SM35 -gencode=arch=compute_35,code=\\\"sm_35,compute_35\\\"")
-    set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -D__STDC_LIMIT_MACROS -std=c++14")
+    set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -D__STDC_LIMIT_MACROS")
     include_directories(SYSTEM ${CUDA_INCLUDE_DIRS})
 else ()
     message(FATAL_ERROR "CUDA not found")

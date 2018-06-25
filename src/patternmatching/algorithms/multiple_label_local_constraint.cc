@@ -16,7 +16,7 @@ LocalConstraint::LocalConstraint(
     const pvid_t &originVertex_,
     const weight_t &originLabel_,
     const std::unordered_map <weight_t, size_t> &localConstraint_,
-    const std::unordered_set <vid_t> &localConstraintNeighborVertex_)
+    const FixedBitmapType &localConstraintNeighborVertex_)
     : originVertex(originVertex_), originLabel(originLabel_) {
   localConstraint = localConstraint_;
   localConstraintNeighborVertex = localConstraintNeighborVertex_;

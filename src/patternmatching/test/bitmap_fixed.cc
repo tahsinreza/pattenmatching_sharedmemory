@@ -65,6 +65,14 @@ int main(int argc, char **argv) {
   std::cout << "print Raw" << std::endl;
   fixedBitmap.printRaw();
 
+
+  std::cout << "insert atomic 1" << std::endl;
+  fixedBitmap.insertAtomic(1);
+  fixedBitmap.printRaw();
+
+  std::cout << "isIn atomic 1" << std::endl;
+  std::cout << fixedBitmap.isInAtomic(1) << std::endl;
+
   return 0;
 }
 

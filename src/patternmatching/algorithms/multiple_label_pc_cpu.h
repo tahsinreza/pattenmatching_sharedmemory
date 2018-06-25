@@ -49,17 +49,13 @@ class MultipleLabelPcCpu : public MultipleLabelCpuBase<State> {
       State *globalState,
       const PathConstraint &currentConstraint,
       const bool &reverse,
+      std::unordered_map<vid_t, size_t> &sourceTraversalMap,
       const vid_t &sourceVertexId,
       const vid_t &currentVertexId,
       const size_t &remainingLength);
 
   bool isInConstraintVector(const PathConstraint &constraint) const;
 
-  inline bool isOmitted(const State &globalState, const vid_t vertexId) const;
-  inline void makeOmitted(State *globalState, const vid_t vertexId) const;
-  inline void removeMatch(State *globalState, const vid_t vertexId, const pvid_t patternVertexId) const;
-
-  std::vector <std::unordered_map<vid_t, size_t>> sourceTraversalVector;
   std::vector <std::set<vid_t>> patternTraversalVector;
   std::vector <PathConstraint> pathConstraintVector;
   typename std::vector<PathConstraint>::const_iterator pathConstraintIterator;

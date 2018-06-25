@@ -139,7 +139,6 @@ void TemplateConstraint::generateWalkMap() {
     generateWalk(currentWalk, historyVertexIndex, historyEdgeIndex, it.first);
 
     walkMap[it.first] = currentWalk;
-    currentWalk.print();
   }
 }
 
@@ -158,6 +157,13 @@ void TemplateConstraint::print(std::ostream &ostream) const {
       ostream << " (" << it.first << "," << subit << ")";
 
     }
+  }
+  ostream << std::endl;
+}
+void TemplateConstraint::printWalk(std::ostream &ostream) const {
+  ostream << "Vertex Index Walk : ";
+  for (const auto &it : walkMap) {
+    it.second.print(ostream);
   }
   ostream << std::endl;
 }
