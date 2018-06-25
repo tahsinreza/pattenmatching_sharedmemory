@@ -20,12 +20,14 @@ class Walk {
   enum MoveType {
     E_MOVE_BACK,
     E_CHECK,
-    E_VERTEX
+    E_VERTEX_STORE,
+    E_VERTEX_NO_STORE
   };
   Walk();
   void addMoveBack(const vid_t &vertexIndex, const size_t &previousPositionIt);
   void addCheck(const vid_t &vertexIndex, const size_t &previousPositionIt);
   void addVertex(const vid_t &vertexIndex);
+  void computeStoredVertex();
   void print(std::ostream &ostream = std::cout) const;
  public:
   size_t length;

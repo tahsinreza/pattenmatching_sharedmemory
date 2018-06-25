@@ -85,10 +85,14 @@ void Logger::log(const LogLevel &logLevel, const std::string &message, const Log
   }
 
   if (logOutput & E_OUTPUT_FILE_LOG) {
+    std::ofstream fileStream(resultDirectory + C_LOG_FILEPATTERN, std::ofstream::app);
+    #if __cplusplus>=201402L
     auto now = std::chrono::system_clock::now();
     auto in_time_t = std::chrono::system_clock::to_time_t(now);
-    std::ofstream fileStream(resultDirectory + C_LOG_FILEPATTERN, std::ofstream::app);
     fileStream << std::put_time(std::localtime(&in_time_t), "[%F %T] : ") << message << std::endl;
+    #else
+    fileStream << message << std::endl;
+    #endif
     fileStream.close();
   }
 }

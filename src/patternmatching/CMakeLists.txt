@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.10)
 project(patternmatching LANGUAGES CXX CUDA)
 
 add_subdirectory(test)
+add_subdirectory(algorithms)
 
 include_directories(
         ${PROJECT_SOURCE_DIR}
@@ -26,20 +27,58 @@ set(PROJECT_CPP_SOURCES
         multiple_label_cpu.cc
         patternmatching_binary.cc
         unique_label_cpu.cc
-        algorithms/bitmap.h
-        algorithms/bitmap.tpp
-        algorithms/unique_label_circular_constraint.cc
-        algorithms/multiple_label_path_constraint.cc
-        algorithms/multiple_label_path_constraint.h
+        algorithms/backward_compatibility.h
+        algorithms/bitmap_dynamic.h
+        algorithms/bitmap_dynamic.cc
+        algorithms/bitmap_dynamic.tpp
+        algorithms/bitmap_fixed.h
+        algorithms/bitmap_fixed.tpp
+        algorithms/CMakeLists.txt
+        algorithms/graph_stat.cc
+        algorithms/graph_stat_cpu.h
+        algorithms/graph_stat_cpu.tpp
+        algorithms/graph_stat.h
+        algorithms/multiple_label_cc_backtrack_cpu.h
+        algorithms/multiple_label_cc_backtrack_cpu.tpp
+        algorithms/multiple_label_cc_cpu.h
+        algorithms/multiple_label_cc_cpu.tpp
+        algorithms/multiple_label_cc_strict_cpu.h
+        algorithms/multiple_label_cc_strict_cpu.tpp
+        algorithms/multiple_label_circular_constraint.cc
+        algorithms/multiple_label_circular_constraint.h
+        algorithms/multiple_label_common_cpu.h
+        algorithms/multiple_label_common_cpu.tpp
+        algorithms/multiple_label_common.h
+        algorithms/multiple_label_lcc0_cpu.h
+        algorithms/multiple_label_lcc0_cpu.tpp
+        algorithms/multiple_label_lcc_cpu.h
+        algorithms/multiple_label_lcc_cpu.tpp
         algorithms/multiple_label_local_constraint.cc
         algorithms/multiple_label_local_constraint.h
+        algorithms/multiple_label_path_constraint.cc
+        algorithms/multiple_label_path_constraint.h
+        algorithms/multiple_label_pc_cpu.h
+        algorithms/multiple_label_pc_cpu.tpp
+        algorithms/multiple_label_tds_cpu.h
+        algorithms/multiple_label_tds_cpu.tpp
         algorithms/multiple_label_template_constraint.cc
         algorithms/multiple_label_template_constraint.h
-        algorithms/multiple_label_common.h algorithms/multiple_label_template_walk.cc
-        algorithms/multiple_label_common.h algorithms/multiple_label_template_edge.cc
-        algorithms/multiple_label_common.h algorithms/multiple_label_circular_constraint.cc algorithms/multiple_label_circular_constraint.h)
+        algorithms/multiple_label_template_edge.cc
+        algorithms/multiple_label_template_edge.h
+        algorithms/multiple_label_template_walk.cc
+        algorithms/multiple_label_template_walk.h
+        algorithms/unique_label_cc_cpu.h
+        algorithms/unique_label_cc_cpu.tpp
+        algorithms/unique_label_circular_constraint.cc
+        algorithms/unique_label_circular_constraint.h
+        algorithms/unique_label_common_cpu.h
+        algorithms/unique_label_common_cpu.tpp
+        algorithms/unique_label_lcc_cpu.h
+        algorithms/unique_label_lcc_cpu.tpp
+        algorithms/utils.h
+        )
 
-set(PROJECT_CUDA_SOURCES)
+set(PROJECT_CUDA_SOURCES algorithms/backward_compatibility.h)
 
 add_executable(${PROJECT_NAME}
         ${PROJECT_TPP_SOURCES}
@@ -52,3 +91,4 @@ target_link_libraries(${PROJECT_NAME}
         ${TBB_LIBRARIES}
         ${OpenMP_CXX_LIBRARIES}
         ${CUDA_LIBRARIES})
+

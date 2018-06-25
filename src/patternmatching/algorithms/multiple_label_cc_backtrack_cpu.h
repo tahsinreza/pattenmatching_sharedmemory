@@ -2,8 +2,8 @@
 // Created by qiu on 17/05/18.
 //
 
-#ifndef TOTEM_MULTIPLE_LABEL_CC_CPU_H
-#define TOTEM_MULTIPLE_LABEL_CC_CPU_H
+#ifndef TOTEM_MULTIPLE_LABEL_CC_BACKTRACK_CPU_H
+#define TOTEM_MULTIPLE_LABEL_CC_BACKTRACK_CPU_H
 
 #include "multiple_label_common_cpu.h"
 #include <vector>
@@ -15,7 +15,7 @@
 namespace patternmatching {
 
 template<class State>
-class MultipleLabelCcCpu : public MultipleLabelCpuBase<State> {
+class MultipleLabelCcBacktrackCpu : public MultipleLabelCpuBase<State> {
  protected:
   typedef MultipleLabelCpuBase<State> BaseClass;
  public:
@@ -50,10 +50,8 @@ class MultipleLabelCcCpu : public MultipleLabelCpuBase<State> {
       const graph_t &graph,
       State *globalState,
       const MultipleLabelCircularConstraint &currentConstraint,
-      std::unordered_map<vid_t, std::unordered_map<vid_t, FixedBitmapType> > &sourceTraversalMap,
-      std::vector<vid_t> &historyIndexVector,
+      std::unordered_map<vid_t, FixedBitmapType> &sourceTraversalMap,
       const vid_t &sourceVertexId,
-      const vid_t &previousVertexId,
       const vid_t &currentVertexId,
       const size_t &startingPosition,
       const size_t &remainingLength);
@@ -67,6 +65,6 @@ class MultipleLabelCcCpu : public MultipleLabelCpuBase<State> {
 
 }
 
-#include "multiple_label_cc_cpu.tpp"
+#include "multiple_label_cc_backtrack_cpu.tpp"
 
 #endif //TOTEM_MULTIPLE_LABEL_CC_CPU_H

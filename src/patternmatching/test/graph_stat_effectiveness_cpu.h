@@ -9,24 +9,22 @@
 #include "algorithms/multiple_label_common_cpu.h"
 #include "algorithms/multiple_label_lcc0_cpu.h"
 #include "algorithms/multiple_label_lcc_cpu.h"
-//#include "algorithms/multiple_label_cc_cpu.h"
-#include "algorithms/multiple_label_cc_backtrack_cpu.h"
-#include "algorithms/multiple_label_cc_strict_cpu.h"
+#include "algorithms/multiple_label_cc_cpu.h"
 #include "algorithms/multiple_label_pc_cpu.h"
 #include "algorithms/multiple_label_tds_cpu.h"
+#include "algorithms/graph_stat_cpu.h"
 
 namespace patternmatching {
 
-class MultipleLabelCpu {
+class GraphStatEffectivenessCpu {
  public:
   typedef MultipleLabelGlobalStateInt StateType;
   typedef MultipleLabelLcc0Cpu<StateType> Lcc0Type;
   typedef MultipleLabelLccCpu<StateType> LccType;
-  //typedef MultipleLabelCcBacktrackCpu<StateType> CcType;
-  typedef MultipleLabelCcStrictCpu<StateType> CcType;
-  //typedef MultipleLabelCcCpu<StateType> CcType;
+  typedef MultipleLabelCcCpu<StateType> CcType;
   typedef MultipleLabelPcCpu<StateType> PcType;
   typedef MultipleLabelTdsCpu<StateType> TdsType;
+  typedef GraphStatCpu<StateType> GraphStatType;
   int runPatternMatching();
 
   error_t allocate(CmdLineOption &cmdLineOption);
@@ -47,14 +45,14 @@ class MultipleLabelCpu {
   graph_t *pattern;
   totem_attr_t attributeCpu;
   MultipleLabelGlobalStateInt patternmatchingState;
-
-  MultipleLabelStep algorithmStep;
+  MultipleLabelGlobalStateInt patternMatchingStateTemporary;
 
   Lcc0Type lcc0Cpu;
   LccType lccCpu;
   CcType ccCpu;
   PcType pcCpu;
   TdsType tdsCpu;
+  GraphStatType graphStatCpu;
 };
 
 }

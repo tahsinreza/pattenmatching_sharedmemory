@@ -49,7 +49,8 @@ class MultipleLabelPcCpu : public MultipleLabelCpuBase<State> {
       State *globalState,
       const PathConstraint &currentConstraint,
       const bool &reverse,
-      std::unordered_map<vid_t, size_t> &sourceTraversalMap,
+      std::unordered_map<vid_t, FixedBitmapType> &sourceTraversalMap,
+      std::vector<vid_t> &historyIndexVector,
       const vid_t &sourceVertexId,
       const vid_t &currentVertexId,
       const size_t &remainingLength);

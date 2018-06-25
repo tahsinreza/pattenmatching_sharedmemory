@@ -137,6 +137,7 @@ void TemplateConstraint::generateWalkMap() {
     historyVertexIndex.push_back(it.first);
     currentWalk.addVertex(it.first);
     generateWalk(currentWalk, historyVertexIndex, historyEdgeIndex, it.first);
+    currentWalk.computeStoredVertex();
 
     walkMap[it.first] = currentWalk;
   }

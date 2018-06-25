@@ -8,7 +8,7 @@
 #include "totem_partition.h"
 #include <unordered_map>
 #include <unordered_set>
-#include "bitmap.h"
+#include "bitmap_fixed.h"
 #include <vector>
 #include "patternmatching_logger.h"
 #include "multiple_label_common.h"
@@ -56,32 +56,32 @@ typedef MultipleLabelGlobalState<uint32_t> MultipleLabelGlobalStateInt;
 template<class State>
 class MultipleLabelCpuBase {
  protected:
-  inline bool isVertexActive(const State &globalState, const vid_t vertexId) const;
-  inline bool isVertexInactive(const State &globalState, const vid_t vertexId) const;
-  inline void deactivateVertex(State *globalState, const vid_t vertexId) const;
+  inline bool isVertexActive(const State &globalState, const vid_t &vertexId) const;
+  inline bool isVertexInactive(const State &globalState, const vid_t &vertexId) const;
+  inline void deactivateVertex(State *globalState, const vid_t &vertexId) const;
 
-  inline void makeModifiedVertex(State *globalState, const vid_t vertexId) const;
-  inline bool isVertexModified(const State &globalState, const vid_t vertexId) const;
+  inline void makeModifiedVertex(State *globalState, const vid_t &vertexId) const;
+  inline bool isVertexModified(const State &globalState, const vid_t &vertexId) const;
 
-  inline void scheduleVertex(State *globalState, const vid_t vertexId) const;
-  inline void unscheduleVertex(State *globalState, const vid_t vertexId) const;
-  inline bool isVertexScheduled(const State &globalState, const vid_t vertexId) const;
+  inline void scheduleVertex(State *globalState, const vid_t &vertexId) const;
+  inline void unscheduleVertex(State *globalState, const vid_t &vertexId) const;
+  inline bool isVertexScheduled(const State &globalState, const vid_t &vertexId) const;
 
-  inline bool isEdgeActive(const State &globalState, const eid_t edgeId) const;
-  inline bool isEdgeInactive(const State &globalState, const eid_t edgeId) const;
-  inline void deactivateEdge(State *globalState, const eid_t edgeId) const;
+  inline bool isEdgeActive(const State &globalState, const eid_t &edgeId) const;
+  inline bool isEdgeInactive(const State &globalState, const eid_t &edgeId) const;
+  inline void deactivateEdge(State *globalState, const eid_t &edgeId) const;
 
-  inline bool isMatch(const State &globalState, const vid_t vertexId) const;
-  inline void removeMatch(State *globalState, const vid_t vertexId, const pvid_t patternVertexId) const;
+  inline bool isMatch(const State &globalState, const vid_t &vertexId) const;
+  inline void removeMatch(State *globalState, const vid_t &vertexId, const pvid_t &patternVertexId) const;
 
-  inline bool isAlreadyMatchedAtomic(const State &globalState, const vid_t vertexId, const pvid_t patternVertexId) const;
-  inline void makeAlreadyMatchedAtomic(State *globalState, const vid_t vertexId, const pvid_t patternVertexId) const;
-  inline void removeAlreadyMatched(State *globalState, const vid_t vertexId, const pvid_t patternVertexId) const;
-  inline void clearAlreadyMatched(State *globalState, const vid_t vertexId) const;
+  inline bool isAlreadyMatchedAtomic(const State &globalState, const vid_t &vertexId, const pvid_t &patternVertexId) const;
+  inline void makeAlreadyMatchedAtomic(State *globalState, const vid_t &vertexId, const pvid_t &patternVertexId) const;
+  inline void removeAlreadyMatched(State *globalState, const vid_t &vertexId, const pvid_t &patternVertexId) const;
+  inline void clearAlreadyMatched(State *globalState, const vid_t &vertexId) const;
 
-  inline void clearToUnmatch(State *globalState, const vid_t vertexId) const;
-  inline void makeToUnmatch(State *globalState, const vid_t vertexId, const pvid_t patternVertexId) const;
-  inline void removeToUnmatch(State *globalState, const vid_t vertexId, const pvid_t patternVertexId) const;
+  inline void clearToUnmatch(State *globalState, const vid_t &vertexId) const;
+  inline void makeToUnmatch(State *globalState, const vid_t &vertexId, const pvid_t &patternVertexId) const;
+  inline void removeToUnmatch(State *globalState, const vid_t &vertexId, const pvid_t &patternVertexId) const;
 
 };
 

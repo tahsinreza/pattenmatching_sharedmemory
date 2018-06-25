@@ -20,6 +20,7 @@ template<class State>
 class MultipleLabelTdsCpu : public MultipleLabelCpuBase<State> {
  protected:
   typedef MultipleLabelCpuBase<State> BaseClass;
+  using TraversalHypothesis = std::vector< vid_t >;
  public:
   void init(const graph_t &graph, const graph_t &pattern);
 
@@ -48,13 +49,14 @@ class MultipleLabelTdsCpu : public MultipleLabelCpuBase<State> {
       const graph_t &graph,
       State *globalState,
       const Walk &walk,
+      std::unordered_map< vid_t, std::unordered_map<pvid_t, std::vector<TraversalHypothesis > > > &sourceTraversalMap,
+      std::vector<vid_t> &historyIndexVector,
+      TraversalHypothesis &traversalHypothesis,
       const vid_t &sourceVertexId,
       const vid_t &currentVertexId,
-      std::vector<vid_t> &historyIndexVector,
       const size_t &currentPositionInConstraint);
 
   bool isInConstraintVector(const TemplateConstraint &constraint) const;
-  bool isInHistoryIndexVector(const std::vector<vid_t> &historyIndexVector, const vid_t &vertex) const;
 
   std::vector <std::set<vid_t>> patternTraversalVector;
   std::vector <TemplateConstraint> templateConstraintVector;

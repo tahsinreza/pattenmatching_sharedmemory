@@ -6,6 +6,7 @@
 #include "multiple_label_template_constraint.h"
 #include <iostream>
 #include <deque>
+#include "utils.h"
 
 namespace patternmatching {
 
@@ -146,11 +147,11 @@ MultipleLabelTdsCpu<State>::preprocessSubtemplateConstraint() {
     templateConstraintList.push_back(it);
   }
 
-  size_t offset=0;
+  size_t offset = 0;
 
-  while (templateConstraintList.size() > 0 && (offset<templateConstraintList.size()-1)) {
+  while (templateConstraintList.size() > 0 && (offset < templateConstraintList.size() - 1)) {
     int mergedNumber = 0;
-    auto it = templateConstraintList.begin()+offset;
+    auto it = templateConstraintList.begin() + offset;
     auto currentTemplateConstraint = *it;
     ++it;
     while (it != templateConstraintList.end()) {
@@ -165,7 +166,7 @@ MultipleLabelTdsCpu<State>::preprocessSubtemplateConstraint() {
       }
     }
     if (mergedNumber > 0) {
-      offset=0;
+      offset = 0;
       if (!isInConstraintVector(currentTemplateConstraint)) {
         templateConstraintVector.push_back(currentTemplateConstraint);
       }
@@ -190,7 +191,7 @@ MultipleLabelTdsCpu<State>::preprocessPatern(
     it.generateWalkMap();
   }
 
-  templateConstraintIterator=templateConstraintVector.begin();
+  templateConstraintIterator = templateConstraintVector.begin();
   return SUCCESS;
 }
 
@@ -208,29 +209,23 @@ __host__ void MultipleLabelTdsCpu<State>::printTemplateConstraint(std::ostream &
 }
 
 template<class State>
-bool MultipleLabelTdsCpu<State>::isInHistoryIndexVector(const std::vector<vid_t> &historyIndexVector, const vid_t &vertex) const {
-  for(const auto& it : historyIndexVector) {
-    if(it==vertex) return true;
-  }
-  return false;
-}
-
-template<class State>
 bool MultipleLabelTdsCpu<State>::checkConstraint(
     const graph_t &graph,
     State *globalState,
     const Walk &walk,
+    std::unordered_map<vid_t, std::unordered_map<pvid_t, std::vector<TraversalHypothesis> > > &sourceTraversalMap,
+    std::vector<vid_t> &historyIndexVector,
+    TraversalHypothesis &traversalHypothesis,
     const vid_t &sourceVertexId,
     const vid_t &currentVertexId,
-    std::vector<vid_t> &historyIndexVector,
     const size_t &currentPositionInConstraint) {
 
   // Close the recursion
-  if(currentPositionInConstraint==walk.length) return true;
+  if (currentPositionInConstraint == walk.length) return true;
 
   auto currentWalkMove = walk.moveVector[currentPositionInConstraint];
 
-  if (currentWalkMove == Walk::E_VERTEX) {
+  if (currentWalkMove == Walk::E_VERTEX_NO_STORE || currentWalkMove == Walk::E_VERTEX_STORE) {
     auto nextWalkVertexIndex = walk.vertexIndexVector[currentPositionInConstraint];
     for (eid_t neighborEdgeId = graph.vertices[currentVertexId]; neighborEdgeId < graph.vertices[currentVertexId + 1];
          neighborEdgeId++) {
@@ -241,16 +236,35 @@ bool MultipleLabelTdsCpu<State>::checkConstraint(
       if (!globalState->vertexPatternMatch[neighborVertexId].isIn(nextWalkVertexIndex))
         continue;
 
-      if (isInHistoryIndexVector(historyIndexVector,neighborVertexId)) continue;
+      if (isInVector(historyIndexVector, neighborVertexId)) continue;
 
-      //sourceTraversalVector[sourceVertexId][neighborVertexId] = 1;
+      /*if (sourceTraversalMap.find(neighborVertexId) != sourceTraversalMap.end()
+          && sourceTraversalMap[neighborVertexId].find(nextWalkVertexIndex) != sourceTraversalMap[neighborVertexId].end()
+          && isInVector(sourceTraversalMap[neighborVertexId][nextWalkVertexIndex], traversalHypothesis))
+        continue;*/
+
+      if(currentWalkMove == Walk::E_VERTEX_STORE) {
+        traversalHypothesis.push_back(neighborVertexId);
+      }
+
+      sourceTraversalMap[neighborVertexId][nextWalkVertexIndex].push_back(traversalHypothesis);
       historyIndexVector.push_back(neighborVertexId);
-      if (checkConstraint(graph, globalState, walk, sourceVertexId,
-                          neighborVertexId, historyIndexVector, currentPositionInConstraint+1)) {
+      if (checkConstraint(graph,
+                          globalState,
+                          walk,
+                          sourceTraversalMap,
+                          historyIndexVector,
+                          traversalHypothesis,
+                          sourceVertexId,
+                          neighborVertexId,
+                          currentPositionInConstraint + 1)) {
         return true;
       }
       historyIndexVector.pop_back();
-      //sourceTraversalVector[sourceVertexId].erase(neighborVertexId);
+
+      if(currentWalkMove == Walk::E_VERTEX_STORE) {
+        traversalHypothesis.pop_back();
+      }
     }
   } else if (currentWalkMove == Walk::E_CHECK) {
     auto nextWalkMoveBackIndex = walk.moveBackIndexVector[currentPositionInConstraint];
@@ -264,8 +278,15 @@ bool MultipleLabelTdsCpu<State>::checkConstraint(
 
       if (neighborVertexId != checkVertexId) continue;
 
-      if (checkConstraint(graph, globalState, walk, sourceVertexId,
-                          sourceVertexId, historyIndexVector, currentPositionInConstraint+1)) {
+      if (checkConstraint(graph,
+                          globalState,
+                          walk,
+                          sourceTraversalMap,
+                          historyIndexVector,
+                          traversalHypothesis,
+                          sourceVertexId,
+                          currentVertexId,
+                          currentPositionInConstraint + 1)) {
         return true;
       }
 
@@ -273,8 +294,15 @@ bool MultipleLabelTdsCpu<State>::checkConstraint(
   } else if (currentWalkMove == Walk::E_MOVE_BACK) {
     auto nextWalkMoveBackIndex = walk.moveBackIndexVector[currentPositionInConstraint];
 
-    if (checkConstraint(graph, globalState, walk, sourceVertexId,
-                        historyIndexVector[nextWalkMoveBackIndex], historyIndexVector, currentPositionInConstraint+1)) {
+    if (checkConstraint(graph,
+                        globalState,
+                        walk,
+                        sourceTraversalMap,
+                        historyIndexVector,
+                        traversalHypothesis,
+                        sourceVertexId,
+                        historyIndexVector[nextWalkMoveBackIndex],
+                        currentPositionInConstraint + 1)) {
       return true;
     }
   }
@@ -300,12 +328,16 @@ MultipleLabelTdsCpu<State>::compute(const graph_t &graph, State *globalState) {
                             &TemplateConstraint::print,
                             Logger::E_OUTPUT_FILE_LOG);
 
-  #pragma omp parallel for
+  std::unordered_map<vid_t, std::unordered_map<pvid_t, std::vector<TraversalHypothesis> > > sourceTraversalMap;
+  std::vector<vid_t> historyIndexVector;
+  TraversalHypothesis traversalHypothesis;
+
+  #pragma omp parallel for private(sourceTraversalMap, historyIndexVector, traversalHypothesis)
   for (vid_t vertexId = 0; vertexId < graph.vertex_count; vertexId++) {
     if (!BaseClass::isVertexActive(*globalState, vertexId)) continue;
 
     size_t constraintIndex = 0;
-    bool hasBeenModified=false;
+    bool hasBeenModified = false;
 
     for (auto it = currentConstraint.walkMap.cbegin();
          it != currentConstraint.walkMap.cend();
@@ -314,18 +346,21 @@ MultipleLabelTdsCpu<State>::compute(const graph_t &graph, State *globalState) {
       if (globalState->vertexPatternMatch[vertexId].isIn((*it).first)) {
 
         // Check cycle
-        //sourceTraversalVector[vertexId].clear();
-        std::vector<vid_t> historyIndexVector;
+        sourceTraversalMap.clear();
+        historyIndexVector.clear();
         historyIndexVector.push_back(vertexId);
+        traversalHypothesis.clear();
         if (!checkConstraint(graph,
                              globalState,
                              (*it).second,
-                             vertexId,
-                             vertexId,
+                             sourceTraversalMap,
                              historyIndexVector,
+                             traversalHypothesis,
+                             vertexId,
+                             vertexId,
                              1)) {
           BaseClass::makeToUnmatch(globalState, vertexId, (*it).first);
-          hasBeenModified=true;
+          hasBeenModified = true;
         }
       }
     }

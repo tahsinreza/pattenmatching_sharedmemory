@@ -10,7 +10,7 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <iostream>
-#include "bitmap.h"
+#include "bitmap_fixed.h"
 
 
 namespace patternmatching {

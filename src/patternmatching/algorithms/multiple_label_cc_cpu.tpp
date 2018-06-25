@@ -6,6 +6,7 @@
 #include "totem_util.h"
 #include "multiple_label_cc_cpu.h"
 #include <iostream>
+#include "utils.h"
 
 namespace patternmatching {
 
@@ -113,25 +114,32 @@ __host__ void MultipleLabelCcCpu<State>::printCircularConstraint(std::ostream &o
   }
 }
 
+#define DBG_SOURCE 20
+
 template<class State>
 bool MultipleLabelCcCpu<State>::checkConstraint(
     const graph_t &graph,
     State *globalState,
     const MultipleLabelCircularConstraint &currentConstraint,
     std::unordered_map<vid_t, FixedBitmapType> &sourceTraversalMap,
+    std::vector<vid_t> &historyIndexVector,
     const vid_t &sourceVertexId,
+    const vid_t &previousVertexId,
     const vid_t &currentVertexId,
     const size_t &startingPosition,
     const size_t &remainingLength) {
 
   // Verify that we closed the cycle.
   if (remainingLength == 1) {
+    if(sourceVertexId==DBG_SOURCE) std::cout << "remainingLength : " << remainingLength << std::endl;
     for (eid_t neighborEdgeId = graph.vertices[currentVertexId]; neighborEdgeId < graph.vertices[currentVertexId + 1];
          neighborEdgeId++) {
       if (!BaseClass::isEdgeActive(*globalState, neighborEdgeId)) continue;
       vid_t neighborVertexId = graph.edges[neighborEdgeId];
       if (!BaseClass::isVertexActive(*globalState, neighborVertexId)) continue;
 
+      if(sourceVertexId==DBG_SOURCE) std::cout << "neighborVertexId : " << neighborVertexId << std::endl;
+      if(sourceVertexId==DBG_SOURCE) std::cout << "sourceVertexId : " << sourceVertexId << std::endl;
       if (sourceVertexId == neighborVertexId) {
         return true;
       }
@@ -141,26 +149,41 @@ bool MultipleLabelCcCpu<State>::checkConstraint(
     size_t nextPositionInConstraint = (startingPosition + currentConstraint.length - (remainingLength - 1))
         % currentConstraint.vertexLabelVector.size();
 
+    if(sourceVertexId==DBG_SOURCE) {
+      std::cout << "historyIndexVector";
+      for (const auto &it : historyIndexVector)
+        std::cout << " " << it;
+      std::cout << std::endl;
+    }
+    const auto &nextConstraintVertexIndex = currentConstraint.vertexIndexVector[nextPositionInConstraint];
+    if(sourceVertexId==DBG_SOURCE) DEBUG_PRINT(nextConstraintVertexIndex)
+
     for (eid_t neighborEdgeId = graph.vertices[currentVertexId]; neighborEdgeId < graph.vertices[currentVertexId + 1];
          neighborEdgeId++) {
       if (!BaseClass::isEdgeActive(*globalState, neighborEdgeId)) continue;
       const vid_t &neighborVertexId = graph.edges[neighborEdgeId];
       if (!BaseClass::isVertexActive(*globalState, neighborVertexId)) continue;
 
-      const auto &nextConstraintVertexIndex=currentConstraint.vertexIndexVector[nextPositionInConstraint];
       if (!globalState->vertexPatternMatch[neighborVertexId].isIn(nextConstraintVertexIndex))
         continue;
 
-      if (sourceTraversalMap.find(neighborVertexId) != sourceTraversalMap.end()
-          && sourceTraversalMap[neighborVertexId].isIn(nextConstraintVertexIndex))
-        continue;
+      if(sourceVertexId==DBG_SOURCE) std::cout << "neighborVertexId : " << neighborVertexId << std::endl;
 
-      sourceTraversalMap[neighborVertexId].insert(nextConstraintVertexIndex);
-      if (checkConstraint(graph, globalState, currentConstraint, sourceTraversalMap, sourceVertexId,
-                          neighborVertexId, startingPosition, remainingLength - 1)) {
+      if (sourceTraversalMap.find(neighborVertexId) != sourceTraversalMap.end()
+          && sourceTraversalMap[neighborVertexId].isIn(nextConstraintVertexIndex)) {
+        if(sourceVertexId==DBG_SOURCE) std::cout << "AGG : " << neighborVertexId<< std::endl;
+        continue;
+      }
+
+      //sourceTraversalMap[neighborVertexId].insert(nextConstraintVertexIndex);
+      historyIndexVector.push_back(neighborVertexId);
+      if(sourceVertexId==DBG_SOURCE) std::cout << "Go Up : " << neighborVertexId << std::endl;
+      if (checkConstraint(graph, globalState, currentConstraint, sourceTraversalMap, historyIndexVector, sourceVertexId,
+                          currentVertexId, neighborVertexId, startingPosition, remainingLength - 1)) {
         BaseClass::makeAlreadyMatchedAtomic(globalState, neighborVertexId, nextConstraintVertexIndex);
         return true;
       }
+      historyIndexVector.pop_back();
     }
   }
   return false;
@@ -169,7 +192,6 @@ bool MultipleLabelCcCpu<State>::checkConstraint(
 template<class State>
 __host__ void MultipleLabelCcCpu<State>::resetState(State *globalState) {
   globalState->resetModifiedList();
-  //globalState->resetPatternMatch();
 }
 
 template<class State>
@@ -178,12 +200,9 @@ MultipleLabelCcCpu<State>::compute(
     const graph_t &graph, State
 *globalState) {
   //resetState(globalState);
-  std::cout << "Start CC " << std::endl;
+  //std::cout << "Start CC " << std::endl;
 
   const auto &currentConstraint = *circularConstraintIterator;
-
-  std::unordered_map<vid_t, FixedBitmapType> sourceTraversalMap;
-
 
   Logger::get().log(Logger::E_LEVEL_DEBUG, "currentConstraint : ", Logger::E_OUTPUT_FILE_LOG);
   Logger::get().logFunction(Logger::E_LEVEL_DEBUG,
@@ -191,47 +210,58 @@ MultipleLabelCcCpu<State>::compute(
                             &MultipleLabelCircularConstraint::print,
                             Logger::E_OUTPUT_FILE_LOG);
 
-  #pragma omp parallel for private(sourceTraversalMap)
-  for (vid_t vertexId = 0; vertexId < graph.vertex_count; vertexId++) {
-    if (!BaseClass::isVertexActive(*globalState, vertexId)) continue;
+  //#pragma omp parallel
+  {
+    std::unordered_map<vid_t, FixedBitmapType> sourceTraversalMap;
+    std::unordered_map<vid_t, std::unordered_set<vid_t> > sourceTraversalMap2;
+    std::vector<vid_t> historyIndexVector;
 
-    size_t startingPositionInConstraint = 0;
-    size_t constraintIndex = 0;
-    bool hasBeenModified = false;
+    //#pragma omp for
+    for (vid_t vertexId = 0; vertexId < graph.vertex_count; vertexId++) {
+      if (!BaseClass::isVertexActive(*globalState, vertexId)) continue;
 
-    for (auto it = currentConstraint.vertexIndexVector.cbegin();
-         it != currentConstraint.vertexIndexVector.cend();
-         ++it, ++constraintIndex) {
-      //if(it!=currentConstraint.vertexIndexVector.cbegin()) break;
+      size_t startingPositionInConstraint = 0;
+      size_t constraintIndex = 0;
+      bool hasBeenModified = false;
 
-      if (globalState->vertexPatternMatch[vertexId].isIn(*it)) {
-        startingPositionInConstraint = constraintIndex;
-        if(BaseClass::isAlreadyMatchedAtomic(*globalState, vertexId, *it)) {
-          continue;
-        }
+      for (auto it = currentConstraint.vertexIndexVector.cbegin();
+           it != currentConstraint.vertexIndexVector.cend();
+           ++it, ++constraintIndex) {
 
-        // Check cycle
-        sourceTraversalMap.clear();
-        if (!checkConstraint(graph,
-                             globalState,
-                             currentConstraint,
-                             sourceTraversalMap,
-                             vertexId,
-                             vertexId,
-                             startingPositionInConstraint,
-                             currentConstraint.length)) {
-          BaseClass::makeToUnmatch(globalState, vertexId, *it);
-          hasBeenModified = true;
+        if (globalState->vertexPatternMatch[vertexId].isIn(*it)) {
+          /*if (BaseClass::isAlreadyMatchedAtomic(*globalState, vertexId, *it)) {
+            hasBeenModified = true;
+            continue;
+          }*/
+
+          startingPositionInConstraint = constraintIndex;
+          // Check cycle
+          sourceTraversalMap.clear();
+          historyIndexVector.clear();
+          historyIndexVector.push_back(vertexId);
+
+          if (!checkConstraint(graph,
+                               globalState,
+                               currentConstraint,
+                               sourceTraversalMap,
+                               historyIndexVector,
+                               vertexId,
+                               vertexId,
+                               startingPositionInConstraint,
+                               currentConstraint.length)) {
+            if(vertexId==DBG_SOURCE) std::cout << "Pattern removed : " << *it << std::endl;
+            BaseClass::makeToUnmatch(globalState, vertexId, *it);
+            hasBeenModified = true;
+          }
         }
       }
-    }
 
-    if (hasBeenModified) {
-      BaseClass::makeModifiedVertex(globalState, vertexId);
+      if (hasBeenModified) {
+        BaseClass::makeModifiedVertex(globalState, vertexId);
+      }
     }
   }
 
-  ++circularConstraintIterator;
   //std::cout << "Mid CC " << std::endl;
 
   size_t vertexEliminatedNumber = 0;
@@ -244,7 +274,7 @@ MultipleLabelCcCpu<State>::compute(
     if (BaseClass::isVertexModified(*globalState, vertexId)) {
       for (const auto &patternIndex : globalState->vertexPatternToUnmatch[vertexId]) {
         BaseClass::removeMatch(globalState, vertexId, patternIndex);
-        matchEliminatedNumber+=1;
+        matchEliminatedNumber += 1;
       }
 
       if (!BaseClass::isMatch(*globalState, vertexId)) {
@@ -260,7 +290,7 @@ MultipleLabelCcCpu<State>::compute(
       BaseClass::clearAlreadyMatched(globalState, vertexId);
     } else {
       // Schedule vertex close to the one modified
-      bool hasBeenScheduled=false;
+      bool hasBeenScheduled = false;
       for (eid_t neighborEdgeId = graph.vertices[vertexId]; neighborEdgeId < graph.vertices[vertexId + 1];
            neighborEdgeId++) {
         if (!BaseClass::isEdgeActive(*globalState, neighborEdgeId)) continue;
@@ -268,16 +298,17 @@ MultipleLabelCcCpu<State>::compute(
         if (!BaseClass::isVertexModified(*globalState, neighborVertexId)) continue;
 
         BaseClass::scheduleVertex(globalState, vertexId);
-        hasBeenScheduled=true;
+        hasBeenScheduled = true;
         break;
       }
-      if(!hasBeenScheduled) {
+      if (!hasBeenScheduled) {
         BaseClass::unscheduleVertex(globalState, vertexId);
       }
     }
 
-
   }
+
+  ++circularConstraintIterator;
 
   std::cout << "Match eliminated : " << matchEliminatedNumber << std::endl;
   //std::cout << "End CC " << std::endl;
@@ -296,7 +327,7 @@ const std::vector<MultipleLabelCircularConstraint> &MultipleLabelCcCpu<State>::g
 
 template<class State>
 void MultipleLabelCcCpu<State>::setCircularConstraintIterator(
-    const typename std::vector<MultipleLabelCircularConstraint>::const_iterator& it) {
-  circularConstraintIterator=it;
+    const typename std::vector<MultipleLabelCircularConstraint>::const_iterator &it) {
+  circularConstraintIterator = it;
 }
 }
