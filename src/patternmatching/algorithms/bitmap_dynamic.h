@@ -52,6 +52,7 @@ class DynamicBitmap {
   inline void insert ( InputIterator first, InputIterator last );
 
   inline void erase(const size_t &value);
+  inline void eraseAtomic(const size_t &value);
   inline void clear();
   inline void fill();
 

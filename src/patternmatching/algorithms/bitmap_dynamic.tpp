@@ -54,10 +54,13 @@ void DynamicBitmap::insert(InputIterator first, InputIterator last) {
   }
 }
 
-
-
 void DynamicBitmap::erase(const size_t &value) {
   map[getBitmapIndex(value)] &= ~(static_cast<BitmapType>(1) << getBitmapSubindex(value));
+}
+void DynamicBitmap::eraseAtomic(const size_t &value) {
+  BitmapType mask = ~(static_cast<BitmapType>(1) << getBitmapSubindex(value));
+  auto addr = &(map[getBitmapIndex(value)]);
+  __sync_fetch_and_and(addr, mask);
 }
 void DynamicBitmap::clear() {
   for (int i = 0; i < bitmapSize; i++) {
@@ -94,7 +97,7 @@ typename DynamicBitmap::const_iterator end(DynamicBitmap &obj) {
 }
 
 bool DynamicBitmap::getBit(const size_t &value) const {
-  return (map[getBitmapIndex(value)] & (1 << getBitmapSubindex(value))) > 0;
+  return static_cast<bool>(map[getBitmapIndex(value)] & (1 << getBitmapSubindex(value)));
 }
 
 bool DynamicBitmap::getBitAtomic(const size_t &value) const {

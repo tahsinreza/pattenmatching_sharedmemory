@@ -102,6 +102,12 @@ void FixedBitmap<MaxSize>::erase(const size_t &value) {
   map[getBitmapIndex(value)] &= ~(static_cast<BitmapType>(1) << getBitmapSubindex(value));
 }
 template<size_t MaxSize>
+void FixedBitmap<MaxSize>::eraseAtomic(const size_t &value) {
+  BitmapType mask = ~(static_cast<BitmapType>(1) << getBitmapSubindex(value));
+  auto addr = &(map[getBitmapIndex(value)]);
+  __sync_fetch_and_and(addr, mask);
+}
+template<size_t MaxSize>
 void FixedBitmap<MaxSize>::clear() {
   for (int i = 0; i < C_BITMAP_SIZE; i++) {
     map[i] = 0;

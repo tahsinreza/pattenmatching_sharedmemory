@@ -74,6 +74,17 @@ int main(int argc, char **argv) {
   std::cout << "isIn atomic 1" << std::endl;
   std::cout << dynamicBitmap.isInAtomic(1) << std::endl;
 
+  std::cout << "erase atomic 1" << std::endl;
+  dynamicBitmap.eraseAtomic(1);
+  dynamicBitmap.printRaw();
+
+  std::cout << "isIn atomic 1" << std::endl;
+  std::cout << dynamicBitmap.isInAtomic(1) << std::endl;
+
+  std::cout << "fill" << std::endl;
+  dynamicBitmap.fill();
+  dynamicBitmap.printRaw();
+
   return 0;
 }
 
