@@ -4,6 +4,9 @@
 
 #include "graph_stat.h"
 
+GraphStat::GraphStat()
+    : vertexTotalNumber(0), edgeTotalNumber(0) {}
+
 GraphStat &GraphStat::operator+=(const GraphStat &other) {
   edgeTotalNumber+=other.edgeTotalNumber;
   vertexTotalNumber+=other.vertexTotalNumber;
@@ -44,13 +47,13 @@ void GraphStat::print(std::ostream &ostream) const {
   ostream << "edgeLabelTotalNumberMap :" <<std::endl;
   for (const auto &it1 : edgeLabelTotalNumberMap) {
     for (const auto &it2 : it1.second) {
-      ostream << "\t(" << it1.first <<","<< it2.first <<" : " << it2.second<< std::endl;
+      ostream << "\t(" << it1.first <<","<< it2.first <<") : " << it2.second<< std::endl;
     }
   }
   ostream << "edgeLabelAverageNumberMap :" <<std::endl;
   for (const auto &it1 : edgeLabelAverageNumberMap) {
     for (const auto &it2 : it1.second) {
-      ostream << "\t(" << it1.first <<","<< it2.first <<" : " << it2.second<< std::endl;
+      ostream << "\t(" << it1.first <<","<< it2.first <<") : " << it2.second<< std::endl;
     }
   }
 
@@ -79,16 +82,16 @@ void GraphStat::addEdge(const weight_t &vertexFromLabel, const weight_t &vertexT
 
 void GraphStat::computeStats() {
   for (const auto &it : vertexLabelTotalNumberMap) {
-    vertexLabelAverageNumberMap[it.first] = it.second / vertexTotalNumber;
+    vertexLabelAverageNumberMap[it.first] = static_cast<double>(it.second) / vertexTotalNumber;
   }
 
   for (const auto &it1 : edgeLabelTotalNumberMap) {
     for (const auto &it2 : it1.second) {
-      edgeLabelAverageNumberMap[it1.first][it2.first] = it2.second / edgeTotalNumber;
+      edgeLabelAverageNumberMap[it1.first][it2.first] = static_cast<double>(it2.second) / edgeTotalNumber;
     }
   }
 
   for (const auto &it : edgeOutboundLabelTotalNumberMap) {
-    edgeOutboundLabelAverageNumberMap[it.first] = it.second / vertexLabelTotalNumberMap[it.first];
+    edgeOutboundLabelAverageNumberMap[it.first] = static_cast<double>(it.second) / vertexLabelTotalNumberMap[it.first];
   }
 };

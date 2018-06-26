@@ -8,10 +8,11 @@
 #include "totem_partition.h"
 #include <unordered_map>
 #include <unordered_set>
-#include "utils/bitmap_fixed.h"
-#include "utils/bitmap_dynamic.h"
+#include "bitmap_fixed.h"
+#include "bitmap_dynamic.h"
 #include <vector>
-#include "patternmatching_logger.h"
+#include "logger.h"
+#include "utils.h"
 #include "multiple_label_common.h"
 
 namespace patternmatching {
@@ -25,6 +26,7 @@ class MultipleLabelGlobalState {
   using BitmapType = FixedBitmap<C_MAXIMUM_PATTERN_SIZE>;
   //using BitmapType = std::unordered_set<pvid_t >;
  public:
+  MultipleLabelGlobalState();
   error_t allocate(const vid_t vertexCount, const eid_t edgeCount, const pvid_t patternVertexCount);
   error_t free();
   void resetActiveList();

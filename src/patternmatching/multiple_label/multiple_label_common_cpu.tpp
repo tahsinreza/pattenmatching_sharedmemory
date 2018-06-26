@@ -6,7 +6,7 @@
 #include "totem_graph.h"
 #include "totem_mem.h"
 #include "multiple_label_common_cpu.h"
-#include "patternmatching_logger.h"
+#include "logger.h"
 
 namespace patternmatching {
 
@@ -17,6 +17,15 @@ namespace patternmatching {
 /**
  * state shared between all partitions
  */
+template<typename VisitedType>
+MultipleLabelGlobalState<VisitedType>::MultipleLabelGlobalState()
+    : graphVertexCount(0), graphActiveVertexCount(0),
+      graphEdgeCount(0), graphActiveEdgeCount(0), patternVertexCount(0),
+      vertexActiveList(nullptr), vertexModifiedList(nullptr), vertexScheduledList(nullptr),
+      edgeActiveList(nullptr),
+      vertexPatternMatch(nullptr), vertexPatternAlreadyMatched(nullptr), vertexPatternToUnmatch(nullptr)
+{}
+
 template<typename VisitedType>
 error_t MultipleLabelGlobalState<VisitedType>::allocate(const vid_t _graphVertexCount,
                                                         const eid_t _graphEdgeCount,
@@ -58,6 +67,7 @@ error_t MultipleLabelGlobalState<VisitedType>::allocate(const vid_t _graphVertex
 
 template<typename VisitedType>
 error_t MultipleLabelGlobalState<VisitedType>::free() {
+  if(vertexActiveList == nullptr) return 0;
   delete[] vertexActiveList;
   delete[] edgeActiveList;
   delete[] vertexModifiedList;

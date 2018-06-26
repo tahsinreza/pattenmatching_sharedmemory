@@ -76,8 +76,6 @@ __host__ void MultipleLabelPcStrictCpu<State>::resetState(State *globalState) {
 template<class State>
 __host__ size_t
 MultipleLabelPcStrictCpu<State>::compute(const graph_t &graph, State *globalState) {
-  //resetState(globalState);
-
   const auto &currentConstraint = *pathConstraintIterator;
 
   Logger::get().log(Logger::E_LEVEL_DEBUG, "currentConstraint : ", Logger::E_OUTPUT_FILE_LOG);

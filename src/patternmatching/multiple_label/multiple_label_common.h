@@ -6,7 +6,7 @@
 #define PROJECT_MULTIPLE_LABEL_COMMON_H
 
 #include "totem_comdef.h"
-#include "utils/bitmap_fixed.h"
+#include "bitmap_fixed.h"
 namespace patternmatching {
 
 typedef uint32_t pvid_t;

@@ -20,6 +20,8 @@ class GraphStatCpu : BaseClass {
 
   size_t compute(const graph_t &graph, State *globalState);
 
+  const GraphStat& getGraphStat() const;
+
  private:
   GraphStat graphStat;
 };

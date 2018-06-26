@@ -1,8 +1,61 @@
 cmake_minimum_required (VERSION 3.10)
 project(patternmatching_multiple_label LANGUAGES CXX CUDA)
 
-include_directories("${CUDA_INCLUDE_DIRS}")
+include_directories(
+        ${PROJECT_SOURCE_DIR}
+        ${PATTERNMATCHING_SOURCE_DIR}/utils
+        ${SOURCE_ROOT_DIR}/totem)
 
-include_directories(${PROJECT_SOURCE_DIR})
+add_library(${PROJECT_NAME}
+        multiple_label_cc_backtrack_cpu.h
+        multiple_label_cc_backtrack_cpu.tpp
+        multiple_label_cc_cpu.h
+        multiple_label_cc_cpu.tpp
+        multiple_label_cc_strict_cpu.h
+        multiple_label_cc_strict_cpu.tpp
+        multiple_label_common_cpu.h
+        multiple_label_common_cpu.tpp
+        multiple_label_common.h
+        multiple_label_constraint_circular.cc
+        multiple_label_constraint_circular.h
+        multiple_label_constraint_local.cc
+        multiple_label_constraint_local.h
+        multiple_label_constraint_path.cc
+        multiple_label_constraint_path.h
+        multiple_label_constraint_template.cc
+        multiple_label_constraint_template.h
+        multiple_label_enumeration_cpu.h
+        multiple_label_enumeration_cpu.tpp
+        multiple_label_generate_constraint_circular.cc
+        multiple_label_generate_constraint_circular.h
+        multiple_label_generate_constraint_enumeration.cc
+        multiple_label_generate_constraint_enumeration.h
+        multiple_label_generate_constraint_local.cc
+        multiple_label_generate_constraint_local.h
+        multiple_label_generate_constraint_path.cc
+        multiple_label_generate_constraint_path.h
+        multiple_label_generate_constraint_template.cc
+        multiple_label_generate_constraint_template.h
+        multiple_label_lcc0_cpu.h
+        multiple_label_lcc0_cpu.tpp
+        multiple_label_lcc_cpu.h
+        multiple_label_lcc_cpu.tpp
+        multiple_label_pc_backtrack_cpu.h
+        multiple_label_pc_backtrack_cpu.tpp
+        multiple_label_pc_cpu.h
+        multiple_label_pc_cpu.tpp
+        multiple_label_pc_strict_cpu.h
+        multiple_label_pc_strict_cpu.tpp
+        multiple_label_tds_backtrack_cpu.h
+        multiple_label_tds_backtrack_cpu.tpp
+        multiple_label_tds_cpu.h
+        multiple_label_tds_cpu.tpp
+        multiple_label_tds_strict_cpu.h
+        multiple_label_tds_strict_cpu.tpp)
 
-
+target_link_libraries(${PROJECT_NAME}
+        totem
+        ${OTHER_LIBRARIES}
+        ${TBB_LIBRARIES}
+        ${OpenMP_CXX_LIBRARIES}
+        ${CUDA_LIBRARIES})

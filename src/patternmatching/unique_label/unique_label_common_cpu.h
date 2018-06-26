@@ -7,7 +7,7 @@
 #include "totem_mem.h"
 #include "totem_partition.h"
 #include <unordered_map>
-#include "patternmatching_logger.h"
+#include "logger.h"
 
 namespace patternmatching {
 

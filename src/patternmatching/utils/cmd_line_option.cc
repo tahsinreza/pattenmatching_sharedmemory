@@ -7,7 +7,7 @@
 #include <stdexcept>
 #include <iostream>
 
-#include "patternmatching_cmd_line_option.h"
+#include "cmd_line_option.h"
 
 namespace patternmatching {
 

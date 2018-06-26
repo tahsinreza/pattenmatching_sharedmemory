@@ -5,7 +5,7 @@
 
 #include "totem.h"
 #include "graph_stat_effectiveness_cpu.h"
-#include "patternmatching_logger.h"
+#include "logger.h"
 
 namespace patternmatching {
 
@@ -92,46 +92,59 @@ error_t GraphStatEffectivenessCpu::allocate(CmdLineOption &cmdLineOption) {
   initialiseTotem();
 
   patternmatchingState.allocate(graph->vertex_count, graph->edge_count, pattern->vertex_count);
-  patternMatchingStateTemporary.allocate(graph->vertex_count, graph->edge_count, pattern->vertex_count);
+
+  // Generate pattern
+  Logger::get().log(Logger::E_LEVEL_INFO, "Generate pattern multiple_label");
+
+  Logger::get().log(Logger::E_LEVEL_INFO, "Generate Local constraint");
+  generateLocal.preprocessPatern(*pattern);
+  Logger::get().logFunction(Logger::E_LEVEL_INFO,
+                            generateLocal, &MultipleLabelGenerateConstraintLocal::print, Logger::E_OUTPUT_FILE_LOG);
+
+  Logger::get().log(Logger::E_LEVEL_INFO, "Generate Circular constraint");
+  generateCircular.preprocessPatern(*pattern);
+  Logger::get().logFunction(Logger::E_LEVEL_INFO,
+                            generateCircular, &MultipleLabelGenerateConstraintCircular::print, Logger::E_OUTPUT_FILE_LOG);
+
+  Logger::get().log(Logger::E_LEVEL_INFO, "Generate Path constraint");
+  generatePath.preprocessPatern(*pattern);
+  Logger::get().logFunction(Logger::E_LEVEL_INFO,
+                            generatePath, &MultipleLabelGenerateConstraintPath::print, Logger::E_OUTPUT_FILE_LOG);
+  Logger::get().logFunction(Logger::E_LEVEL_INFO,
+                            generatePath, &MultipleLabelGenerateConstraintPath::print, Logger::E_OUTPUT_COUT);
+
+  Logger::get().log(Logger::E_LEVEL_INFO, "Generate Template constraint");
+  generateTemplate.preprocessPatern(*pattern, generateCircular.getConstraintVector(), generatePath.getConstraintVector());
+  Logger::get().logFunction(Logger::E_LEVEL_INFO,
+                            generateTemplate, &MultipleLabelGenerateConstraintTemplate::print, Logger::E_OUTPUT_FILE_LOG);
+
+  Logger::get().log(Logger::E_LEVEL_INFO, "Generate Enumeration constraint");
+  generateEnumeration.preprocessPatern(*pattern);
+  Logger::get().logFunction(Logger::E_LEVEL_INFO,
+                            generateEnumeration, &MultipleLabelGenerateConstraintEnumeration::print, Logger::E_OUTPUT_FILE_LOG);
 
   // Initialise unique_label
-  Logger::get().log(Logger::E_LEVEL_INFO, "Initialize LCC, CC, PC, and Step unique_label");
+  Logger::get().log(Logger::E_LEVEL_INFO, "Initialize LCC0, LCC, CC, PC, TDS, and Enumeration");
+  lcc0Cpu.setConstraintVector(generateLocal.getConstraintVector());
+  lccCpu.setConstraintVector(generateLocal.getConstraintVector());
+  ccCpu.setConstraintVector(generateCircular.getConstraintVector());
+  ccBacktrackCpu.setConstraintVector(generateCircular.getConstraintVector());
+  ccStrictCpu.setConstraintVector(generateCircular.getConstraintVector());
+  pcCpu.setConstraintVector(generatePath.getConstraintVector());
+  pcBacktrackCpu.setConstraintVector(generatePath.getConstraintVector());
+  pcStrictCpu.setConstraintVector(generatePath.getConstraintVector());
+  tdsCpu.setConstraintVector(generateTemplate.getConstraintVector());
+  tdsBacktrackCpu.setConstraintVector(generateTemplate.getConstraintVector());
+  tdsStrictCpu.setConstraintVector(generateTemplate.getConstraintVector());
+  enumerationCpu.setConstraint(generateEnumeration.getConstraint());
 
-  Logger::get().log(Logger::E_LEVEL_INFO, "Initialize LCC0");
-  lcc0Cpu.preprocessPatern(*pattern);
-  Logger::get().logFunction(Logger::E_LEVEL_INFO, lcc0Cpu, &Lcc0Type::printLocalConstraint, Logger::E_OUTPUT_FILE_LOG);
-
-  Logger::get().log(Logger::E_LEVEL_INFO, "Initialize LCC");
-  lccCpu.preprocessPatern(*pattern);
-  Logger::get().logFunction(Logger::E_LEVEL_INFO, lccCpu, &LccType::printLocalConstraint, Logger::E_OUTPUT_FILE_LOG);
-  Logger::get().logFunction(Logger::E_LEVEL_DEBUG, lccCpu, &LccType::printLocalConstraint, Logger::E_OUTPUT_COUT);
-
-  Logger::get().log(Logger::E_LEVEL_INFO, "Initialize CC");
-  ccCpu.init(*graph, *pattern);
-  ccCpu.preprocessPatern(*pattern);
-  Logger::get().logFunction(Logger::E_LEVEL_INFO, ccCpu, &CcType::printCircularConstraint, Logger::E_OUTPUT_FILE_LOG);
-  Logger::get().logFunction(Logger::E_LEVEL_DEBUG, ccCpu, &CcType::printCircularConstraint, Logger::E_OUTPUT_COUT);
-
-  Logger::get().log(Logger::E_LEVEL_INFO, "Initialize PC");
-  pcCpu.init(*graph, *pattern);
-  pcCpu.preprocessPatern(*pattern);
-  Logger::get().logFunction(Logger::E_LEVEL_INFO, pcCpu, &PcType::printPathConstraint, Logger::E_OUTPUT_FILE_LOG);
-  Logger::get().logFunction(Logger::E_LEVEL_DEBUG, pcCpu, &PcType::printPathConstraint, Logger::E_OUTPUT_COUT);
-
-  Logger::get().log(Logger::E_LEVEL_INFO, "Initialize TDS");
-  tdsCpu.init(*graph, *pattern);
-  tdsCpu.preprocessPatern(*pattern, ccCpu.getCircularConstraintVector(), pcCpu.getPathConstraintVector());
-  Logger::get().logFunction(Logger::E_LEVEL_INFO, tdsCpu, &TdsType::printTemplateConstraint, Logger::E_OUTPUT_FILE_LOG);
-  Logger::get().logFunction(Logger::E_LEVEL_DEBUG, tdsCpu, &TdsType::printTemplateConstraint, Logger::E_OUTPUT_COUT);
+  currentIteration=0;
 
   Logger::get().log(Logger::E_LEVEL_INFO, "End of initialisation");
   return SUCCESS;
 }
 
 error_t GraphStatEffectivenessCpu::free() {
-  #if 0
-  totem_finalize();
-    #endif
   patternmatchingState.free();
   graph_finalize(graph);
 
@@ -139,117 +152,116 @@ error_t GraphStatEffectivenessCpu::free() {
 }
 
 int GraphStatEffectivenessCpu::runPatternMatching() {
-  // run step
-  bool finished = 0;
-  MultipleLabelStep::Step currentStep;
   totalStepTime = 0.;
+  currentIteration = 0;
 
   Logger::get().log(Logger::E_LEVEL_INFO, "Start run");
 
-  int currentIteration = 0;
-
   // Run LCC0
-  totem_timing_reset();
-  stopwatch_t stopwatch;
-  stopwatch_start(&stopwatch);
-  currentStepVertexEliminated = lcc0Cpu.compute(*graph, &patternmatchingState);
-  currentStepTime = stopwatch_elapsed(&stopwatch);
-  totalStepTime += currentStepTime;
-  logResults(currentIteration, false);
+  {
+    totem_timing_reset();
+    stopwatch_t stopwatch;
+    stopwatch_start(&stopwatch);
+    currentStepVertexEliminated = lcc0Cpu.compute(*graph, &patternmatchingState);
+    currentStepTime = stopwatch_elapsed(&stopwatch);
+    totalStepTime += currentStepTime;
+    logResults(currentIteration, false);
 
-  currentIteration++;
+    currentIteration++;
+  }
 
+  Logger::get().log(Logger::E_LEVEL_INFO, "Graph stat");
+  // Run Graph Stat
+  {
+
+    totem_timing_reset();
+    stopwatch_t stopwatch;
+    stopwatch_start(&stopwatch);
+    graphStatCpu.compute(*graph, &patternmatchingState);
+
+    currentStepTime = stopwatch_elapsed(&stopwatch);
+    totalStepTime += currentStepTime;
+
+    auto graphStat = graphStatCpu.getGraphStat();
+
+    Logger::get().logFunction(Logger::E_LEVEL_RESULT,
+                              graphStat, &GraphStat::print,
+                              Logger::E_OUTPUT_FILE_LOG);
+    Logger::get().logFunction(Logger::E_LEVEL_RESULT,
+                              graphStat, &GraphStat::print,
+                              Logger::E_OUTPUT_COUT);
+  }
+
+  Logger::get().log(Logger::E_LEVEL_INFO, "Run LCC");
   // Run LCC
-  patternMatchingStateTemporary=patternmatchingState;
-  finished=0;
-  while(!finished) {
+  {
+    patternMatchingStateTemporary = patternmatchingState;
+    bool finished = false;
+    totalStepTime = 0;
+    while (!finished) {
 
-    totem_timing_reset();
-    stopwatch_t stopwatch;
-    stopwatch_start(&stopwatch);
-    currentStepVertexEliminated = lccCpu.compute(*graph, &patternMatchingStateTemporary);
-    currentStepTime = stopwatch_elapsed(&stopwatch);
-    totalStepTime += currentStepTime;
-    logResults(currentIteration, false);
+      totem_timing_reset();
+      stopwatch_t stopwatch;
+      stopwatch_start(&stopwatch);
+      currentStepVertexEliminated = lccCpu.compute(*graph, &patternMatchingStateTemporary);
+      currentStepTime = stopwatch_elapsed(&stopwatch);
+      totalStepTime += currentStepTime;
+      logResults(currentIteration, false);
 
-    currentIteration++;
-    if(currentStepVertexEliminated==0) finished=true;
-  }
-
-  // Run CC Full
-  finished=0;
-  while(!finished) {
-    patternMatchingStateTemporary=patternmatchingState;
-
-    totem_timing_reset();
-    stopwatch_t stopwatch;
-    stopwatch_start(&stopwatch);
-    currentStepVertexEliminated = lccCpu.compute(*graph, &patternMatchingStateTemporary);
-    currentStepTime = stopwatch_elapsed(&stopwatch);
-    totalStepTime += currentStepTime;
-    logResults(currentIteration, false);
-
-    currentIteration++;
-    if(currentStepVertexEliminated==0) finished=true;
-  }
-
-
-  //Other
-  algorithmStep.getNextStep(currentStepVertexEliminated, &currentStep, &currentStepName);
-  while (!finished && currentIteration < 200) {
-  // reinitialise
-    switch (currentStep) {
-      case MultipleLabelStep::E_CC :
-        ccCpu.resetState(&patternmatchingState);
-        break;
-
-      case MultipleLabelStep::E_PC :
-        pcCpu.resetState(&patternmatchingState);
-        break;
-      default:break;
+      currentIteration++;
+      if (currentStepVertexEliminated == 0) finished = true;
     }
-
-    totem_timing_reset();
-    stopwatch_t stopwatch;
-    stopwatch_start(&stopwatch);
-
-    switch (currentStep) {
-      case MultipleLabelStep::E_LCC0 :
-        currentStepVertexEliminated = lcc0Cpu.compute(*graph, &patternmatchingState);
-        break;
-      case MultipleLabelStep::E_LCC :
-        currentStepVertexEliminated = lccCpu.compute(*graph, &patternmatchingState);
-        break;
-      case MultipleLabelStep::E_CC :
-        currentStepVertexEliminated = ccCpu.compute(*graph, &patternmatchingState);
-        break;
-      case MultipleLabelStep::E_PC :
-        currentStepVertexEliminated = pcCpu.compute(*graph, &patternmatchingState);
-        break;
-      case MultipleLabelStep::E_TDS :
-        currentStepVertexEliminated = tdsCpu.compute(*graph, &patternmatchingState);
-        break;
-      default:break;
-    }
-
-    currentStepTime = stopwatch_elapsed(&stopwatch);
-    totalStepTime += currentStepTime;
-
-    logResults(currentIteration, false);
-
-    finished = algorithmStep.getNextStep(currentStepVertexEliminated, &currentStep, &currentStepName);
-    currentIteration++;
   }
 
-  //printActiveGraph(stringStream);
-  Logger::get().log(Logger::E_LEVEL_INFO, "End run");
-  Logger::get().log(Logger::E_LEVEL_INFO, "Saving pruned graph");
-  currentStepTime=0.;
-  currentStepVertexEliminated=0;
-  logResults(currentIteration, true);
+  Logger::get().log(Logger::E_LEVEL_INFO, "Run CC");
+  runTest(generateCircular, ccCpu);
+
+  Logger::get().log(Logger::E_LEVEL_INFO, "Run CC Strict");
+  runTest(generateCircular, ccStrictCpu);
+
+  Logger::get().log(Logger::E_LEVEL_INFO, "Run CC Backtrack");
+  runTest(generateCircular, ccBacktrackCpu);
+
+  Logger::get().log(Logger::E_LEVEL_INFO, "Run PC");
+  runTest(generatePath, pcCpu);
+
+  Logger::get().log(Logger::E_LEVEL_INFO, "Run PC Strict");
+  runTest(generatePath, pcStrictCpu);
+
+  Logger::get().log(Logger::E_LEVEL_INFO, "Run PC Backtrack");
+  runTest(generatePath, pcBacktrackCpu);
+
+  Logger::get().log(Logger::E_LEVEL_INFO, "Run TDS");
+  runTest(generateTemplate, tdsCpu);
+
+  Logger::get().log(Logger::E_LEVEL_INFO, "Run TDS Strict");
+  runTest(generateTemplate, tdsStrictCpu);
+
+  Logger::get().log(Logger::E_LEVEL_INFO, "Run TDS Backtrack");
+  runTest(generateTemplate, tdsBacktrackCpu);
+
+  Logger::get().log(Logger::E_LEVEL_INFO, "Run Enumerate");
+  runTest(generateEnumeration, enumerationCpu);
 
   return 0;
 }
+
+template<class Generator, class Algorithm>
+void GraphStatEffectivenessCpu::runTest(Generator &generator, Algorithm &algorithm) {
+  for(int currentConstraint=0; currentConstraint< generator.getConstraintNumber(); currentConstraint++) {
+    patternMatchingStateTemporary = patternmatchingState;
+
+    totem_timing_reset();
+    stopwatch_t stopwatch;
+    stopwatch_start(&stopwatch);
+    currentStepVertexEliminated = algorithm.compute(*graph, &patternMatchingStateTemporary);
+    currentStepTime = stopwatch_elapsed(&stopwatch);
+    totalStepTime += currentStepTime;
+    logResults(currentIteration, false);
+
+    currentIteration++;
+  }
+};
 
 void GraphStatEffectivenessCpu::logResults(const int currentIteration, const bool logGraph) const {
   Logger::get().setCurrentIteration(currentIteration);

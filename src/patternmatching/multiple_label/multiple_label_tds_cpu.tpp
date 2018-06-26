@@ -109,6 +109,7 @@ bool MultipleLabelTdsCpu<State>::checkConstraint(
     }
   } else if (currentWalkMove == Walk::E_MOVE_BACK) {
     auto nextWalkMoveBackIndex = walk.moveBackIndexVector[currentPositionInConstraint];
+    auto nextVertexId = historyIndexVector[nextWalkMoveBackIndex];
 
     if (checkConstraint(graph,
                         globalState,
@@ -118,7 +119,7 @@ bool MultipleLabelTdsCpu<State>::checkConstraint(
                         historyIndexVector,
                         traversalHypothesis,
                         sourceVertexId,
-                        historyIndexVector[nextWalkMoveBackIndex],
+                        nextVertexId,
                         currentPositionInConstraint + 1)) {
       return true;
     }
@@ -134,9 +135,6 @@ __host__ void MultipleLabelTdsCpu<State>::resetState(State *globalState) {
 template<class State>
 __host__ size_t
 MultipleLabelTdsCpu<State>::compute(const graph_t &graph, State *globalState) {
-  //resetState(globalState);
-  Logger::get().log(Logger::E_LEVEL_DEBUG, "TDS Start : ", Logger::E_OUTPUT_DEBUG);
-
   const auto &currentConstraint = *templateConstraintIterator;
 
   Logger::get().log(Logger::E_LEVEL_DEBUG, "currentConstraint : ", Logger::E_OUTPUT_FILE_LOG);
@@ -145,16 +143,13 @@ MultipleLabelTdsCpu<State>::compute(const graph_t &graph, State *globalState) {
                             &MultipleLabelConstraintTemplate::print,
                             Logger::E_OUTPUT_FILE_LOG);
 
-  size_t stepCompleted=0;
-  size_t stepMax=globalState->graphActiveVertexCount;
-  size_t stepSize=1000;
+  PROGRESSION_INSERT_BEGIN()
 
   SourceTraversalMapType sourceTraversalMap;
   SourceTraversalEdgeMapType sourceTraversalEdgeMap;
   std::vector<vid_t> historyIndexVector;
   TraversalHypothesis traversalHypothesis;
 
-  std::cout << "vertex count : " << graph.vertex_count <<std::endl;
   #pragma omp parallel for private(sourceTraversalMap, sourceTraversalEdgeMap, historyIndexVector, traversalHypothesis)
   for (vid_t vertexId = 0; vertexId < graph.vertex_count; vertexId++) {
     if (!BaseClass::isVertexActive(*globalState, vertexId)) continue;
@@ -196,15 +191,7 @@ MultipleLabelTdsCpu<State>::compute(const graph_t &graph, State *globalState) {
       BaseClass::makeModifiedVertex(globalState, vertexId);
     }
 
-    #pragma omp atomic
-    ++stepCompleted;
-
-    if(stepCompleted%stepSize==0) {
-      #pragma omp critical
-      {
-        std::cout << "Progression : " << stepCompleted << "/" << stepMax << std::endl;
-      }
-    }
+    PROGRESSION_INSERT_LOOP()
   };
 
   size_t vertexEliminatedNumber = 0;

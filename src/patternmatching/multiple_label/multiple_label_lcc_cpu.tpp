@@ -5,6 +5,7 @@
 #include "totem_graph.h"
 #include "totem_util.h"
 #include "multiple_label_lcc_cpu.h"
+#include "utils.h"
 #include <iostream>
 
 namespace patternmatching {
@@ -19,7 +20,6 @@ __host__ size_t
 MultipleLabelLccCpu<State>::compute(const graph_t &graph, State *globalState) const {
 
   size_t edgeEliminatedNumber = 0;
-  std::cout << "Start LCC " << std::endl;
   std::unordered_map<weight_t, size_t> currentLocalConstraint;
   currentLocalConstraint.reserve(10);
 
@@ -101,7 +101,6 @@ MultipleLabelLccCpu<State>::compute(const graph_t &graph, State *globalState) co
     }
   }
 
-  //std::cout << "Mid LCC " << std::endl;
   size_t vertexEliminatedNumber = 0;
 
   #pragma omp parallel for reduction(+:vertexEliminatedNumber)
@@ -142,7 +141,6 @@ MultipleLabelLccCpu<State>::compute(const graph_t &graph, State *globalState) co
 
   globalState->graphActiveVertexCount-=vertexEliminatedNumber;
   globalState->graphActiveEdgeCount-=edgeEliminatedNumber;
-  //std::cout << "End LCC " << std::endl;
   std::cout << "Eliminated edges : " << edgeEliminatedNumber << std::endl;
 
   return vertexEliminatedNumber;

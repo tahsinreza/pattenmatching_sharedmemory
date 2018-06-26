@@ -74,8 +74,6 @@ __host__ size_t
 MultipleLabelCcStrictCpu<State>::compute(
     const graph_t &graph, State
 *globalState) {
-  //resetState(globalState);
-  //std::cout << "Start CC " << std::endl;
 
   const auto &currentConstraint = *circularConstraintIterator;
 
@@ -85,6 +83,7 @@ MultipleLabelCcStrictCpu<State>::compute(
                             &MultipleLabelConstraintCircular::print,
                             Logger::E_OUTPUT_FILE_LOG);
 
+  PROGRESSION_INSERT_BEGIN()
   std::vector<vid_t> historyIndexVector;
 
   #pragma omp parallel for private(historyIndexVector)
@@ -127,10 +126,8 @@ MultipleLabelCcStrictCpu<State>::compute(
     if (hasBeenModified) {
       BaseClass::makeModifiedVertex(globalState, vertexId);
     }
+    PROGRESSION_INSERT_LOOP()
   }
-
-
-  //std::cout << "Mid CC " << std::endl;
 
   size_t vertexEliminatedNumber = 0;
   size_t matchEliminatedNumber = 0;
@@ -180,7 +177,6 @@ MultipleLabelCcStrictCpu<State>::compute(
   ++circularConstraintIterator;
 
   std::cout << "Match eliminated : " << matchEliminatedNumber << std::endl;
-  //std::cout << "End CC " << std::endl;
   return vertexEliminatedNumber;
 }
 

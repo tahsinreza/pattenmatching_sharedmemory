@@ -1,11 +1,12 @@
 
-#include "patternmatching_logger.h"
+#include "logger.h"
 #include <iostream>
 #include <fstream>
 #include <cstdio>
 #include <chrono>
 #include <ctime>
 #include <iomanip>
+#include "utils.h"
 
 namespace patternmatching {
 
@@ -16,7 +17,11 @@ const std::string Logger::C_LOG_FILEPATTERN = "log.totem";
 
 const std::string Logger::C_ITERATION_RESULTS_FILEPATTERN = "results.totem";
 
-const int Logger::C_MIN_LOG_LEVEL = Logger::E_LEVEL_DEBUG;
+#if LOGGER_LEVEL_NO_DEBUG == 1
+  const int Logger::C_MIN_LOG_LEVEL = Logger::E_LEVEL_INFO;
+#else
+  const int Logger::C_MIN_LOG_LEVEL = Logger::E_LEVEL_DEBUG;
+#endif
 
 Logger *Logger::instance = nullptr;
 

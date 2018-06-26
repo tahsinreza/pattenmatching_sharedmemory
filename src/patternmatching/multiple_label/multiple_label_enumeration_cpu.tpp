@@ -66,86 +66,74 @@ size_t MultipleLabelEnumerationCpu<State>::checkConstraint(
 
       if (neighborVertexId != checkVertexId) continue;
 
-      return checkConstraint(graph,
-                             globalState,
-                             walk,
-                             historyIndexVector,
-                             sourceVertexId,
-                             currentVertexId,
-                             currentPositionInConstraint + 1);
+      enumerationNumber += checkConstraint(graph,
+                                           globalState,
+                                           walk,
+                                           historyIndexVector,
+                                           sourceVertexId,
+                                           currentVertexId,
+                                           currentPositionInConstraint + 1);
 
     }
   } else if (currentWalkMove == Walk::E_MOVE_BACK) {
     auto nextWalkMoveBackIndex = walk.moveBackIndexVector[currentPositionInConstraint];
+    auto nextVertex = historyIndexVector[nextWalkMoveBackIndex];
 
-    return checkConstraint(graph,
-                           globalState,
-                           walk,
-                           historyIndexVector,
-                           sourceVertexId,
-                           historyIndexVector[nextWalkMoveBackIndex],
-                           currentPositionInConstraint + 1);
+    enumerationNumber += checkConstraint(graph,
+                                         globalState,
+                                         walk,
+                                         historyIndexVector,
+                                         sourceVertexId,
+                                         nextVertex,
+                                         currentPositionInConstraint + 1);
   }
+
   return enumerationNumber;
 }
 
 template<class State>
 __host__ void MultipleLabelEnumerationCpu<State>::resetState(State *globalState) {
-  globalState->resetModifiedList();
 }
 
 template<class State>
 __host__ size_t
 MultipleLabelEnumerationCpu<State>::compute(const graph_t &graph, State *globalState) {
-  //resetState(globalState);
-  Logger::get().log(Logger::E_LEVEL_DEBUG, "Enumeration Start : ", Logger::E_OUTPUT_DEBUG);
-
   Logger::get().log(Logger::E_LEVEL_DEBUG, "currentConstraint : ", Logger::E_OUTPUT_FILE_LOG);
   Logger::get().logFunction(Logger::E_LEVEL_DEBUG,
                             templateConstraint,
                             &MultipleLabelConstraintTemplate::print,
                             Logger::E_OUTPUT_FILE_LOG);
 
-  size_t stepCompleted = 0;
-  size_t stepMax = globalState->graphActiveVertexCount;
-  size_t stepSize = 1000;
+  PROGRESSION_INSERT_BEGIN()
 
   const auto &walkKey = templateConstraint.walkMap.cbegin();
   const auto &walkStartingVertex = walkKey->first;
   const auto &walk = walkKey->second;
+  walk.print();
 
   std::vector<vid_t> historyIndexVector;
 
-  size_t enumerationNumber=0;
+  size_t enumerationNumber = 0;
 
   #pragma omp parallel for private(historyIndexVector) reduction(+:enumerationNumber)
   for (vid_t vertexId = 0; vertexId < graph.vertex_count; vertexId++) {
     if (!BaseClass::isVertexActive(*globalState, vertexId)) continue;
 
-
     if (globalState->vertexPatternMatch[vertexId].isIn(walkStartingVertex)) {
-        // Check cycle
-        historyIndexVector.clear();
-        historyIndexVector.push_back(vertexId);
-        enumerationNumber += checkConstraint(graph,
-                                             globalState,
-                                             walk,
-                                             historyIndexVector,
-                                             vertexId,
-                                             vertexId,
-                                             1);
+      // Check cycle
+      historyIndexVector.clear();
+      historyIndexVector.push_back(vertexId);
+      enumerationNumber += checkConstraint(graph,
+                                           globalState,
+                                           walk,
+                                           historyIndexVector,
+                                           vertexId,
+                                           vertexId,
+                                           1);
 
     }
 
-    #pragma omp atomic
-    ++stepCompleted;
-
-    if (stepCompleted % stepSize == 0) {
-      #pragma omp critical
-      {
-        std::cout << "Progression : " << stepCompleted << "/" << stepMax << std::endl;
-      }
-    }
+    PROGRESSION_INSERT_LOOP()
   }
 
   return enumerationNumber;
@@ -153,7 +141,7 @@ MultipleLabelEnumerationCpu<State>::compute(const graph_t &graph, State *globalS
 
 template<class State>
 void MultipleLabelEnumerationCpu<State>::setConstraint(
-    const MultipleLabelConstraintTemplate& templateConstraint_) {
-  templateConstraint=templateConstraint_;
+    const MultipleLabelConstraintTemplate &templateConstraint_) {
+  templateConstraint = templateConstraint_;
 }
 }

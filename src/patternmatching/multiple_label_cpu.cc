@@ -5,7 +5,7 @@
 
 #include "totem.h"
 #include "multiple_label_cpu.h"
-#include "patternmatching_logger.h"
+#include "logger.h"
 
 namespace patternmatching {
 
@@ -250,13 +250,17 @@ void MultipleLabelCpu::logResults(const int currentIteration, const bool logGrap
   {
     auto format = "Iteration %4d [%s], Running time %.4f, Eliminated vertex %lu";
     auto size = std::snprintf(nullptr, 0, format,
-                              currentIteration, currentStepName.c_str(), currentStepTime, currentStepVertexEliminated);
+                              currentIteration, currentStepName.c_str(), currentStepTime,
+                              currentStepVertexEliminated);
     std::string output(size + 1, '0');
     std::sprintf(&output[0], format,
                  currentIteration, currentStepName.c_str(), currentStepTime, currentStepVertexEliminated);
     output.resize(output.size() - 1);
 
-    Logger::get().log(Logger::E_LEVEL_RESULT, output, Logger::E_OUTPUT_DEBUG);
+    std::stringstream sstr;
+    sstr << " ["<<patternmatchingState.graphActiveVertexCount<<","<< patternmatchingState.graphVertexCount<< " ]";
+
+    Logger::get().log(Logger::E_LEVEL_RESULT, output+sstr.str(), Logger::E_OUTPUT_DEBUG);
   }
 
   // Save graph

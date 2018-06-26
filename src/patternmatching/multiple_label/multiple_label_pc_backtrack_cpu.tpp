@@ -78,7 +78,6 @@ __host__ void MultipleLabelPcBacktrackCpu<State>::resetState(State *globalState)
 template<class State>
 __host__ size_t
 MultipleLabelPcBacktrackCpu<State>::compute(const graph_t &graph, State *globalState) {
-  //resetState(globalState);
 
   const auto &currentConstraint = *pathConstraintIterator;
 

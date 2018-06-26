@@ -2,8 +2,8 @@
 // Created by qiu on 17/05/18.
 //
 
-#include "patternmatching_cmd_line_option.h"
-#include "patternmatching_logger.h"
+#include "cmd_line_option.h"
+#include "logger.h"
 #include "graph_stat_effectiveness_cpu.h"
 
 using namespace patternmatching;

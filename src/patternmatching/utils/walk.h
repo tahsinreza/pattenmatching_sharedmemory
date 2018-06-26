@@ -6,12 +6,8 @@
 #define PROJECT_MULTIPLE_LABEL_TEMPLATE_WALK_H
 
 #include "totem_graph.h"
-#include "multiple_label_constraint_circular.h"
-#include "multiple_label_constraint_path.h"
 #include <vector>
-#include <set>
 #include <iostream>
-#include <unordered_map>
 
 namespace patternmatching {
 

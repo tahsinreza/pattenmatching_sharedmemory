@@ -3,7 +3,7 @@
 #ifndef TOTEM_MULTIPLE_LABEL_CPU_CUH
 #define TOTEM_MULTIPLE_LABEL_CPU_CUH
 
-#include "patternmatching_cmd_line_option.h"
+#include "cmd_line_option.h"
 #include "multiple_label_step.h"
 #include "totem_graph.h"
 #include "multiple_label_common_cpu.h"

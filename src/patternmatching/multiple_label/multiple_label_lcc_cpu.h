@@ -9,7 +9,7 @@
 #include "multiple_label_constraint_local.h"
 #include <iostream>
 #include <unordered_set>
-#include "utils/bitmap_fixed.h"
+#include "bitmap_fixed.h"
 
 namespace patternmatching {
 

@@ -96,6 +96,7 @@ bool MultipleLabelTdsBacktrackCpu<State>::checkConstraint(
     }
   } else if (currentWalkMove == Walk::E_MOVE_BACK) {
     auto nextWalkMoveBackIndex = walk.moveBackIndexVector[currentPositionInConstraint];
+    auto nextVertexId = historyIndexVector[nextWalkMoveBackIndex];
 
     if (checkConstraint(graph,
                         globalState,
@@ -104,7 +105,7 @@ bool MultipleLabelTdsBacktrackCpu<State>::checkConstraint(
                         historyIndexVector,
                         traversalHypothesis,
                         sourceVertexId,
-                        historyIndexVector[nextWalkMoveBackIndex],
+                        nextVertexId,
                         currentPositionInConstraint + 1)) {
       return true;
     }
@@ -120,9 +121,6 @@ __host__ void MultipleLabelTdsBacktrackCpu<State>::resetState(State *globalState
 template<class State>
 __host__ size_t
 MultipleLabelTdsBacktrackCpu<State>::compute(const graph_t &graph, State *globalState) {
-  //resetState(globalState);
-  Logger::get().log(Logger::E_LEVEL_DEBUG, "TDS Start : ", Logger::E_OUTPUT_DEBUG);
-
   const auto &currentConstraint = *templateConstraintIterator;
 
   Logger::get().log(Logger::E_LEVEL_DEBUG, "currentConstraint : ", Logger::E_OUTPUT_FILE_LOG);
@@ -131,9 +129,7 @@ MultipleLabelTdsBacktrackCpu<State>::compute(const graph_t &graph, State *global
                             &MultipleLabelConstraintTemplate::print,
                             Logger::E_OUTPUT_FILE_LOG);
 
-  size_t stepCompleted=0;
-  size_t stepMax=globalState->graphActiveVertexCount;
-  size_t stepSize=1000;
+  PROGRESSION_INSERT_BEGIN()
 
   SourceTraversalMapType sourceTraversalMap;
   std::vector<vid_t> historyIndexVector;
@@ -177,15 +173,7 @@ MultipleLabelTdsBacktrackCpu<State>::compute(const graph_t &graph, State *global
       BaseClass::makeModifiedVertex(globalState, vertexId);
     }
 
-    #pragma omp atomic
-    ++stepCompleted;
-
-    if(stepCompleted%stepSize==0) {
-      #pragma omp critical
-      {
-        std::cout << "Progression : " << stepCompleted << "/" << stepMax << std::endl;
-      }
-    }
+    PROGRESSION_INSERT_LOOP()
   }
 
   size_t vertexEliminatedNumber = 0;

@@ -1,6 +1,6 @@
 
-#ifndef TOTEM_UNIQUE_LABEL_LOGGER_H
-#define TOTEM_UNIQUE_LABEL_LOGGER_H
+#ifndef PROJECT_LOGGER_H
+#define PROJECT_LOGGER_H
 
 #include <string>
 #include <sstream>

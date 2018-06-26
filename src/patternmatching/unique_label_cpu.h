@@ -3,7 +3,7 @@
 #ifndef TOTEM_UNIQUE_LABEL_CPU_CUH
 #define TOTEM_UNIQUE_LABEL_CPU_CUH
 
-#include "patternmatching_cmd_line_option.h"
+#include "cmd_line_option.h"
 #include "unique_label_step.h"
 #include "totem.h"
 #include "totem_mem.h"

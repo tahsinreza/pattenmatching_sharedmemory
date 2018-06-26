@@ -74,8 +74,6 @@ template<class State>
 __host__ size_t
 MultipleLabelCcBacktrackCpu<State>::compute(
     const graph_t &graph, State *globalState) {
-  //std::cout << "Start CC " << std::endl;
-
   const auto &currentConstraint = *circularConstraintIterator;
 
   Logger::get().log(Logger::E_LEVEL_DEBUG, "currentConstraint : ", Logger::E_OUTPUT_FILE_LOG);
@@ -83,6 +81,8 @@ MultipleLabelCcBacktrackCpu<State>::compute(
                             currentConstraint,
                             &MultipleLabelConstraintCircular::print,
                             Logger::E_OUTPUT_FILE_LOG);
+
+  PROGRESSION_INSERT_BEGIN()
 
   std::unordered_map<vid_t, FixedBitmapType> sourceTraversalMap;
 
@@ -125,6 +125,7 @@ MultipleLabelCcBacktrackCpu<State>::compute(
     if (hasBeenModified) {
       BaseClass::makeModifiedVertex(globalState, vertexId);
     }
+    PROGRESSION_INSERT_LOOP()
   }
 
 

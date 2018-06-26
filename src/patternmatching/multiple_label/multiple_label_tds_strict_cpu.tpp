@@ -80,13 +80,14 @@ bool MultipleLabelTdsStrictCpu<State>::checkConstraint(
     }
   } else if (currentWalkMove == Walk::E_MOVE_BACK) {
     auto nextWalkMoveBackIndex = walk.moveBackIndexVector[currentPositionInConstraint];
+    auto nextVertexId = historyIndexVector[nextWalkMoveBackIndex];
 
     if (checkConstraint(graph,
                         globalState,
                         walk,
                         historyIndexVector,
                         sourceVertexId,
-                        historyIndexVector[nextWalkMoveBackIndex],
+                        nextVertexId,
                         currentPositionInConstraint + 1)) {
       return true;
     }
@@ -102,9 +103,6 @@ __host__ void MultipleLabelTdsStrictCpu<State>::resetState(State *globalState) {
 template<class State>
 __host__ size_t
 MultipleLabelTdsStrictCpu<State>::compute(const graph_t &graph, State *globalState) {
-  //resetState(globalState);
-  Logger::get().log(Logger::E_LEVEL_DEBUG, "TDS Start : ", Logger::E_OUTPUT_DEBUG);
-
   const auto &currentConstraint = *templateConstraintIterator;
 
   Logger::get().log(Logger::E_LEVEL_DEBUG, "currentConstraint : ", Logger::E_OUTPUT_FILE_LOG);
@@ -113,9 +111,7 @@ MultipleLabelTdsStrictCpu<State>::compute(const graph_t &graph, State *globalSta
                             &MultipleLabelConstraintTemplate::print,
                             Logger::E_OUTPUT_FILE_LOG);
 
-  size_t stepCompleted=0;
-  size_t stepMax=globalState->graphActiveVertexCount;
-  size_t stepSize=1000;
+  PROGRESSION_INSERT_BEGIN()
 
   std::vector<vid_t> historyIndexVector;
 
@@ -154,15 +150,7 @@ MultipleLabelTdsStrictCpu<State>::compute(const graph_t &graph, State *globalSta
       BaseClass::makeModifiedVertex(globalState, vertexId);
     }
 
-    #pragma omp atomic
-    ++stepCompleted;
-
-    if(stepCompleted%stepSize==0) {
-      #pragma omp critical
-      {
-        std::cout << "Progression : " << stepCompleted << "/" << stepMax << std::endl;
-      }
-    }
+    PROGRESSION_INSERT_LOOP()
   }
 
   size_t vertexEliminatedNumber = 0;

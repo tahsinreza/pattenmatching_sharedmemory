@@ -57,4 +57,10 @@ GraphStatCpu<State, BaseClass>::compute(const graph_t &graph, State *globalState
   return 0;
 }
 
+
+template<class State, class BaseClass>
+const GraphStat& GraphStatCpu<State, BaseClass>::getGraphStat() const {
+  return graphStat;
+}
+
 }
