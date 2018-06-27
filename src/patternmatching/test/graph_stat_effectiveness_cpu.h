@@ -24,6 +24,7 @@
 #include "multiple_label_tds_strict_cpu.h"
 #include "multiple_label_enumeration_cpu.h"
 #include "graph_stat_cpu.h"
+#include "algo_results.h"
 
 namespace patternmatching {
 
@@ -62,7 +63,7 @@ class GraphStatEffectivenessCpu {
   template<class Generator, class Algorithm>
   void runTest(Generator &generator, Algorithm &algorithm);
 
-  size_t currentStepVertexEliminated;
+  AlgoResults algoResults;
   std::string currentStepName;
   double currentStepTime;
   double totalStepTime;

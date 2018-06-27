@@ -70,7 +70,7 @@ __host__ void MultipleLabelCcStrictCpu<State>::resetState(State *globalState) {
 }
 
 template<class State>
-__host__ size_t
+__host__ AlgoResults
 MultipleLabelCcStrictCpu<State>::compute(
     const graph_t &graph, State
 *globalState) {
@@ -174,10 +174,12 @@ MultipleLabelCcStrictCpu<State>::compute(
   }
 
   globalState->graphActiveVertexCount-=vertexEliminatedNumber;
+  AlgoResults algoResults;
+  algoResults.vertexEliminated=vertexEliminatedNumber;
+  algoResults.matchEliminated=matchEliminatedNumber;
   ++circularConstraintIterator;
 
-  std::cout << "Match eliminated : " << matchEliminatedNumber << std::endl;
-  return vertexEliminatedNumber;
+  return algoResults;
 }
 
 template<class State>

@@ -7,8 +7,23 @@
 #include <iostream>
 #include <deque>
 #include "utils.h"
+#include <iostream>
+#include <fstream>
 
 namespace patternmatching {
+
+
+template<class State>
+void MultipleLabelEnumerationCpu<State>::writeEnumeration(
+    const Walk &walk,
+    const std::vector<vid_t> &historyIndexVector) const {
+  auto fstream = Logger::get().getStream(Logger::E_OUTPUT_FILE_ENUMERATION_RESUTLS, omp_get_thread_num());
+  for(int i=0;i<historyIndexVector.size();i++) {
+    fstream << "("<<walk.historyIndexVector[i]<<","<<historyIndexVector[i]<<");";
+  }
+  fstream<< std::endl;
+  fstream.close();
+}
 
 template<class State>
 size_t MultipleLabelEnumerationCpu<State>::checkConstraint(
@@ -24,6 +39,7 @@ size_t MultipleLabelEnumerationCpu<State>::checkConstraint(
 
   // Close the recursion
   if (currentPositionInConstraint == walk.length) {
+    writeEnumeration(walk, historyIndexVector);
     return 1;
   }
 
@@ -66,26 +82,26 @@ size_t MultipleLabelEnumerationCpu<State>::checkConstraint(
 
       if (neighborVertexId != checkVertexId) continue;
 
-      enumerationNumber += checkConstraint(graph,
-                                           globalState,
-                                           walk,
-                                           historyIndexVector,
-                                           sourceVertexId,
-                                           currentVertexId,
-                                           currentPositionInConstraint + 1);
+      return checkConstraint(graph,
+                             globalState,
+                             walk,
+                             historyIndexVector,
+                             sourceVertexId,
+                             currentVertexId,
+                             currentPositionInConstraint + 1);
 
     }
   } else if (currentWalkMove == Walk::E_MOVE_BACK) {
     auto nextWalkMoveBackIndex = walk.moveBackIndexVector[currentPositionInConstraint];
     auto nextVertex = historyIndexVector[nextWalkMoveBackIndex];
 
-    enumerationNumber += checkConstraint(graph,
-                                         globalState,
-                                         walk,
-                                         historyIndexVector,
-                                         sourceVertexId,
-                                         nextVertex,
-                                         currentPositionInConstraint + 1);
+    return checkConstraint(graph,
+                           globalState,
+                           walk,
+                           historyIndexVector,
+                           sourceVertexId,
+                           nextVertex,
+                           currentPositionInConstraint + 1);
   }
 
   return enumerationNumber;
@@ -96,7 +112,7 @@ __host__ void MultipleLabelEnumerationCpu<State>::resetState(State *globalState)
 }
 
 template<class State>
-__host__ size_t
+__host__ AlgoResults
 MultipleLabelEnumerationCpu<State>::compute(const graph_t &graph, State *globalState) {
   Logger::get().log(Logger::E_LEVEL_DEBUG, "currentConstraint : ", Logger::E_OUTPUT_FILE_LOG);
   Logger::get().logFunction(Logger::E_LEVEL_DEBUG,
@@ -109,34 +125,45 @@ MultipleLabelEnumerationCpu<State>::compute(const graph_t &graph, State *globalS
   const auto &walkKey = templateConstraint.walkMap.cbegin();
   const auto &walkStartingVertex = walkKey->first;
   const auto &walk = walkKey->second;
-  walk.print();
 
-  std::vector<vid_t> historyIndexVector;
+  Logger::get().log(Logger::E_LEVEL_DEBUG, "selectedWalk : ", Logger::E_OUTPUT_FILE_LOG);
+  Logger::get().logFunction(Logger::E_LEVEL_DEBUG,
+                            walk,
+                            &Walk::print,
+                            Logger::E_OUTPUT_FILE_LOG);
 
   size_t enumerationNumber = 0;
+  #pragma omp parallel
+  {
+    std::vector<vid_t> historyIndexVector;
+    historyIndexVector.reserve(walk.length);
 
-  #pragma omp parallel for private(historyIndexVector) reduction(+:enumerationNumber)
-  for (vid_t vertexId = 0; vertexId < graph.vertex_count; vertexId++) {
-    if (!BaseClass::isVertexActive(*globalState, vertexId)) continue;
+    #pragma omp for private(historyIndexVector) reduction(+:enumerationNumber)
+    for (vid_t vertexId = 0; vertexId < graph.vertex_count; vertexId++) {
+      if (!BaseClass::isVertexActive(*globalState, vertexId)) continue;
 
-    if (globalState->vertexPatternMatch[vertexId].isIn(walkStartingVertex)) {
-      // Check cycle
-      historyIndexVector.clear();
-      historyIndexVector.push_back(vertexId);
-      enumerationNumber += checkConstraint(graph,
-                                           globalState,
-                                           walk,
-                                           historyIndexVector,
-                                           vertexId,
-                                           vertexId,
-                                           1);
+      if (globalState->vertexPatternMatch[vertexId].isIn(walkStartingVertex)) {
+        // Check cycle
+        historyIndexVector.clear();
+        historyIndexVector.push_back(vertexId);
+        enumerationNumber += checkConstraint(graph,
+                                             globalState,
+                                             walk,
+                                             historyIndexVector,
+                                             vertexId,
+                                             vertexId,
+                                             1);
 
+      }
+
+      PROGRESSION_INSERT_LOOP()
     }
-
-    PROGRESSION_INSERT_LOOP()
   }
 
-  return enumerationNumber;
+  AlgoResults algoResults;
+  algoResults.enumeration = enumerationNumber;
+
+  return algoResults;
 }
 
 template<class State>

@@ -7,6 +7,7 @@
 #include <ctime>
 #include <iomanip>
 #include "utils.h"
+#include <omp.h>
 
 namespace patternmatching {
 
@@ -16,6 +17,7 @@ const std::string Logger::C_VERTEX_FILEPATTERN = "vertex_%04d.totem";
 const std::string Logger::C_LOG_FILEPATTERN = "log.totem";
 
 const std::string Logger::C_ITERATION_RESULTS_FILEPATTERN = "results.totem";
+const std::string Logger::C_ENUMERATION_RESULTS_FILEPATTERN = "enumeration_%04d.totem";
 
 #if LOGGER_LEVEL_NO_DEBUG == 1
   const int Logger::C_MIN_LOG_LEVEL = Logger::E_LEVEL_INFO;
@@ -36,6 +38,16 @@ Logger &Logger::get() {
   return *instance;
 }
 
+std::ofstream Logger::getStream(const LogOutput &logOutput, const int param) const {
+  if(logOutput == E_OUTPUT_FILE_ENUMERATION_RESUTLS) {
+    char buffer[128];
+    sprintf(buffer, C_ENUMERATION_RESULTS_FILEPATTERN.c_str(), param);
+    return std::ofstream(resultDirectory + buffer, std::ofstream::app);
+  }
+
+  return std::ofstream();
+}
+
 void Logger::init(const std::string &_resultDirectory) {
   if (_resultDirectory.back() == '/') {
     resultDirectory = _resultDirectory;
@@ -44,12 +56,20 @@ void Logger::init(const std::string &_resultDirectory) {
   }
   currentIteration = 0;
 
+  // Create directory if needed
+  makeDirectoryStructure(resultDirectory);
+
   // clear log files
   std::ofstream iterationResultsFileStream
       (resultDirectory + C_ITERATION_RESULTS_FILEPATTERN, std::ofstream::out | std::ofstream::trunc);
   iterationResultsFileStream.close();
   std::ofstream logFileStream(resultDirectory + C_LOG_FILEPATTERN, std::ofstream::out | std::ofstream::trunc);
   logFileStream.close();
+  for(int i=0; i<omp_get_max_threads();i++) {
+    char buffer[128];
+    sprintf(buffer, C_ENUMERATION_RESULTS_FILEPATTERN.c_str(), i);
+    std::ofstream enumerationFileStream(resultDirectory + buffer, std::ofstream::out | std::ofstream::trunc);
+  }
 }
 
 bool Logger::isLogged(const LogLevel &logLevel) {

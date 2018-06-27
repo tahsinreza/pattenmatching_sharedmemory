@@ -27,7 +27,8 @@ class Logger {
     E_OUTPUT_FILE_GRAPH=1<<1,
     E_OUTPUT_FILE_VERTEX=1<<2,
     E_OUTPUT_FILE_ITERATION_RESULTS=1<<3,
-    E_OUTPUT_FILE_LOG=1<<4,
+    E_OUTPUT_FILE_ENUMERATION_RESUTLS=1<<4,
+    E_OUTPUT_FILE_LOG=1<<5,
     E_OUTPUT_DEBUG=E_OUTPUT_COUT | E_OUTPUT_FILE_LOG
   };
 
@@ -38,6 +39,8 @@ class Logger {
   void init(const std::string &resultDirectory);
 
   static bool isLogged(const LogLevel &logLevel);
+
+  std::ofstream getStream(const LogOutput &logOutput, const int param) const;
 
 
   void log(const LogLevel &logLevel, const char *message, const LogOutput &logOutput = E_OUTPUT_DEBUG) const;
@@ -62,6 +65,7 @@ class Logger {
   static const std::string C_VERTEX_FILEPATTERN;
   static const std::string C_LOG_FILEPATTERN;
   static const std::string C_ITERATION_RESULTS_FILEPATTERN;
+  static const std::string C_ENUMERATION_RESULTS_FILEPATTERN;
   static const int C_MIN_LOG_LEVEL;
 };
 

@@ -13,6 +13,7 @@
 #include <set>
 #include <unordered_map>
 #include <iostream>
+#include "algo_results.h"
 
 namespace patternmatching {
 
@@ -22,8 +23,7 @@ class MultipleLabelEnumerationCpu : public MultipleLabelCpuBase<State> {
   typedef MultipleLabelCpuBase<State> BaseClass;
   using TraversalHypothesis = std::vector< vid_t >;
  public:
-  __host__ size_t
-  compute(const graph_t &graph, State *globalState);
+  AlgoResults   compute(const graph_t &graph, State *globalState);
   void resetState(State *globalState);
 
   void setConstraint(
@@ -37,6 +37,9 @@ class MultipleLabelEnumerationCpu : public MultipleLabelCpuBase<State> {
       const vid_t &sourceVertexId,
       const vid_t &currentVertexId,
       const size_t &currentPositionInConstraint);
+  inline void writeEnumeration(
+      const Walk &walk,
+      const std::vector<vid_t> &historyIndexVector) const;
 
   MultipleLabelConstraintTemplate templateConstraint;
 };

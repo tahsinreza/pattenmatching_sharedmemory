@@ -16,14 +16,9 @@ namespace patternmatching {
 template <class State, class BaseClass>
 class GraphStatCpu : BaseClass {
  public:
-  void printGraphStat(std::ostream &ostream = std::cout) const;
-
-  size_t compute(const graph_t &graph, State *globalState);
-
-  const GraphStat& getGraphStat() const;
+  GraphStat compute(const graph_t &graph, State *globalState) const;
 
  private:
-  GraphStat graphStat;
 };
 
 }

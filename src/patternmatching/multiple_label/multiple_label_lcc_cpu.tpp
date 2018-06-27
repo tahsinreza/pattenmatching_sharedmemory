@@ -16,9 +16,9 @@ void MultipleLabelLccCpu<State>::resetState(State *globalState) {
 }
 
 template<class State>
-__host__ size_t
+__host__ AlgoResults
 MultipleLabelLccCpu<State>::compute(const graph_t &graph, State *globalState) const {
-
+  AlgoResults algoResults;
   size_t edgeEliminatedNumber = 0;
   std::unordered_map<weight_t, size_t> currentLocalConstraint;
   currentLocalConstraint.reserve(10);
@@ -102,8 +102,9 @@ MultipleLabelLccCpu<State>::compute(const graph_t &graph, State *globalState) co
   }
 
   size_t vertexEliminatedNumber = 0;
+  size_t matchEliminatedNumber = 0;
 
-  #pragma omp parallel for reduction(+:vertexEliminatedNumber)
+  #pragma omp parallel for reduction(+:vertexEliminatedNumber, matchEliminatedNumber)
   for (vid_t vertexId = 0; vertexId < graph.vertex_count; vertexId++) {
     if (!BaseClass::isVertexActive(*globalState, vertexId)) continue;
 
@@ -111,6 +112,7 @@ MultipleLabelLccCpu<State>::compute(const graph_t &graph, State *globalState) co
       // The vertex was modified
       for (const auto &patternIndex : globalState->vertexPatternToUnmatch[vertexId]) {
         BaseClass::removeMatch(globalState, vertexId, patternIndex);
+        matchEliminatedNumber++;
       }
 
       if (!BaseClass::isMatch(*globalState, vertexId)) {
@@ -141,9 +143,12 @@ MultipleLabelLccCpu<State>::compute(const graph_t &graph, State *globalState) co
 
   globalState->graphActiveVertexCount-=vertexEliminatedNumber;
   globalState->graphActiveEdgeCount-=edgeEliminatedNumber;
-  std::cout << "Eliminated edges : " << edgeEliminatedNumber << std::endl;
 
-  return vertexEliminatedNumber;
+  algoResults.vertexEliminated=vertexEliminatedNumber;
+  algoResults.edgeEliminated=edgeEliminatedNumber;
+  algoResults.matchEliminated=matchEliminatedNumber;
+
+  return algoResults;
 }
 
 template<class State>

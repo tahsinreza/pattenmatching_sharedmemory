@@ -9,6 +9,7 @@
 #include "multiple_label_constraint_local.h"
 #include <iostream>
 #include <unordered_set>
+#include "algo_results.h"
 
 namespace patternmatching {
 
@@ -18,7 +19,7 @@ class MultipleLabelLcc0Cpu : public MultipleLabelCpuBase<State> {
  protected:
   typedef MultipleLabelCpuBase<State> BaseClass;
  public:
-  size_t compute(const graph_t &graph, State *globalState) const;
+  AlgoResults compute(const graph_t &graph, State *globalState) const;
 
   void setConstraintVector(
       const std::vector <MultipleLabelConstraintLocal>& patternLocalConstraint);

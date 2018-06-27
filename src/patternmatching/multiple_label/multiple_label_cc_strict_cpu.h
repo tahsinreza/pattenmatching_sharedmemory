@@ -11,6 +11,7 @@
 #include <unordered_map>
 #include <iostream>
 #include "multiple_label_constraint_circular.h"
+#include "algo_results.h"
 
 namespace patternmatching {
 
@@ -19,11 +20,11 @@ class MultipleLabelCcStrictCpu : public MultipleLabelCpuBase<State> {
  protected:
   typedef MultipleLabelCpuBase<State> BaseClass;
  public:
-  size_t  compute(const graph_t &graph, State *globalState);
+  AlgoResults compute(const graph_t &graph, State *globalState);
   void resetState(State *globalState);
 
   void setConstraintVector(
-      const std::vector <MultipleLabelConstraintCircular>& circularConstraintVector);
+      const std::vector<MultipleLabelConstraintCircular> &circularConstraintVector);
   void setConstraintIterator(const size_t &index);
 
  private:
@@ -38,7 +39,7 @@ class MultipleLabelCcStrictCpu : public MultipleLabelCpuBase<State> {
       const size_t &startingPosition,
       const size_t &remainingLength);
 
-  std::vector <MultipleLabelConstraintCircular> circularConstraintVector;
+  std::vector<MultipleLabelConstraintCircular> circularConstraintVector;
   typename std::vector<MultipleLabelConstraintCircular>::const_iterator circularConstraintIterator;
 };
 

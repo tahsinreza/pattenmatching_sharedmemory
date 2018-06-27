@@ -10,6 +10,7 @@
 #include <iostream>
 #include <unordered_set>
 #include "bitmap_fixed.h"
+#include "algo_results.h"
 
 namespace patternmatching {
 
@@ -19,7 +20,7 @@ class MultipleLabelLccCpu : public MultipleLabelCpuBase<State> {
  protected:
   typedef MultipleLabelCpuBase<State> BaseClass;
  public:
-  size_t compute(const graph_t &graph, State *globalState) const;
+  AlgoResults compute(const graph_t &graph, State *globalState) const;
 
   void resetState(State *globalState);
 

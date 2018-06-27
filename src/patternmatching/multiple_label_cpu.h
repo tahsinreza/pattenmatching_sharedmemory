@@ -24,6 +24,7 @@
 #include "multiple_label_tds_backtrack_cpu.h"
 #include "multiple_label_tds_strict_cpu.h"
 #include "multiple_label_enumeration_cpu.h"
+#include "algo_results.h"
 
 namespace patternmatching {
 
@@ -58,7 +59,7 @@ class MultipleLabelCpu {
   void printActiveVertex(std::ostream &ostream=std::cout) const;
   void logResults(const int currentIteration, const bool logGraph) const;
 
-  size_t currentStepVertexEliminated;
+  AlgoResults algoResults;
   std::string currentStepName;
   double currentStepTime;
   double totalStepTime;
@@ -75,6 +76,7 @@ class MultipleLabelCpu {
   MultipleLabelGenerateConstraintTemplate generateTemplate;
 
   MultipleLabelStep algorithmStep;
+  MultipleLabelStep::Step currentStep;
 
   Lcc0Type lcc0Cpu;
   LccType lccCpu;

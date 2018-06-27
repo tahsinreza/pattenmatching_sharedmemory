@@ -101,7 +101,7 @@ __host__ void MultipleLabelTdsStrictCpu<State>::resetState(State *globalState) {
 }
 
 template<class State>
-__host__ size_t
+__host__ AlgoResults
 MultipleLabelTdsStrictCpu<State>::compute(const graph_t &graph, State *globalState) {
   const auto &currentConstraint = *templateConstraintIterator;
 
@@ -154,14 +154,16 @@ MultipleLabelTdsStrictCpu<State>::compute(const graph_t &graph, State *globalSta
   }
 
   size_t vertexEliminatedNumber = 0;
+  size_t matchEliminatedNumber = 0;
 
-  #pragma omp parallel for reduction(+:vertexEliminatedNumber)
+  #pragma omp parallel for reduction(+:vertexEliminatedNumber,matchEliminatedNumber)
   for (vid_t vertexId = 0; vertexId < graph.vertex_count; vertexId++) {
     if (!BaseClass::isVertexActive(*globalState, vertexId)) continue;
     if (BaseClass::isVertexModified(*globalState, vertexId)) {
 
       for (const auto &patternIndex : globalState->vertexPatternToUnmatch[vertexId]) {
         BaseClass::removeMatch(globalState, vertexId, patternIndex);
+        matchEliminatedNumber++;
       }
 
       if (!BaseClass::isMatch(*globalState, vertexId)) {
@@ -188,7 +190,10 @@ MultipleLabelTdsStrictCpu<State>::compute(const graph_t &graph, State *globalSta
   }
 
   globalState->graphActiveVertexCount-=vertexEliminatedNumber;
-  return vertexEliminatedNumber;
+  AlgoResults algoResults;
+  algoResults.vertexEliminated=vertexEliminatedNumber;
+  algoResults.matchEliminated=matchEliminatedNumber;
+  return algoResults;
 }
 
 template<class State>

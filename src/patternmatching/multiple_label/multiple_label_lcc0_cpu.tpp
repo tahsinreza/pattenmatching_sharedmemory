@@ -11,9 +11,9 @@
 namespace patternmatching {
 
 template<class State>
-__host__ size_t
+__host__ AlgoResults
 MultipleLabelLcc0Cpu<State>::compute(const graph_t &graph, State *globalState) const {
-
+  AlgoResults algoResults;
   size_t edgeEliminatedNumber = 0;
   std::unordered_map <weight_t, size_t> currentLocalConstraint;
   currentLocalConstraint.reserve(10);
@@ -86,15 +86,15 @@ MultipleLabelLcc0Cpu<State>::compute(const graph_t &graph, State *globalState) c
     }
   }
 
-  std::cout << "Mid LCC 0 " << std::endl;
   size_t vertexEliminatedNumber = 0;
-  std::cout << "Eliminated edges : " << edgeEliminatedNumber << std::endl;
+  size_t matchEliminatedNumber = 0;
 
-  #pragma omp parallel for reduction(+:vertexEliminatedNumber)
+  #pragma omp parallel for reduction(+:vertexEliminatedNumber, matchEliminatedNumber)
   for (vid_t vertexId = 0; vertexId < graph.vertex_count; vertexId++) {
     if (!BaseClass::isVertexActive(*globalState, vertexId)) continue;
 
     for(const auto& patternIndex : globalState->vertexPatternToUnmatch[vertexId]) {
+      matchEliminatedNumber++;
       BaseClass::removeMatch(globalState, vertexId, patternIndex);
     }
 
@@ -112,9 +112,12 @@ MultipleLabelLcc0Cpu<State>::compute(const graph_t &graph, State *globalState) c
 
   globalState->graphActiveVertexCount-=vertexEliminatedNumber;
   globalState->graphActiveEdgeCount-=edgeEliminatedNumber;
-  std::cout << "Eliminated edges : " << edgeEliminatedNumber << std::endl;
 
-  return vertexEliminatedNumber;
+  algoResults.vertexEliminated=vertexEliminatedNumber;
+  algoResults.edgeEliminated=edgeEliminatedNumber;
+  algoResults.matchEliminated=matchEliminatedNumber;
+
+  return algoResults;
 }
 
 template<class State>

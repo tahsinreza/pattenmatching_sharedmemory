@@ -9,7 +9,7 @@ namespace patternmatching {
 
 
 Walk::Walk()
-: length(0), vertexLength(0), moveVector(), vertexIndexVector(), moveBackIndexVector()
+: length(0), vertexLength(0), moveVector(), vertexIndexVector(), moveBackIndexVector(), historyIndexVector()
 {
 }
 
@@ -32,6 +32,7 @@ void Walk::addVertex(const vid_t &vertexIndex) {
   vertexIndexVector.push_back(vertexIndex);
   moveBackIndexVector.push_back(0);
   ++length;
+  historyIndexVector.push_back(vertexIndex);
   ++vertexLength;
 }
 

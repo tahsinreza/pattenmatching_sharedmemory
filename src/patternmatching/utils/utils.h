@@ -6,6 +6,10 @@
 #define PROJECT_UTILS_H
 #include <vector>
 #include <iostream>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <string>
+#include <sstream>
 
 #define PRODUCTION 0
 
@@ -58,6 +62,57 @@ inline bool isInVector(const std::vector<T> &historyIndexVector, const T &vertex
     if (it == vertex) return true;
   }
   return false;
+}
+
+inline std::vector<std::string> splitString(const std::string &input, const char &delim) {
+  std::stringstream ss(input);
+  std::string item;
+  std::vector<std::string> output;
+  while (std::getline(ss, item, delim)) {
+    output.push_back(item);
+  }
+  return output;
+}
+inline std::vector<std::string> splitStringIncremental(const std::string &input, const char &delim) {
+  std::stringstream ss(input);
+  std::string item;
+  std::string current;
+  std::vector<std::string> output;
+  while (std::getline(ss, item, delim)) {
+    if(!item.empty()) {
+      current += item + "/";
+      output.push_back(current);
+    }
+  }
+  return output;
+}
+
+inline bool isDirectory(const std::string &path) {
+  struct stat st = {0};
+  if(stat(path.c_str(), &st) == 0) {
+    return static_cast<bool>(S_ISDIR(st.st_mode));
+  }
+  return false;
+}
+
+inline void makeDirectory(const std::string &path) {
+  mkdir(path.c_str(), ACCESSPERMS);
+}
+
+inline void makeDirectoryStructure(std::string &path) {
+  auto directoryVector=splitStringIncremental(path, '/');
+  for(const auto &it : directoryVector) {
+    if(!isDirectory(it)) makeDirectory(it);
+  }
+}
+
+template<typename... Args>
+std::string sprintfString(const char* format, Args&&... args) {
+  auto size = std::snprintf(nullptr, 0, format, args...);
+  std::string output(size + 1, 'a');
+  std::sprintf(&output[0], format, args...);
+  output.resize(output.size() - 1);
+  return output;
 }
 
 #endif //PROJECT_UTILS_H

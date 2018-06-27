@@ -157,22 +157,23 @@ error_t MultipleLabelCpu::free() {
 int MultipleLabelCpu::runPatternMatching() {
   // run step
   bool finished = 0;
-  MultipleLabelStep::Step currentStep;
   totalStepTime = 0.;
 
   Logger::get().log(Logger::E_LEVEL_INFO, "Start run");
 
   int currentIteration = 0;
-  algorithmStep.getNextStep(currentStepVertexEliminated, &currentStep, &currentStepName);
+  algorithmStep.getNextStep(algoResults, &currentStep, &currentStepName);
   while (!finished && currentIteration < 200) {
   // reinitialise
     switch (currentStep) {
       case MultipleLabelStep::E_CC :
         ccCpu.resetState(&patternmatchingState);
         break;
-
       case MultipleLabelStep::E_PC :
         pcCpu.resetState(&patternmatchingState);
+        break;
+      case MultipleLabelStep::E_TDS :
+        tdsCpu.resetState(&patternmatchingState);
         break;
       default:break;
     }
@@ -184,22 +185,22 @@ int MultipleLabelCpu::runPatternMatching() {
 
     switch (currentStep) {
       case MultipleLabelStep::E_LCC0 :
-        currentStepVertexEliminated = lcc0Cpu.compute(*graph, &patternmatchingState);
+        algoResults = lcc0Cpu.compute(*graph, &patternmatchingState);
         break;
       case MultipleLabelStep::E_LCC :
-        currentStepVertexEliminated = lccCpu.compute(*graph, &patternmatchingState);
+        algoResults = lccCpu.compute(*graph, &patternmatchingState);
         break;
       case MultipleLabelStep::E_CC :
-        currentStepVertexEliminated = ccCpu.compute(*graph, &patternmatchingState);
+        algoResults = ccCpu.compute(*graph, &patternmatchingState);
         break;
       case MultipleLabelStep::E_PC :
-        currentStepVertexEliminated = pcCpu.compute(*graph, &patternmatchingState);
+        algoResults = pcCpu.compute(*graph, &patternmatchingState);
         break;
       case MultipleLabelStep::E_TDS :
-        currentStepVertexEliminated = tdsCpu.compute(*graph, &patternmatchingState);
+        algoResults = tdsCpu.compute(*graph, &patternmatchingState);
         break;
       case MultipleLabelStep::E_ENUMERATION :
-        currentStepVertexEliminated = enumerationCpu.compute(*graph, &patternmatchingState);
+        algoResults = enumerationCpu.compute(*graph, &patternmatchingState);
         break;
       default:break;
     }
@@ -209,7 +210,7 @@ int MultipleLabelCpu::runPatternMatching() {
 
     logResults(currentIteration, false);
 
-    finished = algorithmStep.getNextStep(currentStepVertexEliminated, &currentStep, &currentStepName);
+    finished = algorithmStep.getNextStep(algoResults, &currentStep, &currentStepName);
     currentIteration++;
   }
 
@@ -217,7 +218,7 @@ int MultipleLabelCpu::runPatternMatching() {
   Logger::get().log(Logger::E_LEVEL_INFO, "End run");
   Logger::get().log(Logger::E_LEVEL_INFO, "Saving pruned graph");
   currentStepTime=0.;
-  currentStepVertexEliminated=0;
+  algoResults=AlgoResults();
   logResults(currentIteration, true);
 
   return 0;
@@ -227,40 +228,65 @@ void MultipleLabelCpu::logResults(const int currentIteration, const bool logGrap
   Logger::get().setCurrentIteration(currentIteration);
   // Print Result file
   if (currentIteration == 0) {
-    std::string resultHeader = "Iteration; Step; Step time; Cumulative time; Eliminated vertex";
+    std::string resultHeader = "Iteration; Step; Step time; Cumulative time; "
+                               "Eliminated vertex; Active vertex; Total vertex; "
+                               "Eliminated edge; Active edge; Total edge; "
+                               "Eliminated match; "
+                               "Enumeration number";
     Logger::get().log(Logger::E_LEVEL_RESULT, resultHeader, Logger::E_OUTPUT_FILE_ITERATION_RESULTS);
   }
 
-  // Print result
+  // Print result csv
   {
-    auto format = "%04d; %s; %.4f ; %.4f ; %lu";
-    auto size = std::snprintf(nullptr, 0, format,
-                              currentIteration, currentStepName.c_str(), currentStepTime,
-                              totalStepTime, currentStepVertexEliminated);
-    std::string output(size + 1, 'a');
-    std::sprintf(&output[0], format,
-                 currentIteration, currentStepName.c_str(), currentStepTime,
-                 totalStepTime, currentStepVertexEliminated);
-    output.resize(output.size() - 1);
+    auto output=sprintfString("%04d; %s; %.4f ; %.4f ; "
+                              "%lu; %lu; %lu; "
+                              "%lu; %lu; %lu; "
+                              "%lu; "
+                              "%lu",
+                              currentIteration, currentStepName.c_str(), currentStepTime, totalStepTime,
+                              algoResults.vertexEliminated, patternmatchingState.graphActiveVertexCount, patternmatchingState.graphVertexCount,
+                              algoResults.edgeEliminated, patternmatchingState.graphActiveEdgeCount, patternmatchingState.graphEdgeCount,
+                              algoResults.matchEliminated,
+                              algoResults.enumeration);
 
     Logger::get().log(Logger::E_LEVEL_RESULT, output, Logger::E_OUTPUT_FILE_ITERATION_RESULTS);
   }
 
   // Log result
   {
-    auto format = "Iteration %4d [%s], Running time %.4f, Eliminated vertex %lu";
-    auto size = std::snprintf(nullptr, 0, format,
-                              currentIteration, currentStepName.c_str(), currentStepTime,
-                              currentStepVertexEliminated);
-    std::string output(size + 1, '0');
-    std::sprintf(&output[0], format,
-                 currentIteration, currentStepName.c_str(), currentStepTime, currentStepVertexEliminated);
-    output.resize(output.size() - 1);
+    std::string output;
+    switch (currentStep) {
+      case MultipleLabelStep::E_LCC0 :
+      case MultipleLabelStep::E_LCC :
+        output=sprintfString( "Iteration %4d [%s], Running time %.4f/%.4f, "
+                              "Eliminated vertex %lu/%lu/%lu, "
+                              "Eliminated edge %lu/%lu/%lu, "
+                              "Eliminated match %lu,",
+                              currentIteration, currentStepName.c_str(), currentStepTime, totalStepTime,
+                              algoResults.vertexEliminated, patternmatchingState.graphActiveVertexCount, patternmatchingState.graphVertexCount,
+                              algoResults.edgeEliminated, patternmatchingState.graphActiveEdgeCount, patternmatchingState.graphEdgeCount,
+                              algoResults.matchEliminated);
+        break;
+      case MultipleLabelStep::E_CC :
+      case MultipleLabelStep::E_PC :
+      case MultipleLabelStep::E_TDS :
+        output=sprintfString( "Iteration %4d [%s], Running time %.4f/%.4f, "
+                              "Eliminated vertex %lu/%lu/%lu, "
+                              "Eliminated match %lu,",
+                              currentIteration, currentStepName.c_str(), currentStepTime, totalStepTime,
+                              algoResults.vertexEliminated, patternmatchingState.graphActiveVertexCount, patternmatchingState.graphVertexCount,
+                              algoResults.matchEliminated);
+        break;
+      case MultipleLabelStep::E_ENUMERATION :
+        output=sprintfString( "Iteration %4d [%s], Running time %.4f/%.4f, "
+                              "Enumeration %lu",
+                              currentIteration, currentStepName.c_str(), currentStepTime, totalStepTime,
+                              algoResults.enumeration);
+        break;
+      default:break;
+    }
 
-    std::stringstream sstr;
-    sstr << " ["<<patternmatchingState.graphActiveVertexCount<<","<< patternmatchingState.graphVertexCount<< " ]";
-
-    Logger::get().log(Logger::E_LEVEL_RESULT, output+sstr.str(), Logger::E_OUTPUT_DEBUG);
+    Logger::get().log(Logger::E_LEVEL_RESULT, output, Logger::E_OUTPUT_DEBUG);
   }
 
   // Save graph

@@ -8,6 +8,8 @@ include_directories(
 
 
 add_library(${PROJECT_NAME}
+        algo_results.h
+        algo_results.cc
         graph_stat.h
         graph_stat.cc
         graph_stat_cpu.h

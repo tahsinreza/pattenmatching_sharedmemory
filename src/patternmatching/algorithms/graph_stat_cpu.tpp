@@ -6,18 +6,14 @@
 #include "totem_util.h"
 #include "graph_stat_cpu.h"
 #include <iostream>
+#include <fstream>
 
 namespace patternmatching {
 
 template<class State, class BaseClass>
-void GraphStatCpu<State, BaseClass>::printGraphStat(std::ostream &ostream) const {
-  graphStat.print(ostream);
-}
-
-template<class State, class BaseClass>
-size_t
-GraphStatCpu<State, BaseClass>::compute(const graph_t &graph, State *globalState) {
-
+GraphStat
+GraphStatCpu<State, BaseClass>::compute(const graph_t &graph, State *globalState) const {
+  GraphStat graphStat;
   std::cout << "Start Graph Stat " << std::endl;
 
   #pragma omp parallel
@@ -52,14 +48,6 @@ GraphStatCpu<State, BaseClass>::compute(const graph_t &graph, State *globalState
 
   graphStat.computeStats();
 
-  std::cout << "End Graph Stat 0 " << std::endl;
-
-  return 0;
-}
-
-
-template<class State, class BaseClass>
-const GraphStat& GraphStatCpu<State, BaseClass>::getGraphStat() const {
   return graphStat;
 }
 

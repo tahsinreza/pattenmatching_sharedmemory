@@ -6,6 +6,7 @@
 #define TOTEM_MULTIPLE_LABEL_STATE_H
 
 #include <string>
+#include "algo_results.h"
 
 namespace patternmatching {
 
@@ -28,7 +29,7 @@ class MultipleLabelStep {
   void initStepPc(const int circularConstraintNumber);
   void initStepTds(const int circularConstraintNumber);
 
-  bool getNextStep(const size_t lastStepEliminatedVerticles,
+  bool getNextStep(const AlgoResults &algoResults,
                      Step* nextStep, std::string *nextStepName);
 
  private:

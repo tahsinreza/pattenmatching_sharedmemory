@@ -31,6 +31,7 @@ class Walk {
   std::vector<MoveType> moveVector;
   std::vector<vid_t> vertexIndexVector;
   std::vector<size_t> moveBackIndexVector;
+  std::vector<vid_t> historyIndexVector;
 };
 }
 

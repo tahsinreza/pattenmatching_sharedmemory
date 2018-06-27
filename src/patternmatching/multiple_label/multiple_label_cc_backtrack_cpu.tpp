@@ -71,7 +71,7 @@ __host__ void MultipleLabelCcBacktrackCpu<State>::resetState(State *globalState)
 }
 
 template<class State>
-__host__ size_t
+AlgoResults
 MultipleLabelCcBacktrackCpu<State>::compute(
     const graph_t &graph, State *globalState) {
   const auto &currentConstraint = *circularConstraintIterator;
@@ -176,11 +176,13 @@ MultipleLabelCcBacktrackCpu<State>::compute(
   }
 
   globalState->graphActiveVertexCount-=vertexEliminatedNumber;
+  AlgoResults algoResults;
+  algoResults.vertexEliminated=vertexEliminatedNumber;
+  algoResults.matchEliminated=matchEliminatedNumber;
   ++circularConstraintIterator;
 
-  std::cout << "Match eliminated : " << matchEliminatedNumber << std::endl;
   //std::cout << "End CC " << std::endl;
-  return vertexEliminatedNumber;
+  return algoResults;
 }
 
 template<class State>

@@ -13,6 +13,7 @@
 #include <set>
 #include <unordered_map>
 #include <iostream>
+#include "algo_results.h"
 
 namespace patternmatching {
 
@@ -20,14 +21,13 @@ template<class State>
 class MultipleLabelTdsStrictCpu : public MultipleLabelCpuBase<State> {
  protected:
   typedef MultipleLabelCpuBase<State> BaseClass;
-  using TraversalHypothesis = std::vector< vid_t >;
+  using TraversalHypothesis = std::vector<vid_t>;
  public:
-  __host__ size_t
-  compute(const graph_t &graph, State *globalState);
+  AlgoResults compute(const graph_t &graph, State *globalState);
   void resetState(State *globalState);
 
   void setConstraintVector(
-      const std::vector <MultipleLabelConstraintTemplate>& templateConstraintVector);
+      const std::vector<MultipleLabelConstraintTemplate> &templateConstraintVector);
   void setConstraintIterator(const size_t &index);
  private:
   bool checkConstraint(
@@ -39,7 +39,7 @@ class MultipleLabelTdsStrictCpu : public MultipleLabelCpuBase<State> {
       const vid_t &currentVertexId,
       const size_t &currentPositionInConstraint);
 
-  std::vector <MultipleLabelConstraintTemplate> templateConstraintVector;
+  std::vector<MultipleLabelConstraintTemplate> templateConstraintVector;
   typename std::vector<MultipleLabelConstraintTemplate>::const_iterator templateConstraintIterator;
 };
 

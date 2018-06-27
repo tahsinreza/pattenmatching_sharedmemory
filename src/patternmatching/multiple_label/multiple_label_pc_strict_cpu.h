@@ -11,6 +11,7 @@
 #include <set>
 #include <unordered_map>
 #include <iostream>
+#include "algo_results.h"
 
 namespace patternmatching {
 
@@ -19,7 +20,7 @@ class MultipleLabelPcStrictCpu : public MultipleLabelCpuBase<State> {
  protected:
   typedef MultipleLabelCpuBase<State> BaseClass;
  public:
-  size_t  compute(const graph_t &graph, State *globalState);
+  AlgoResults  compute(const graph_t &graph, State *globalState);
   void resetState(State *globalState);
 
   void setConstraintVector(

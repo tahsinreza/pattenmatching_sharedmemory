@@ -27,7 +27,7 @@ void MultipleLabelStep::initStepTds(const int tdsConstraintNumber_) {
   currentTdsConstraint = 0;
 }
 
-bool MultipleLabelStep::getNextStep(const size_t lastStepEliminatedVerticles,
+bool MultipleLabelStep::getNextStep(const AlgoResults &algoResults,
                                     Step *nextStep, std::string *nextStepName) {
 
   bool finished = false;
@@ -43,7 +43,7 @@ bool MultipleLabelStep::getNextStep(const size_t lastStepEliminatedVerticles,
       break;
     case E_LCC:
       // Stay on same
-      if (lastStepEliminatedVerticles > 0) {
+      if (!algoResults.isEmpty()) {
       } else {
         // Change to CC, PC, or end
         if (currentCircularConstraint < circularConstraintNumber && 1) {

@@ -11,6 +11,7 @@
 #include <set>
 #include <unordered_map>
 #include <iostream>
+#include "algo_results.h"
 
 namespace patternmatching {
 
@@ -19,12 +20,11 @@ class MultipleLabelPcBacktrackCpu : public MultipleLabelCpuBase<State> {
  protected:
   typedef MultipleLabelCpuBase<State> BaseClass;
  public:
-  size_t
-  compute(const graph_t &graph, State *globalState);
+  AlgoResults compute(const graph_t &graph, State *globalState);
   void resetState(State *globalState);
 
   void setConstraintVector(
-      const std::vector <MultipleLabelConstraintPath>& pathConstraintVector);
+      const std::vector<MultipleLabelConstraintPath> &pathConstraintVector);
   void setConstraintIterator(const size_t &index);
 
  private:
@@ -38,7 +38,7 @@ class MultipleLabelPcBacktrackCpu : public MultipleLabelCpuBase<State> {
       const vid_t &currentVertexId,
       const size_t &remainingLength);
 
-  std::vector <MultipleLabelConstraintPath> pathConstraintVector;
+  std::vector<MultipleLabelConstraintPath> pathConstraintVector;
   typename std::vector<MultipleLabelConstraintPath>::const_iterator pathConstraintIterator;
 };
 

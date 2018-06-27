@@ -11,6 +11,7 @@
 #include <set>
 #include <unordered_map>
 #include <iostream>
+#include "algo_results.h"
 
 namespace patternmatching {
 
@@ -20,7 +21,7 @@ class MultipleLabelPcCpu : public MultipleLabelCpuBase<State> {
   typedef MultipleLabelCpuBase<State> BaseClass;
   using sourceTraversalMapType = std::unordered_map<std::pair<vid_t, vid_t>, FixedBitmapType, PairHash>;
  public:
-  size_t  compute(const graph_t &graph, State *globalState);
+  AlgoResults  compute(const graph_t &graph, State *globalState);
   void resetState(State *globalState);
 
   void setConstraintVector(

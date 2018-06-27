@@ -13,6 +13,7 @@
 #include <set>
 #include <unordered_map>
 #include <iostream>
+#include "algo_results.h"
 
 namespace patternmatching {
 
@@ -23,7 +24,7 @@ class MultipleLabelTdsBacktrackCpu : public MultipleLabelCpuBase<State> {
   using TraversalHypothesis = std::vector< vid_t >;
   using SourceTraversalMapType = std::unordered_map< vid_t, std::unordered_map<pvid_t, std::vector<TraversalHypothesis > > >;
  public:
-  size_t  compute(const graph_t &graph, State *globalState);
+  AlgoResults  compute(const graph_t &graph, State *globalState);
   void resetState(State *globalState);
 
   void setConstraintVector(

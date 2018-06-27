@@ -6,6 +6,7 @@
 #include "totem.h"
 #include "graph_stat_effectiveness_cpu.h"
 #include "logger.h"
+#include "utils.h"
 
 namespace patternmatching {
 
@@ -156,13 +157,13 @@ int GraphStatEffectivenessCpu::runPatternMatching() {
   currentIteration = 0;
 
   Logger::get().log(Logger::E_LEVEL_INFO, "Start run");
-
   // Run LCC0
   {
+    currentStepName="LCC0";
     totem_timing_reset();
     stopwatch_t stopwatch;
     stopwatch_start(&stopwatch);
-    currentStepVertexEliminated = lcc0Cpu.compute(*graph, &patternmatchingState);
+    algoResults = lcc0Cpu.compute(*graph, &patternmatchingState);
     currentStepTime = stopwatch_elapsed(&stopwatch);
     totalStepTime += currentStepTime;
     logResults(currentIteration, false);
@@ -173,16 +174,16 @@ int GraphStatEffectivenessCpu::runPatternMatching() {
   Logger::get().log(Logger::E_LEVEL_INFO, "Graph stat");
   // Run Graph Stat
   {
-
+    currentStepName="Graph Stat";
     totem_timing_reset();
     stopwatch_t stopwatch;
     stopwatch_start(&stopwatch);
-    graphStatCpu.compute(*graph, &patternmatchingState);
+    auto graphStat = graphStatCpu.compute(*graph, &patternmatchingState);
 
     currentStepTime = stopwatch_elapsed(&stopwatch);
     totalStepTime += currentStepTime;
-
-    auto graphStat = graphStatCpu.getGraphStat();
+    algoResults=AlgoResults();
+    logResults(currentIteration, false);
 
     Logger::get().logFunction(Logger::E_LEVEL_RESULT,
                               graphStat, &GraphStat::print,
@@ -195,6 +196,7 @@ int GraphStatEffectivenessCpu::runPatternMatching() {
   Logger::get().log(Logger::E_LEVEL_INFO, "Run LCC");
   // Run LCC
   {
+    currentStepName="LCC";
     patternMatchingStateTemporary = patternmatchingState;
     bool finished = false;
     totalStepTime = 0;
@@ -203,44 +205,54 @@ int GraphStatEffectivenessCpu::runPatternMatching() {
       totem_timing_reset();
       stopwatch_t stopwatch;
       stopwatch_start(&stopwatch);
-      currentStepVertexEliminated = lccCpu.compute(*graph, &patternMatchingStateTemporary);
+      algoResults = lccCpu.compute(*graph, &patternMatchingStateTemporary);
       currentStepTime = stopwatch_elapsed(&stopwatch);
       totalStepTime += currentStepTime;
       logResults(currentIteration, false);
 
       currentIteration++;
-      if (currentStepVertexEliminated == 0) finished = true;
+      if (algoResults.isEmpty()) finished = true;
     }
   }
 
   Logger::get().log(Logger::E_LEVEL_INFO, "Run CC");
+  currentStepName="CC";
   runTest(generateCircular, ccCpu);
 
   Logger::get().log(Logger::E_LEVEL_INFO, "Run CC Strict");
+  currentStepName="CC Strict";
   runTest(generateCircular, ccStrictCpu);
 
   Logger::get().log(Logger::E_LEVEL_INFO, "Run CC Backtrack");
+  currentStepName="CC Backtrack";
   runTest(generateCircular, ccBacktrackCpu);
 
   Logger::get().log(Logger::E_LEVEL_INFO, "Run PC");
+  currentStepName="PC";
   runTest(generatePath, pcCpu);
 
   Logger::get().log(Logger::E_LEVEL_INFO, "Run PC Strict");
+  currentStepName="PC Strict";
   runTest(generatePath, pcStrictCpu);
 
   Logger::get().log(Logger::E_LEVEL_INFO, "Run PC Backtrack");
+  currentStepName="PC Backtrack";
   runTest(generatePath, pcBacktrackCpu);
 
   Logger::get().log(Logger::E_LEVEL_INFO, "Run TDS");
+  currentStepName="TDS";
   runTest(generateTemplate, tdsCpu);
 
   Logger::get().log(Logger::E_LEVEL_INFO, "Run TDS Strict");
+  currentStepName="TDS Strict";
   runTest(generateTemplate, tdsStrictCpu);
 
   Logger::get().log(Logger::E_LEVEL_INFO, "Run TDS Backtrack");
+  currentStepName="TDS Backtrack";
   runTest(generateTemplate, tdsBacktrackCpu);
 
   Logger::get().log(Logger::E_LEVEL_INFO, "Run Enumerate");
+  currentStepName="ENUMERATE";
   runTest(generateEnumeration, enumerationCpu);
 
   return 0;
@@ -254,7 +266,7 @@ void GraphStatEffectivenessCpu::runTest(Generator &generator, Algorithm &algorit
     totem_timing_reset();
     stopwatch_t stopwatch;
     stopwatch_start(&stopwatch);
-    currentStepVertexEliminated = algorithm.compute(*graph, &patternMatchingStateTemporary);
+    algoResults = algorithm.compute(*graph, &patternMatchingStateTemporary);
     currentStepTime = stopwatch_elapsed(&stopwatch);
     totalStepTime += currentStepTime;
     logResults(currentIteration, false);
@@ -267,34 +279,42 @@ void GraphStatEffectivenessCpu::logResults(const int currentIteration, const boo
   Logger::get().setCurrentIteration(currentIteration);
   // Print Result file
   if (currentIteration == 0) {
-    std::string resultHeader = "Iteration; Step; Step time; Cumulative time; Eliminated vertex";
+    std::string resultHeader = "Iteration; Step; Step time; Cumulative time; "
+                               "Eliminated vertex; Active vertex; Total vertex; "
+                               "Eliminated edge; Active edge; Total edge; "
+                               "Eliminated match; "
+                               "Enumeration number";
     Logger::get().log(Logger::E_LEVEL_RESULT, resultHeader, Logger::E_OUTPUT_FILE_ITERATION_RESULTS);
   }
 
-  // Print result
+  // Print result csv
   {
-    auto format = "%04d; %s; %.4f ; %.4f ; %lu";
-    auto size = std::snprintf(nullptr, 0, format,
-                              currentIteration, currentStepName.c_str(), currentStepTime,
-                              totalStepTime, currentStepVertexEliminated);
-    std::string output(size + 1, 'a');
-    std::sprintf(&output[0], format,
-                 currentIteration, currentStepName.c_str(), currentStepTime,
-                 totalStepTime, currentStepVertexEliminated);
-    output.resize(output.size() - 1);
+    auto output=sprintfString("%04d; %s; %.4f ; %.4f ; "
+                        "%lu; %lu; %lu; "
+                        "%lu; %lu; %lu; "
+                        "%lu; "
+                        "%lu",
+                     currentIteration, currentStepName.c_str(), currentStepTime, totalStepTime,
+                        algoResults.vertexEliminated, patternmatchingState.graphActiveVertexCount, patternmatchingState.graphVertexCount,
+                        algoResults.edgeEliminated, patternmatchingState.graphActiveEdgeCount, patternmatchingState.graphEdgeCount,
+                        algoResults.matchEliminated,
+                        algoResults.enumeration);
 
     Logger::get().log(Logger::E_LEVEL_RESULT, output, Logger::E_OUTPUT_FILE_ITERATION_RESULTS);
   }
 
   // Log result
   {
-    auto format = "Iteration %4d [%s], Running time %.4f, Eliminated vertex %lu";
-    auto size = std::snprintf(nullptr, 0, format,
-                              currentIteration, currentStepName.c_str(), currentStepTime, currentStepVertexEliminated);
-    std::string output(size + 1, '0');
-    std::sprintf(&output[0], format,
-                 currentIteration, currentStepName.c_str(), currentStepTime, currentStepVertexEliminated);
-    output.resize(output.size() - 1);
+    auto output=sprintfString( "Iteration %4d [%s], Running time %.4f/%.4f, "
+                               "Eliminated vertex %lu/%lu/%lu, "
+                               "Eliminated edge %lu/%lu/%lu, "
+                               "Eliminated match %lu,"
+                               "Enumeration %lu",
+                               currentIteration, currentStepName.c_str(), currentStepTime, totalStepTime,
+                               algoResults.vertexEliminated, patternmatchingState.graphActiveVertexCount, patternmatchingState.graphVertexCount,
+                               algoResults.edgeEliminated, patternmatchingState.graphActiveEdgeCount, patternmatchingState.graphEdgeCount,
+                               algoResults.matchEliminated,
+                               algoResults.enumeration);
 
     Logger::get().log(Logger::E_LEVEL_RESULT, output, Logger::E_OUTPUT_DEBUG);
   }
