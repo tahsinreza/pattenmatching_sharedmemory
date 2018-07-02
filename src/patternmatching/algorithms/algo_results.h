@@ -5,7 +5,7 @@
 #ifndef PROJECT_ALGO_RESULTS_H
 #define PROJECT_ALGO_RESULTS_H
 
-#include "utils.h"
+#include "common_utils.h"
 #include <iostream>
 
 class AlgoResults {

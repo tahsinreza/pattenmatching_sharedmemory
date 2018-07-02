@@ -6,7 +6,7 @@
 #include "multiple_label_constraint_template.h"
 #include <iostream>
 #include <deque>
-#include "utils.h"
+#include "common_utils.h"
 
 namespace patternmatching {
 
@@ -159,8 +159,10 @@ MultipleLabelTdsStrictCpu<State>::compute(const graph_t &graph, State *globalSta
   #pragma omp parallel for reduction(+:vertexEliminatedNumber,matchEliminatedNumber)
   for (vid_t vertexId = 0; vertexId < graph.vertex_count; vertexId++) {
     if (!BaseClass::isVertexActive(*globalState, vertexId)) continue;
-    if (BaseClass::isVertexModified(*globalState, vertexId)) {
 
+    BaseClass::clearAlreadyMatched(globalState, vertexId);
+
+    if (BaseClass::isVertexModified(*globalState, vertexId)) {
       for (const auto &patternIndex : globalState->vertexPatternToUnmatch[vertexId]) {
         BaseClass::removeMatch(globalState, vertexId, patternIndex);
         matchEliminatedNumber++;
@@ -175,7 +177,6 @@ MultipleLabelTdsStrictCpu<State>::compute(const graph_t &graph, State *globalSta
       }
       BaseClass::scheduleVertex(globalState, vertexId);
       BaseClass::clearToUnmatch(globalState, vertexId);
-      BaseClass::clearAlreadyMatched(globalState, vertexId);
     } else {
       // Schedule vertex close to the one modified
       for (eid_t neighborEdgeId = graph.vertices[vertexId]; neighborEdgeId < graph.vertices[vertexId + 1];

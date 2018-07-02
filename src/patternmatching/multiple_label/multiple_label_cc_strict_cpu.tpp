@@ -1,12 +1,11 @@
 //
 // Created by qiu on 17/05/18.
 //
-#include <cuda.h>
 #include "totem_graph.h"
 #include "totem_util.h"
 #include "multiple_label_cc_strict_cpu.h"
 #include <iostream>
-#include "utils.h"
+#include "common_utils.h"
 
 namespace patternmatching {
 
@@ -99,10 +98,7 @@ MultipleLabelCcStrictCpu<State>::compute(
          ++it, ++constraintIndex) {
 
       if (globalState->vertexPatternMatch[vertexId].isIn(*it)) {
-        if (BaseClass::isAlreadyMatchedAtomic(*globalState, vertexId, *it)) {
-          hasBeenModified = true;
-          continue;
-        }
+        if (BaseClass::isAlreadyMatchedAtomic(*globalState, vertexId, *it)) continue;
 
         startingPositionInConstraint = constraintIndex;
         // Check cycle
@@ -136,6 +132,8 @@ MultipleLabelCcStrictCpu<State>::compute(
   for (vid_t vertexId = 0; vertexId < graph.vertex_count; vertexId++) {
     if (!BaseClass::isVertexActive(*globalState, vertexId)) continue;
 
+    BaseClass::clearAlreadyMatched(globalState, vertexId);
+
     if (BaseClass::isVertexModified(*globalState, vertexId)) {
       for (const auto &patternIndex : globalState->vertexPatternToUnmatch[vertexId]) {
         BaseClass::removeMatch(globalState, vertexId, patternIndex);
@@ -152,7 +150,6 @@ MultipleLabelCcStrictCpu<State>::compute(
 
       BaseClass::scheduleVertex(globalState, vertexId);
       BaseClass::clearToUnmatch(globalState, vertexId);
-      BaseClass::clearAlreadyMatched(globalState, vertexId);
     } else {
       // Schedule vertex close to the one modified
       bool hasBeenScheduled = false;

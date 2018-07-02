@@ -30,11 +30,10 @@ void CmdLineOption::printHelp() {
 
 }
 
-void CmdLineOption::parseCmdLine(int argc, char** argv) {
+void CmdLineOption::parseCmdLine(int argc, char** argv, const ArgumentSet &optionalArguments) {
 
   bool printHelp = false;
-  std::bitset<CmdLineOption::C_REQUIRED_QRGUMENTS_NUMBER> requiredInputSet;
-  requiredInputSet.reset();
+  ArgumentSet requiredInputSet=optionalArguments;
 
   char c;
   while ((c = static_cast<char>(getopt(argc, argv, "i:b:v:e:p:o:x:h "))) != -1) {
@@ -42,6 +41,10 @@ void CmdLineOption::parseCmdLine(int argc, char** argv) {
       case 'i' :
         m_inputGraphFilePath = optarg;
         requiredInputSet.set(INPUT_GRAPH_FILE);
+        break;
+      case 'b' :
+        m_inputGraphBinFilePath = optarg;
+        break;
       case 'v' :
         m_inputVertexMetadataFilePath = optarg;
         break;
@@ -78,6 +81,12 @@ const std::string &CmdLineOption::getInputGraphFilePath() const {
 }
 void CmdLineOption::setInputGraphFilePath(const std::string &inputGraphFilePath) {
   m_inputGraphFilePath = inputGraphFilePath;
+}
+const std::string &CmdLineOption::getInputGraphBinFilePath() const {
+  return m_inputGraphBinFilePath;
+}
+void CmdLineOption::setInputGraphBinFilePath(const std::string &inputGraphBinFilePath) {
+  m_inputGraphBinFilePath = inputGraphBinFilePath;
 }
 const std::string &CmdLineOption::getInputVertexMetadataFilePath() const {
   return m_inputVertexMetadataFilePath;

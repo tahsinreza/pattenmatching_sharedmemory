@@ -7,6 +7,7 @@
 
 #include "totem_comdef.h"
 #include "bitmap_fixed.h"
+#include "common_utils.h"
 namespace patternmatching {
 
 typedef uint32_t pvid_t;

@@ -6,7 +6,7 @@
 #include "multiple_label_generate_constraint_enumeration.h"
 #include <iostream>
 #include <deque>
-#include "utils.h"
+#include "common_utils.h"
 
 namespace patternmatching {
 

@@ -1,12 +1,11 @@
 //
 // Created by qiu on 17/05/18.
 //
-#include <cuda.h>
 #include "totem_graph.h"
 #include "totem_util.h"
 #include "multiple_label_cc_cpu.h"
 #include <iostream>
-#include "utils.h"
+#include "common_utils.h"
 
 namespace patternmatching {
 
@@ -40,7 +39,7 @@ bool MultipleLabelCcCpu<State>::checkConstraint(
     size_t nextPositionInConstraint = (startingPosition + currentConstraint.length - (remainingLength - 1))
         % currentConstraint.vertexLabelVector.size();
 
-    const auto &nextConstraintVertexIndex = currentConstraint.vertexIndexVector[nextPositionInConstraint];
+    const auto nextConstraintVertexIndex = currentConstraint.vertexIndexVector[nextPositionInConstraint];
 
     for (eid_t neighborEdgeId = graph.vertices[currentVertexId]; neighborEdgeId < graph.vertices[currentVertexId + 1];
          neighborEdgeId++) {
@@ -91,8 +90,9 @@ MultipleLabelCcCpu<State>::compute(
   PROGRESSION_INSERT_BEGIN()
 
   sourceTraversalMapType sourceTraversalMap;
+  sourceTraversalMap.reserve(1000);
 
-  #pragma omp parallel for private(sourceTraversalMap) schedule(dynamic, 1000)
+  #pragma omp parallel for private(sourceTraversalMap) //schedule(dynamic, 1000)
   for (vid_t vertexId = 0; vertexId < graph.vertex_count; vertexId++) {
     if (!BaseClass::isVertexActive(*globalState, vertexId)) continue;
 
@@ -105,10 +105,7 @@ MultipleLabelCcCpu<State>::compute(
          ++it, ++constraintIndex) {
 
       if (globalState->vertexPatternMatch[vertexId].isIn(*it)) {
-        if (BaseClass::isAlreadyMatchedAtomic(*globalState, vertexId, *it)) {
-          hasBeenModified = true;
-          continue;
-        }
+        if (BaseClass::isAlreadyMatchedAtomic(*globalState, vertexId, *it)) continue;
 
         startingPositionInConstraint = constraintIndex;
         // Check cycle
@@ -133,14 +130,14 @@ MultipleLabelCcCpu<State>::compute(
     PROGRESSION_INSERT_LOOP()
   }
 
-  //std::cout << "Mid CC " << std::endl;
-
   size_t vertexEliminatedNumber = 0;
   size_t matchEliminatedNumber = 0;
 
   #pragma omp parallel for reduction(+:vertexEliminatedNumber, matchEliminatedNumber)
   for (vid_t vertexId = 0; vertexId < graph.vertex_count; vertexId++) {
     if (!BaseClass::isVertexActive(*globalState, vertexId)) continue;
+
+    BaseClass::clearAlreadyMatched(globalState, vertexId);
 
     if (BaseClass::isVertexModified(*globalState, vertexId)) {
       for (const auto &patternIndex : globalState->vertexPatternToUnmatch[vertexId]) {
@@ -158,7 +155,6 @@ MultipleLabelCcCpu<State>::compute(
 
       BaseClass::scheduleVertex(globalState, vertexId);
       BaseClass::clearToUnmatch(globalState, vertexId);
-      BaseClass::clearAlreadyMatched(globalState, vertexId);
     } else {
       // Schedule vertex close to the one modified
       bool hasBeenScheduled = false;
@@ -181,8 +177,8 @@ MultipleLabelCcCpu<State>::compute(
 
   globalState->graphActiveVertexCount -= vertexEliminatedNumber;
   AlgoResults algoResults;
-  algoResults.vertexEliminated=vertexEliminatedNumber;
-  algoResults.matchEliminated=matchEliminatedNumber;
+  algoResults.vertexEliminated = vertexEliminatedNumber;
+  algoResults.matchEliminated = matchEliminatedNumber;
   ++circularConstraintIterator;
 
   return algoResults;

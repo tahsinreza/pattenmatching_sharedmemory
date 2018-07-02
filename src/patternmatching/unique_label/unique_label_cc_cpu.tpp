@@ -223,9 +223,9 @@ UniqueLabelCcCpu<State>::compute(const graph_t &graph, State *globalState) {
     if (isOmitted(*globalState, vertexId)) continue;
 
     if (!isMatch(*globalState, vertexId)) {
-      std::stringstream ss;
+      /*std::stringstream ss;
       ss << "Removed Vertex : " << vertexId << std::endl;
-      Logger::get().log(Logger::E_LEVEL_DEBUG, ss.str());
+      Logger::get().log(Logger::E_LEVEL_DEBUG, ss.str());*/
       BaseClass::deactivate(globalState, vertexId);
       vertexEliminatedNumber += 1;
     }

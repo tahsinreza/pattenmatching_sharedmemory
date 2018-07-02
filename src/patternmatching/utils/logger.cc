@@ -6,7 +6,7 @@
 #include <chrono>
 #include <ctime>
 #include <iomanip>
-#include "utils.h"
+#include "common_utils.h"
 #include <omp.h>
 
 namespace patternmatching {
@@ -38,17 +38,17 @@ Logger &Logger::get() {
   return *instance;
 }
 
-std::ofstream Logger::getStream(const LogOutput &logOutput, const int param) const {
+std::string Logger::getStreamName(const LogOutput &logOutput, const int param) const {
   if(logOutput == E_OUTPUT_FILE_ENUMERATION_RESUTLS) {
     char buffer[128];
     sprintf(buffer, C_ENUMERATION_RESULTS_FILEPATTERN.c_str(), param);
-    return std::ofstream(resultDirectory + buffer, std::ofstream::app);
+    return resultDirectory + buffer;
   }
 
-  return std::ofstream();
+  return std::string();
 }
 
-void Logger::init(const std::string &_resultDirectory) {
+void Logger::init(const std::string &_resultDirectory, const bool &clearEnumeration) {
   if (_resultDirectory.back() == '/') {
     resultDirectory = _resultDirectory;
   } else {
@@ -65,10 +65,13 @@ void Logger::init(const std::string &_resultDirectory) {
   iterationResultsFileStream.close();
   std::ofstream logFileStream(resultDirectory + C_LOG_FILEPATTERN, std::ofstream::out | std::ofstream::trunc);
   logFileStream.close();
-  for(int i=0; i<omp_get_max_threads();i++) {
-    char buffer[128];
-    sprintf(buffer, C_ENUMERATION_RESULTS_FILEPATTERN.c_str(), i);
-    std::ofstream enumerationFileStream(resultDirectory + buffer, std::ofstream::out | std::ofstream::trunc);
+  if(clearEnumeration) {
+    for (int i = 0; i < omp_get_max_threads(); i++) {
+      char buffer[128];
+      sprintf(buffer, C_ENUMERATION_RESULTS_FILEPATTERN.c_str(), i);
+      std::ofstream enumerationFileStream(resultDirectory + buffer, std::ofstream::out | std::ofstream::trunc);
+      enumerationFileStream.close();
+    }
   }
 }
 

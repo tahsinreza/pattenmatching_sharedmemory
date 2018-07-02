@@ -5,7 +5,7 @@
 #include "totem_graph.h"
 #include "totem_util.h"
 #include "multiple_label_lcc0_cpu.h"
-#include "utils.h"
+#include "common_utils.h"
 #include <iostream>
 
 namespace patternmatching {
@@ -18,6 +18,34 @@ MultipleLabelLcc0Cpu<State>::compute(const graph_t &graph, State *globalState) c
   std::unordered_map <weight_t, size_t> currentLocalConstraint;
   currentLocalConstraint.reserve(10);
 
+  size_t vertexEliminatedNumber = 0;
+  size_t matchEliminatedNumber = 0;
+
+
+  #pragma omp parallel for reduction(+:edgeEliminatedNumber,vertexEliminatedNumber, matchEliminatedNumber) private(currentLocalConstraint)
+  for (vid_t vertexId = 0; vertexId < graph.vertex_count; vertexId++) {
+    if (!BaseClass::isVertexActive(*globalState, vertexId)) continue;
+
+    weight_t currentLabel = graph.values[vertexId];
+
+    // Build the set of possible neighbor label matches
+    std::unordered_set <weight_t> neighborConstraintSet;
+    for (const auto &it : globalState->vertexPatternMatch[vertexId]) {
+      const auto &currentLocalConstraint = patternLocalConstraint[it];
+      if(currentLabel!=currentLocalConstraint.originLabel) {
+        matchEliminatedNumber++;
+        BaseClass::removeMatch(globalState, vertexId, it);
+        continue;
+      }
+    }
+
+    if (!BaseClass::isMatch(*globalState, vertexId)) {
+      BaseClass::deactivateVertex(globalState, vertexId);
+      vertexEliminatedNumber += 1;
+    }
+
+  }
+/*
   #pragma omp parallel for reduction(+:edgeEliminatedNumber) private(currentLocalConstraint)
   for (vid_t vertexId = 0; vertexId < graph.vertex_count; vertexId++) {
     if (!BaseClass::isVertexActive(*globalState, vertexId)) continue;
@@ -28,7 +56,10 @@ MultipleLabelLcc0Cpu<State>::compute(const graph_t &graph, State *globalState) c
     std::unordered_set <weight_t> neighborConstraintSet;
     for (const auto &it : globalState->vertexPatternMatch[vertexId]) {
       const auto &currentLocalConstraint = patternLocalConstraint[it];
-      if(currentLabel!=currentLocalConstraint.originLabel) continue;
+      if(currentLabel!=currentLocalConstraint.originLabel) {
+        BaseClass::makeToUnmatch(globalState, vertexId, it);
+        continue;
+      }
       for (const auto &neighborLabelIt : currentLocalConstraint.localConstraint) {
         neighborConstraintSet.insert(neighborLabelIt.first);
       }
@@ -40,6 +71,7 @@ MultipleLabelLcc0Cpu<State>::compute(const graph_t &graph, State *globalState) c
       }
       continue;
     }
+
     // build local constraint
     for(const auto& it : currentLocalConstraint) {
       currentLocalConstraint[it.first]=0;
@@ -84,11 +116,9 @@ MultipleLabelLcc0Cpu<State>::compute(const graph_t &graph, State *globalState) c
         }
       }
     }
-  }
+  }*/
 
-  size_t vertexEliminatedNumber = 0;
-  size_t matchEliminatedNumber = 0;
-
+/*
   #pragma omp parallel for reduction(+:vertexEliminatedNumber, matchEliminatedNumber)
   for (vid_t vertexId = 0; vertexId < graph.vertex_count; vertexId++) {
     if (!BaseClass::isVertexActive(*globalState, vertexId)) continue;
@@ -99,17 +129,13 @@ MultipleLabelLcc0Cpu<State>::compute(const graph_t &graph, State *globalState) c
     }
 
     if (!BaseClass::isMatch(*globalState, vertexId)) {
-      /*std::stringstream ss;
-      ss << "Eliminated vertex : " << vertexId;
-      Logger::get().log(Logger::E_LEVEL_DEBUG, ss.str());*/
-
       BaseClass::deactivateVertex(globalState, vertexId);
       vertexEliminatedNumber += 1;
     }
 
     BaseClass::clearToUnmatch(globalState, vertexId);
   }
-
+*/
   globalState->graphActiveVertexCount-=vertexEliminatedNumber;
   globalState->graphActiveEdgeCount-=edgeEliminatedNumber;
 

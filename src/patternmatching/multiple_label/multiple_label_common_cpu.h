@@ -12,7 +12,7 @@
 #include "bitmap_dynamic.h"
 #include <vector>
 #include "logger.h"
-#include "utils.h"
+#include "common_utils.h"
 #include "multiple_label_common.h"
 
 namespace patternmatching {

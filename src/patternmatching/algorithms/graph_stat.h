@@ -9,7 +9,7 @@
 #include <unordered_map>
 #include <map>
 #include <iostream>
-#include "utils.h"
+#include "common_utils.h"
 
 class GraphStat {
  public:

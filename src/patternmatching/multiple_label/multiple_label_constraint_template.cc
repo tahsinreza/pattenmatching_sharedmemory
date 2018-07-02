@@ -3,7 +3,7 @@
 //
 
 #include "multiple_label_constraint_template.h"
-#include "utils.h"
+#include "common_utils.h"
 
 namespace patternmatching {
 
@@ -123,29 +123,32 @@ void MultipleLabelConstraintTemplate::generateWalk(Walk &walk,
                                       std::vector<vid_t> &historyVertexIndex,
                                       std::vector<UndirectedEdge> &historyEdgeIndex,
                                       const vid_t &currentVertexIndex) const {
-  bool first = true;
+  bool isOn = true;
   auto currentWalkIndex = walk.vertexLength - 1;
   for (const auto &neighborVertex : vertexIndexGraph.at(currentVertexIndex)) {
-    auto previousIndex = historyFindIndex(historyVertexIndex, neighborVertex);
-    if (previousIndex != historyVertexIndex.size()) {
-      if(isInVector(historyEdgeIndex,UndirectedEdge(currentVertexIndex, neighborVertex))) continue;
+    auto edge = UndirectedEdge(currentVertexIndex, neighborVertex);
+    if(!isInVector(historyVertexIndex, neighborVertex)) {
+      if (!isOn) {
+        walk.addMoveBack(currentVertexIndex, currentWalkIndex);
+        isOn = true;
+      }
 
-      if (!first) {
-        walk.addMoveBack(currentVertexIndex, currentWalkIndex);
-        first = true;
-      }
-      historyEdgeIndex.emplace_back(currentVertexIndex, neighborVertex);
-      walk.addCheck(neighborVertex, previousIndex);
-    } else {
-      if (!first) {
-        walk.addMoveBack(currentVertexIndex, currentWalkIndex);
-        first = true;
-      }
-      historyEdgeIndex.emplace_back(currentVertexIndex, neighborVertex);
+      historyEdgeIndex.push_back(edge);
       historyVertexIndex.push_back(neighborVertex);
       walk.addVertex(neighborVertex);
       generateWalk(walk, historyVertexIndex, historyEdgeIndex, neighborVertex);
-      first = false;
+      isOn = false;
+    } else {
+      if(isInVector(historyEdgeIndex,edge)) continue;
+
+      if (!isOn) {
+        walk.addMoveBack(currentVertexIndex, currentWalkIndex);
+        isOn = true;
+      }
+      auto previousIndex = historyFindIndex(historyVertexIndex, neighborVertex);
+
+      historyEdgeIndex.push_back(edge);
+      walk.addCheck(neighborVertex, previousIndex);
     }
   }
 }

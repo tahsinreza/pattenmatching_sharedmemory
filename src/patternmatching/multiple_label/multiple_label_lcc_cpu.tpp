@@ -5,7 +5,7 @@
 #include "totem_graph.h"
 #include "totem_util.h"
 #include "multiple_label_lcc_cpu.h"
-#include "utils.h"
+#include "common_utils.h"
 #include <iostream>
 
 namespace patternmatching {

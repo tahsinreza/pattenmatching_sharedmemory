@@ -6,7 +6,7 @@
 #include "totem_util.h"
 #include "multiple_label_generate_constraint_circular.h"
 #include <iostream>
-#include "utils.h"
+#include "common_utils.h"
 
 namespace patternmatching {
 

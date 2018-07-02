@@ -10,15 +10,18 @@
 #include <sys/stat.h>
 #include <string>
 #include <sstream>
+#include "totem_graph.h"
 
 #define PRODUCTION 0
 
 #if PRODUCTION == 1
   #define PROGRESSION_INSERT 0
   #define LOGGER_LEVEL_NO_DEBUG 1
+  #define ENUMERATION_BINARY_FORMAT 1
 #else
   #define PROGRESSION_INSERT 0
   #define LOGGER_LEVEL_NO_DEBUG 0
+  #define ENUMERATION_BINARY_FORMAT 0
 #endif
 
 #if PROGRESSION_INSERT == 1
@@ -78,10 +81,12 @@ inline std::vector<std::string> splitStringIncremental(const std::string &input,
   std::string item;
   std::string current;
   std::vector<std::string> output;
+  bool first=true;
   while (std::getline(ss, item, delim)) {
-    if(!item.empty()) {
+    if(!item.empty() || first) {
       current += item + "/";
       output.push_back(current);
+      first=false;
     }
   }
   return output;
@@ -91,6 +96,14 @@ inline bool isDirectory(const std::string &path) {
   struct stat st = {0};
   if(stat(path.c_str(), &st) == 0) {
     return static_cast<bool>(S_ISDIR(st.st_mode));
+  }
+  return false;
+}
+
+inline bool isFile(const std::string &path) {
+  struct stat st = {0};
+  if(stat(path.c_str(), &st) == 0) {
+    return static_cast<bool>(S_ISREG(st.st_mode));
   }
   return false;
 }
@@ -111,8 +124,10 @@ std::string sprintfString(const char* format, Args&&... args) {
   auto size = std::snprintf(nullptr, 0, format, args...);
   std::string output(size + 1, 'a');
   std::sprintf(&output[0], format, args...);
-  output.resize(output.size() - 1);
+  output.resize(size);
   return output;
 }
+
+error_t parseVertexFile(FILE *file_handler, graph_t *graph);
 
 #endif //PROJECT_UTILS_H

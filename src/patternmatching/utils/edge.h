@@ -15,15 +15,31 @@ class DirectedEdge {
   DirectedEdge();
   DirectedEdge(const vid_t vertexFromId, const vid_t vertexToIt);
   void print(std::ostream &ostream = std::cout) const;
- public:
+
   bool operator==(const DirectedEdge &other) const;
   bool operator!=(const DirectedEdge &other) const;
+  bool operator<(const DirectedEdge &other) const;
+
+ public:
   vid_t vertexFromId, vertexToIt;
 };
 class UndirectedEdge : public DirectedEdge{
  public:
   UndirectedEdge();
   UndirectedEdge(const vid_t vertexFromId, const vid_t vertexToIt);
+};
+
+struct DirectedEdgeHash {
+ public:
+  std::size_t operator()(const DirectedEdge &x) const {
+    return std::hash<vid_t>()(x.vertexFromId) ^ std::hash<vid_t>()(x.vertexToIt);
+  }
+};
+struct UndirectedEdgeHash : public DirectedEdgeHash {
+ public:
+  std::size_t operator()(const UndirectedEdge &x) const {
+    return DirectedEdgeHash::operator()(x);
+  }
 };
 }
 

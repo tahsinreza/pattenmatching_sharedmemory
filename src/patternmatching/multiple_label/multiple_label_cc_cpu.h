@@ -11,7 +11,7 @@
 #include <unordered_map>
 #include <iostream>
 #include "multiple_label_constraint_circular.h"
-#include "utils.h"
+#include "common_utils.h"
 #include "algo_results.h"
 
 namespace patternmatching {

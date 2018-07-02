@@ -6,23 +6,33 @@
 #include "multiple_label_constraint_template.h"
 #include <iostream>
 #include <deque>
-#include "utils.h"
+#include "common_utils.h"
 #include <iostream>
 #include <fstream>
 
 namespace patternmatching {
 
-
 template<class State>
 void MultipleLabelEnumerationCpu<State>::writeEnumeration(
     const Walk &walk,
-    const std::vector<vid_t> &historyIndexVector) const {
-  auto fstream = Logger::get().getStream(Logger::E_OUTPUT_FILE_ENUMERATION_RESUTLS, omp_get_thread_num());
+    const std::vector<vid_t> &historyIndexVector) const {/*
+  auto fstreamName = Logger::get().getStreamName(Logger::E_OUTPUT_FILE_ENUMERATION_RESUTLS, omp_get_thread_num());
+  #if ENUMERATION_BINARY_FORMAT == 1
+  std::ofstream fstream(fstreamName, std::ofstream::app | std::ofstream::binary);
+  for (int i = 0; i < historyIndexVector.size(); i++) {
+    fstream.write ( reinterpret_cast<const char*>(&(walk.historyIndexVector[i])), sizeof(walk.historyIndexVector[i]) );
+    fstream.write ( reinterpret_cast<const char*>(&(historyIndexVector[i])), sizeof(historyIndexVector[i]) );
+  }
+  fstream.close();
+  #else
+  std::ofstream fstream(fstreamName, std::ofstream::app);
   for(int i=0;i<historyIndexVector.size();i++) {
-    fstream << "("<<walk.historyIndexVector[i]<<","<<historyIndexVector[i]<<");";
+    //fstream << "("<<walk.historyIndexVector[i]<<","<<historyIndexVector[i]<<");";
+    fstream <<historyIndexVector[i]<<";";
   }
   fstream<< std::endl;
-  fstream.close();
+  #endif
+  fstream.close();*/
 }
 
 template<class State>
@@ -43,7 +53,7 @@ size_t MultipleLabelEnumerationCpu<State>::checkConstraint(
     return 1;
   }
 
-  auto currentWalkMove = walk.moveVector[currentPositionInConstraint];
+  const auto currentWalkMove = walk.moveVector[currentPositionInConstraint];
 
   if (currentWalkMove == Walk::E_VERTEX_NO_STORE || currentWalkMove == Walk::E_VERTEX_STORE) {
     auto nextWalkVertexIndex = walk.vertexIndexVector[currentPositionInConstraint];
@@ -120,11 +130,9 @@ MultipleLabelEnumerationCpu<State>::compute(const graph_t &graph, State *globalS
                             &MultipleLabelConstraintTemplate::print,
                             Logger::E_OUTPUT_FILE_LOG);
 
-  PROGRESSION_INSERT_BEGIN()
-
-  const auto &walkKey = templateConstraint.walkMap.cbegin();
-  const auto &walkStartingVertex = walkKey->first;
-  const auto &walk = walkKey->second;
+  auto walkKey = templateConstraint.walkMap.cbegin();
+  const auto walkStartingVertex = walkKey->first;
+  const auto walk = walkKey->second;
 
   Logger::get().log(Logger::E_LEVEL_DEBUG, "selectedWalk : ", Logger::E_OUTPUT_FILE_LOG);
   Logger::get().logFunction(Logger::E_LEVEL_DEBUG,
@@ -132,32 +140,31 @@ MultipleLabelEnumerationCpu<State>::compute(const graph_t &graph, State *globalS
                             &Walk::print,
                             Logger::E_OUTPUT_FILE_LOG);
 
+  PROGRESSION_INSERT_BEGIN()
+
   size_t enumerationNumber = 0;
-  #pragma omp parallel
-  {
-    std::vector<vid_t> historyIndexVector;
-    historyIndexVector.reserve(walk.length);
+  std::vector<vid_t> historyIndexVector;
+  historyIndexVector.reserve(walk.length);
 
-    #pragma omp for private(historyIndexVector) reduction(+:enumerationNumber)
-    for (vid_t vertexId = 0; vertexId < graph.vertex_count; vertexId++) {
-      if (!BaseClass::isVertexActive(*globalState, vertexId)) continue;
+  #pragma omp parallel for reduction(+:enumerationNumber) private(historyIndexVector) schedule(dynamic, 1000)
+  for (vid_t vertexId = 0; vertexId < graph.vertex_count; vertexId++) {
+    if (!BaseClass::isVertexActive(*globalState, vertexId)) continue;
 
-      if (globalState->vertexPatternMatch[vertexId].isIn(walkStartingVertex)) {
-        // Check cycle
-        historyIndexVector.clear();
-        historyIndexVector.push_back(vertexId);
-        enumerationNumber += checkConstraint(graph,
-                                             globalState,
-                                             walk,
-                                             historyIndexVector,
-                                             vertexId,
-                                             vertexId,
-                                             1);
+    if (globalState->vertexPatternMatch[vertexId].isIn(walkStartingVertex)) {
+      // Check cycle
+      historyIndexVector.clear();
+      historyIndexVector.push_back(vertexId);
+      enumerationNumber += checkConstraint(graph,
+                                           globalState,
+                                           walk,
+                                           historyIndexVector,
+                                           vertexId,
+                                           vertexId,
+                                           1);
 
-      }
-
-      PROGRESSION_INSERT_LOOP()
     }
+
+    PROGRESSION_INSERT_LOOP()
   }
 
   AlgoResults algoResults;

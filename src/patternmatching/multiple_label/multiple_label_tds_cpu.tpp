@@ -6,7 +6,7 @@
 #include "multiple_label_constraint_template.h"
 #include <iostream>
 #include <deque>
-#include "utils.h"
+#include "common_utils.h"
 
 namespace patternmatching {
 
@@ -29,7 +29,7 @@ bool MultipleLabelTdsCpu<State>::checkConstraint(
   auto currentWalkMove = walk.moveVector[currentPositionInConstraint];
 
   if (currentWalkMove == Walk::E_VERTEX_NO_STORE || currentWalkMove == Walk::E_VERTEX_STORE) {
-    auto currentWalkVertexIndex = walk.vertexIndexVector[currentPositionInConstraint-1];
+    auto currentWalkVertexIndex = walk.vertexIndexVector[currentPositionInConstraint - 1];
     auto nextWalkVertexIndex = walk.vertexIndexVector[currentPositionInConstraint];
     for (eid_t neighborEdgeId = graph.vertices[currentVertexId]; neighborEdgeId < graph.vertices[currentVertexId + 1];
          neighborEdgeId++) {
@@ -40,22 +40,21 @@ bool MultipleLabelTdsCpu<State>::checkConstraint(
       if (!globalState->vertexPatternMatch[neighborVertexId].isIn(nextWalkVertexIndex))
         continue;
 
-      //if (isInVector(historyIndexVector, neighborVertexId)) continue;
+      const auto &edge = (currentVertexId > neighborVertexId) ? std::make_pair(currentVertexId, neighborVertexId)
+                                                              : std::make_pair(neighborVertexId, currentVertexId);
 
-      const auto &edge = (currentVertexId>neighborVertexId) ? std::make_pair(currentVertexId,neighborVertexId)
-                                                            : std::make_pair(neighborVertexId,currentVertexId);
-
-      if (sourceTraversalEdgeMap.find(edge)!=sourceTraversalEdgeMap.end()
-          && sourceTraversalEdgeMap[edge].isIn(currentWalkVertexIndex))  {
+      if (sourceTraversalEdgeMap.find(edge) != sourceTraversalEdgeMap.end()
+          && sourceTraversalEdgeMap[edge].isIn(currentWalkVertexIndex)) {
         continue;
       }
 
       if (sourceTraversalMap.find(neighborVertexId) != sourceTraversalMap.end()
-          && sourceTraversalMap[neighborVertexId].find(nextWalkVertexIndex) != sourceTraversalMap[neighborVertexId].end()
+          && sourceTraversalMap[neighborVertexId].find(nextWalkVertexIndex)
+              != sourceTraversalMap[neighborVertexId].end()
           && isInVector(sourceTraversalMap[neighborVertexId][nextWalkVertexIndex], traversalHypothesis))
         continue;
 
-      if(currentWalkMove == Walk::E_VERTEX_STORE) {
+      if (currentWalkMove == Walk::E_VERTEX_STORE) {
         traversalHypothesis.push_back(neighborVertexId);
       }
 
@@ -77,7 +76,7 @@ bool MultipleLabelTdsCpu<State>::checkConstraint(
       }
       historyIndexVector.pop_back();
 
-      if(currentWalkMove == Walk::E_VERTEX_STORE) {
+      if (currentWalkMove == Walk::E_VERTEX_STORE) {
         traversalHypothesis.pop_back();
       }
     }
@@ -148,6 +147,7 @@ MultipleLabelTdsCpu<State>::compute(const graph_t &graph, State *globalState) {
   SourceTraversalMapType sourceTraversalMap;
   SourceTraversalEdgeMapType sourceTraversalEdgeMap;
   std::vector<vid_t> historyIndexVector;
+  historyIndexVector.resize(2 * (currentConstraint.walkMap.cbegin()->second.length));
   TraversalHypothesis traversalHypothesis;
 
   #pragma omp parallel for private(sourceTraversalMap, sourceTraversalEdgeMap, historyIndexVector, traversalHypothesis)
@@ -197,11 +197,13 @@ MultipleLabelTdsCpu<State>::compute(const graph_t &graph, State *globalState) {
   size_t vertexEliminatedNumber = 0;
   size_t matchEliminatedNumber = 0;
 
-  #pragma omp parallel for reduction(+:vertexEliminatedNumber,matchEliminatedNumber)
+  #pragma omp parallel for reduction(+:vertexEliminatedNumber, matchEliminatedNumber)
   for (vid_t vertexId = 0; vertexId < graph.vertex_count; vertexId++) {
     if (!BaseClass::isVertexActive(*globalState, vertexId)) continue;
-    if (BaseClass::isVertexModified(*globalState, vertexId)) {
 
+    BaseClass::clearAlreadyMatched(globalState, vertexId);
+
+    if (BaseClass::isVertexModified(*globalState, vertexId)) {
       for (const auto &patternIndex : globalState->vertexPatternToUnmatch[vertexId]) {
         BaseClass::removeMatch(globalState, vertexId, patternIndex);
         matchEliminatedNumber++;
@@ -216,9 +218,9 @@ MultipleLabelTdsCpu<State>::compute(const graph_t &graph, State *globalState) {
       }
       BaseClass::scheduleVertex(globalState, vertexId);
       BaseClass::clearToUnmatch(globalState, vertexId);
-      BaseClass::clearAlreadyMatched(globalState, vertexId);
     } else {
       // Schedule vertex close to the one modified
+      bool hasBeenScheduled = false;
       for (eid_t neighborEdgeId = graph.vertices[vertexId]; neighborEdgeId < graph.vertices[vertexId + 1];
            neighborEdgeId++) {
         if (!BaseClass::isEdgeActive(*globalState, neighborEdgeId)) continue;
@@ -226,27 +228,31 @@ MultipleLabelTdsCpu<State>::compute(const graph_t &graph, State *globalState) {
         if (!BaseClass::isVertexModified(*globalState, neighborVertexId)) continue;
 
         BaseClass::scheduleVertex(globalState, vertexId);
+        hasBeenScheduled = true;
+      }
+      if (!hasBeenScheduled) {
+        BaseClass::unscheduleVertex(globalState, vertexId);
       }
     }
   }
 
-  globalState->graphActiveVertexCount-=vertexEliminatedNumber;
+  globalState->graphActiveVertexCount -= vertexEliminatedNumber;
   AlgoResults algoResults;
-  algoResults.vertexEliminated=vertexEliminatedNumber;
-  algoResults.matchEliminated=matchEliminatedNumber;
+  algoResults.vertexEliminated = vertexEliminatedNumber;
+  algoResults.matchEliminated = matchEliminatedNumber;
   return algoResults;
 }
 
 template<class State>
 void MultipleLabelTdsCpu<State>::setConstraintVector(
-    const std::vector <MultipleLabelConstraintTemplate>& templateConstraintVector_) {
-  templateConstraintVector=templateConstraintVector_;
-  templateConstraintIterator=templateConstraintVector.cbegin();
+    const std::vector<MultipleLabelConstraintTemplate> &templateConstraintVector_) {
+  templateConstraintVector = templateConstraintVector_;
+  templateConstraintIterator = templateConstraintVector.cbegin();
 }
 
 template<class State>
 void MultipleLabelTdsCpu<State>::setConstraintIterator(const size_t &index) {
-  templateConstraintIterator = templateConstraintVector.cbegin()+index;
+  templateConstraintIterator = templateConstraintVector.cbegin() + index;
 }
 
 }

@@ -51,3 +51,21 @@ target_link_libraries(${PROJECT_NAME}_graph_stat_effectiveness
         ${TBB_LIBRARIES}
         ${OpenMP_CXX_LIBRARIES}
         ${CUDA_LIBRARIES})
+
+
+add_executable(${PROJECT_NAME}_graph_make_undirected
+        graph_make_undirected.cc
+        graph_make_undirected_cpu.cc
+        graph_make_undirected_cpu.h
+        ${PATTERNMATCHING_CPP_SOURCES})
+
+target_link_libraries(${PROJECT_NAME}_graph_make_undirected
+        patternmatching_algorithms
+        patternmatching_unique_label
+        patternmatching_multiple_label
+        patternmatching_utils
+        totem
+        ${OTHER_LIBRARIES}
+        ${TBB_LIBRARIES}
+        ${OpenMP_CXX_LIBRARIES}
+        ${CUDA_LIBRARIES})

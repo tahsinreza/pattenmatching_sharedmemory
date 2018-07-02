@@ -3,7 +3,7 @@
 //
 
 #include "walk.h"
-#include "utils.h"
+#include "common_utils.h"
 
 namespace patternmatching {
 

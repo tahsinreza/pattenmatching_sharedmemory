@@ -13,6 +13,9 @@ using namespace patternmatching;
 int main(int argc, char** argv) {
   CmdLineOption cmdLineOption;
   cmdLineOption.parseCmdLine(argc, argv);
+  if(cmdLineOption.getInputGraphBinFilePath().empty()) {
+    cmdLineOption.setInputGraphBinFilePath(cmdLineOption.getInputGraphFilePath()+".bin");
+  }
 
   Logger::get().init(cmdLineOption.getOutputResultDirectory());
 

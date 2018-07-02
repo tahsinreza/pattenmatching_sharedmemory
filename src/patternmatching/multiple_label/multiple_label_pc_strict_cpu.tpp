@@ -4,7 +4,7 @@
 #include "totem_util.h"
 #include "multiple_label_pc_strict_cpu.h"
 #include <iostream>
-#include "utils.h"
+#include "common_utils.h"
 
 namespace patternmatching {
 
@@ -148,6 +148,8 @@ MultipleLabelPcStrictCpu<State>::compute(const graph_t &graph, State *globalStat
   for (vid_t vertexId = 0; vertexId < graph.vertex_count; vertexId++) {
     if (!BaseClass::isVertexActive(*globalState, vertexId)) continue;
 
+    BaseClass::clearAlreadyMatched(globalState, vertexId);
+
     if (BaseClass::isVertexModified(*globalState, vertexId)) {
       for (const auto &patternIndex : globalState->vertexPatternToUnmatch[vertexId]) {
         BaseClass::removeMatch(globalState, vertexId, patternIndex);
@@ -163,7 +165,6 @@ MultipleLabelPcStrictCpu<State>::compute(const graph_t &graph, State *globalStat
       }
       BaseClass::scheduleVertex(globalState, vertexId);
       BaseClass::clearToUnmatch(globalState, vertexId);
-      BaseClass::clearAlreadyMatched(globalState, vertexId);
     } else {
       // Schedule vertex close to the one modified
       for (eid_t neighborEdgeId = graph.vertices[vertexId]; neighborEdgeId < graph.vertices[vertexId + 1];

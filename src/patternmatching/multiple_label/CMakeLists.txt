@@ -7,6 +7,7 @@ include_directories(
         ${SOURCE_ROOT_DIR}/totem)
 
 add_library(${PROJECT_NAME}
+        ../utils/common_utils.h
         multiple_label_cc_backtrack_cpu.h
         multiple_label_cc_backtrack_cpu.tpp
         multiple_label_cc_cpu.h

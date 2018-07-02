@@ -4,7 +4,7 @@
 #include "totem_util.h"
 #include "multiple_label_pc_cpu.h"
 #include <iostream>
-#include "utils.h"
+#include "common_utils.h"
 
 namespace patternmatching {
 
@@ -153,6 +153,8 @@ MultipleLabelPcCpu<State>::compute(const graph_t &graph, State *globalState) {
   for (vid_t vertexId = 0; vertexId < graph.vertex_count; vertexId++) {
     if (!BaseClass::isVertexActive(*globalState, vertexId)) continue;
 
+    BaseClass::clearAlreadyMatched(globalState, vertexId);
+
     if (BaseClass::isVertexModified(*globalState, vertexId)) {
       for (const auto &patternIndex : globalState->vertexPatternToUnmatch[vertexId]) {
         BaseClass::removeMatch(globalState, vertexId, patternIndex);
@@ -168,9 +170,9 @@ MultipleLabelPcCpu<State>::compute(const graph_t &graph, State *globalState) {
       }
       BaseClass::scheduleVertex(globalState, vertexId);
       BaseClass::clearToUnmatch(globalState, vertexId);
-      BaseClass::clearAlreadyMatched(globalState, vertexId);
     } else {
       // Schedule vertex close to the one modified
+      bool hasBeenScheduled = false;
       for (eid_t neighborEdgeId = graph.vertices[vertexId]; neighborEdgeId < graph.vertices[vertexId + 1];
            neighborEdgeId++) {
         if (!BaseClass::isEdgeActive(*globalState, neighborEdgeId)) continue;
@@ -178,6 +180,10 @@ MultipleLabelPcCpu<State>::compute(const graph_t &graph, State *globalState) {
         if (!BaseClass::isVertexModified(*globalState, neighborVertexId)) continue;
 
         BaseClass::scheduleVertex(globalState, vertexId);
+        hasBeenScheduled = true;
+      }
+      if (!hasBeenScheduled) {
+        BaseClass::unscheduleVertex(globalState, vertexId);
       }
     }
   }

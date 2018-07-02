@@ -9,58 +9,6 @@
 
 namespace patternmatching {
 
-error_t parse_vertex_list2(FILE *file_handler, graph_t *graph) {
-  const uint32_t MAX_LINE_LENGTH = 100;
-  const char delimiters[] = " \t\n:";
-  uint64_t line_number = 0;
-  char line[MAX_LINE_LENGTH];
-
-  graph->valued = true;
-  graph->values = reinterpret_cast<weight_t *>(malloc(graph->vertex_count * sizeof(weight_t)));
-
-  vid_t vertex_index = 0;
-  while (vertex_index < graph->vertex_count) {
-    if (fgets(line, sizeof(line), file_handler) == NULL) break;
-    line_number++;
-    if (line[0] == '#') { continue; }
-
-    // Start tokenizing: first, the vertex id.
-    char *token;
-    char *saveptr;
-    CHK((token = strtok_r(line, delimiters, &saveptr)) != NULL, err);
-    CHK(is_numeric(token), err);
-    uint64_t token_num = atoll(token);
-    CHK((token_num < VERTEX_ID_MAX), err_id_overflow);
-    vid_t vertex_id = token_num;
-
-    // Second, get the value.
-    CHK((token = strtok_r(NULL, delimiters, &saveptr)) != NULL, err);
-    // TODO(abdullah): Use isnumeric to verify the value.
-    weight_t value = (weight_t) atoll(token);
-
-    if (vertex_id != vertex_index) {
-      // Vertices must be in increasing order and less than the maximum count.
-      CHK(((vertex_id > vertex_index) &&
-          (vertex_id < graph->vertex_count)), err);
-
-      // Vertices without values will be assigned a default one.
-      while (vertex_index < vertex_id) {
-        graph->values[vertex_index++] = DEFAULT_VERTEX_VALUE;
-      }
-    }
-    graph->values[vertex_index++] = value;
-  }
-
-  return SUCCESS;
-
-  err_id_overflow:
-  fprintf(stderr, "The type used for vertex ids does not support the range of"
-                  " values in this file.\n");
-  err:
-  fprintf(stderr, "parse_vertex_list\n");
-  return FAILURE;
-}
-
 void MultipleLabelCpu::initialiseTotem() {
   // Configure OpenMP.
   omp_set_num_threads(omp_get_max_threads());
@@ -71,21 +19,30 @@ void MultipleLabelCpu::initialiseTotem() {
 error_t MultipleLabelCpu::allocate(CmdLineOption &cmdLineOption) {
   // Load graph
   Logger::get().log(Logger::E_LEVEL_INFO, "Loading graph");
-  graph_initialize(cmdLineOption.getInputGraphFilePath().c_str(), 0, &graph);
+  if(isFile(cmdLineOption.getInputGraphBinFilePath()) && 0) {
+    graph_initialize(cmdLineOption.getInputGraphBinFilePath().c_str(), 0, &graph);
+  } else {
+    graph_initialize(cmdLineOption.getInputGraphFilePath().c_str(), 0, &graph);
 
-  if (!cmdLineOption.getInputVertexMetadataFilePath().empty()) {
-    FILE *file_handler = fopen(cmdLineOption.getInputVertexMetadataFilePath().c_str(), "r");
-    if (file_handler != NULL) parse_vertex_list2(file_handler, graph);
+    if (!cmdLineOption.getInputVertexMetadataFilePath().empty()) {
+      FILE *file_handler = fopen(cmdLineOption.getInputVertexMetadataFilePath().c_str(), "r");
+      if (file_handler != NULL) parseVertexFile(file_handler, graph);
+    }
+    Logger::get().log(Logger::E_LEVEL_INFO, std::string("Saved graph as : ")+ cmdLineOption.getInputGraphBinFilePath());
+    graph_store_binary(graph, cmdLineOption.getInputGraphBinFilePath().c_str());
   }
-  //graph_store_binary(graph, (cmdLineOption.getInputGraphFilePath()+".test2_3.bin").c_str());
 
   // Load pattern
   Logger::get().log(Logger::E_LEVEL_INFO, "Loading pattern");
-  graph_initialize((cmdLineOption.getInputPatternDirectory() + "pattern_edge").c_str(), 0, &pattern);
+  if(isFile(cmdLineOption.getInputPatternDirectory() + "pattern_edge.totem")) {
+    graph_initialize((cmdLineOption.getInputPatternDirectory() + "pattern_edge.totem").c_str(), 0, &pattern);
+  } else {
+    graph_initialize((cmdLineOption.getInputPatternDirectory() + "pattern_edge").c_str(), 0, &pattern);
+  }
 
   if (!cmdLineOption.getInputVertexMetadataFilePath().empty()) {
     FILE *file_handler = fopen((cmdLineOption.getInputPatternDirectory() + "pattern_vertex_data").c_str(), "r");
-    if (file_handler != NULL) parse_vertex_list2(file_handler, pattern);
+    if (file_handler != NULL) parseVertexFile(file_handler, pattern);
   }
 
   Logger::get().log(Logger::E_LEVEL_INFO, "Initialize Totem and global state");
@@ -110,8 +67,6 @@ error_t MultipleLabelCpu::allocate(CmdLineOption &cmdLineOption) {
   generatePath.preprocessPatern(*pattern);
   Logger::get().logFunction(Logger::E_LEVEL_INFO,
                             generatePath, &MultipleLabelGenerateConstraintPath::print, Logger::E_OUTPUT_FILE_LOG);
-  Logger::get().logFunction(Logger::E_LEVEL_INFO,
-                            generatePath, &MultipleLabelGenerateConstraintPath::print, Logger::E_OUTPUT_COUT);
 
   Logger::get().log(Logger::E_LEVEL_INFO, "Generate Template constraint");
   generateTemplate.preprocessPatern(*pattern, generateCircular.getConstraintVector(), generatePath.getConstraintVector());
@@ -158,7 +113,6 @@ int MultipleLabelCpu::runPatternMatching() {
   // run step
   bool finished = 0;
   totalStepTime = 0.;
-
   Logger::get().log(Logger::E_LEVEL_INFO, "Start run");
 
   int currentIteration = 0;
@@ -210,11 +164,16 @@ int MultipleLabelCpu::runPatternMatching() {
 
     logResults(currentIteration, false);
 
+    if(currentStep==MultipleLabelStep::E_LCC0 && 0) {
+      Logger::get().log(Logger::E_LEVEL_INFO, "Directed run");
+      auto directedEdges = undirectedCpu.compute(*graph, &patternmatchingState);
+      std::cout << "undirectedEdges = " << directedEdges <<std::endl;
+    }
+
     finished = algorithmStep.getNextStep(algoResults, &currentStep, &currentStepName);
     currentIteration++;
   }
 
-  //printActiveGraph(stringStream);
   Logger::get().log(Logger::E_LEVEL_INFO, "End run");
   Logger::get().log(Logger::E_LEVEL_INFO, "Saving pruned graph");
   currentStepTime=0.;
@@ -239,10 +198,10 @@ void MultipleLabelCpu::logResults(const int currentIteration, const bool logGrap
   // Print result csv
   {
     auto output=sprintfString("%04d; %s; %.4f ; %.4f ; "
-                              "%lu; %lu; %lu; "
-                              "%lu; %lu; %lu; "
-                              "%lu; "
-                              "%lu",
+                              "%zu; %zu; %zu; "
+                              "%zu; %zu; %zu; "
+                              "%zu; "
+                              "%zu",
                               currentIteration, currentStepName.c_str(), currentStepTime, totalStepTime,
                               algoResults.vertexEliminated, patternmatchingState.graphActiveVertexCount, patternmatchingState.graphVertexCount,
                               algoResults.edgeEliminated, patternmatchingState.graphActiveEdgeCount, patternmatchingState.graphEdgeCount,
@@ -259,9 +218,9 @@ void MultipleLabelCpu::logResults(const int currentIteration, const bool logGrap
       case MultipleLabelStep::E_LCC0 :
       case MultipleLabelStep::E_LCC :
         output=sprintfString( "Iteration %4d [%s], Running time %.4f/%.4f, "
-                              "Eliminated vertex %lu/%lu/%lu, "
-                              "Eliminated edge %lu/%lu/%lu, "
-                              "Eliminated match %lu,",
+                              "Eliminated vertex %zu/%zu/%zu, "
+                              "Eliminated edge %zu/%zu/%zu, "
+                              "Eliminated match %zu",
                               currentIteration, currentStepName.c_str(), currentStepTime, totalStepTime,
                               algoResults.vertexEliminated, patternmatchingState.graphActiveVertexCount, patternmatchingState.graphVertexCount,
                               algoResults.edgeEliminated, patternmatchingState.graphActiveEdgeCount, patternmatchingState.graphEdgeCount,
@@ -271,15 +230,15 @@ void MultipleLabelCpu::logResults(const int currentIteration, const bool logGrap
       case MultipleLabelStep::E_PC :
       case MultipleLabelStep::E_TDS :
         output=sprintfString( "Iteration %4d [%s], Running time %.4f/%.4f, "
-                              "Eliminated vertex %lu/%lu/%lu, "
-                              "Eliminated match %lu,",
+                              "Eliminated vertex %zu/%zu/%zu, "
+                              "Eliminated match %zu",
                               currentIteration, currentStepName.c_str(), currentStepTime, totalStepTime,
                               algoResults.vertexEliminated, patternmatchingState.graphActiveVertexCount, patternmatchingState.graphVertexCount,
                               algoResults.matchEliminated);
         break;
       case MultipleLabelStep::E_ENUMERATION :
         output=sprintfString( "Iteration %4d [%s], Running time %.4f/%.4f, "
-                              "Enumeration %lu",
+                              "Enumeration %zu",
                               currentIteration, currentStepName.c_str(), currentStepTime, totalStepTime,
                               algoResults.enumeration);
         break;

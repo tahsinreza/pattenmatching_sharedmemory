@@ -36,11 +36,11 @@ class Logger {
   Logger(const LogLevel&) = delete;
   Logger& operator=(const LogLevel&) = delete;
 
-  void init(const std::string &resultDirectory);
+  void init(const std::string &resultDirectory, const bool &clearEnumeration=true);
 
   static bool isLogged(const LogLevel &logLevel);
 
-  std::ofstream getStream(const LogOutput &logOutput, const int param) const;
+  std::string getStreamName(const LogOutput &logOutput, const int param) const;
 
 
   void log(const LogLevel &logLevel, const char *message, const LogOutput &logOutput = E_OUTPUT_DEBUG) const;

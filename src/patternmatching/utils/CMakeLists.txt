@@ -19,9 +19,10 @@ add_library(${PROJECT_NAME}
         logger.h
         cmd_line_option.cc
         cmd_line_option.h
-        utils.h
+        common_utils.h
+        common_utils.cc
         walk.cc
-        walk.h)
+        walk.h common_utils.cc)
 
 target_link_libraries(${PROJECT_NAME}
         totem

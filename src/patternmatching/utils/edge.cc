@@ -16,6 +16,10 @@ bool DirectedEdge::operator==(const DirectedEdge &other) const {
 bool DirectedEdge::operator!=(const DirectedEdge &other) const {
   return (vertexFromId != other.vertexFromId) || (vertexToIt != other.vertexToIt);
 }
+bool DirectedEdge::operator<(const DirectedEdge &other) const {
+  return (vertexFromId < other.vertexFromId)
+      || ((vertexFromId == other.vertexFromId) && (vertexToIt < other.vertexToIt));
+}
 void DirectedEdge::print(std::ostream &ostream) const {
   ostream << "(" << vertexFromId << "," << vertexToIt << ")" << std::endl;
 }

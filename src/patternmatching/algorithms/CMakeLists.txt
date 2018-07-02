@@ -13,7 +13,11 @@ add_library(${PROJECT_NAME}
         graph_stat.h
         graph_stat.cc
         graph_stat_cpu.h
-        graph_stat_cpu.tpp)
+        graph_stat_cpu.tpp
+        make_undirected_cpu.h
+        make_undirected_cpu.cc
+        undirected_cpu.h
+        undirected_cpu.tpp)
 
 target_link_libraries(${PROJECT_NAME}
         totem
