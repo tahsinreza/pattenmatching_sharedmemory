@@ -22,6 +22,7 @@ CmdLineOption::CmdLineOption() {
 void CmdLineOption::printHelp() {
   std::cerr << "Usage: -i <string> -p <string> -o <string>\n"
             << " -i <string>   - input graph base filename (required)\n"
+            << " -b <string>   - input binary graph base filename (optional)\n"
             << " -v <string>   - vertex metadata base filename (optional, Default is degree based metadata)\n"
             << " -e <string>   - edge metadata base filename (optional)\n"
             << " -p <string>   - pattern base directory (required)\n"
