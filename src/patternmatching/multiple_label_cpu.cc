@@ -19,7 +19,7 @@ void MultipleLabelCpu::initialiseTotem() {
 error_t MultipleLabelCpu::allocate(CmdLineOption &cmdLineOption) {
   // Load graph
   Logger::get().log(Logger::E_LEVEL_INFO, "Loading graph");
-  if(isFile(cmdLineOption.getInputGraphBinFilePath()) && 0) {
+  if(isFile(cmdLineOption.getInputGraphBinFilePath())) {
     graph_initialize(cmdLineOption.getInputGraphBinFilePath().c_str(), 0, &graph);
   } else {
     graph_initialize(cmdLineOption.getInputGraphFilePath().c_str(), 0, &graph);
