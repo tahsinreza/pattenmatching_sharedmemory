@@ -170,10 +170,6 @@ void MultipleLabelConstraintEffectiveness::computeStrict(const graph_t &pattern,
     findingProbability *= probaFindOneVertex(graphStat, uniqueVertexNumber, labelTo);
     findingProbabilityArray.push_back(findingProbability);
   }
-/*
-  for(const auto &it : findingProbabilityArray) {
-    std::cout << "findingProbabilityArray : "<< it << std::endl;
-  }*/
 
   // Compute number pruned
   for (int i = 0; i < constraint.length; i++) {
@@ -185,18 +181,22 @@ void MultipleLabelConstraintEffectiveness::computeStrict(const graph_t &pattern,
   auto threadNumber = omp_get_max_threads();
   for (int i = 0; i < constraint.length; i++) {
     size_t possibleMatch = graphStat.vertexLabelTotalNumberMap.at(constraint.vertexLabelVector[i]);
-    double uniqueVertexNumber = 1;
-    double cost = uniqueVertexNumber;
+    double traversedVertexNumber = 1;
+    double cost = traversedVertexNumber;
     for (int j = 0; j < constraint.length; j++) {
       labelFrom = constraint.vertexLabelVector[(i + j) % constraint.length];
       labelTo = constraint.vertexLabelVector[(i + j + 1) % constraint.length];
-      uniqueVertexNumber = averageNumberOfUniqueVertex(graphStat, uniqueVertexNumber, labelFrom, labelTo, 1);
-      cost *= uniqueVertexNumber;
+      cost+=averageNumberOfVertex(graphStat, traversedVertexNumber, labelFrom);
+      traversedVertexNumber = averageNumberOfVertex(graphStat, traversedVertexNumber, labelFrom, labelTo);
     }
+    // Closure
+    labelFrom = constraint.vertexLabelVector[(i + constraint.length -1) % constraint.length];
+    cost+=averageNumberOfVertex(graphStat, traversedVertexNumber, labelFrom);
 
-    auto costIncrease = possibleMatch * cost * (findingProbabilityArray[i]);
+    cost += traversedVertexNumber;
+    double costIncrease = possibleMatch * cost * (1-findingProbabilityArray[i]);
     costIncrease/=threadNumber;
-    costIncrease/=1+ static_cast<double>(constraint.length-1)/2 * findingProbabilityArray[i];
+    costIncrease/=1+ static_cast<double>(constraint.length-1)/2 * (findingProbabilityArray[i]);
     approximateCostEliminated += costIncrease;
   }
 
@@ -271,16 +271,31 @@ double MultipleLabelConstraintEffectiveness::probaFindOneVertex(const GraphStat 
   return 1 - pow((setSize - 1) / setSize, labelFromNumber);
 }
 
+double MultipleLabelConstraintEffectiveness::averageNumberOfVertex(const GraphStat &graphStat,
+                                                                         const double labelFromNumber,
+                                                                         const weight_t labelFrom,
+                                                                         const weight_t labelTo) const {
+  return averageNumberOfUniqueVertex(graphStat, labelFromNumber, labelFrom, labelTo, true);
+}
+
 double MultipleLabelConstraintEffectiveness::averageNumberOfUniqueVertex(const GraphStat &graphStat,
                                                                          const double labelFromNumber,
                                                                          const weight_t labelFrom,
                                                                          const weight_t labelTo,
                                                                          const bool forceUnique) const {
-  auto maximumVertexToNumber = static_cast<double>(graphStat.vertexLabelTotalNumberMap.at(labelTo));
   auto tries = labelFromNumber * static_cast<double>(graphStat.edgeLabelTotalNumberMap.at(labelFrom).at(labelTo))
-      / maximumVertexToNumber;
+      / graphStat.vertexLabelTotalNumberMap.at(labelFrom);
   if (forceUnique) return tries;
+  auto maximumVertexToNumber = static_cast<double>(graphStat.vertexLabelTotalNumberMap.at(labelTo));
   return averageDifferentVertexFromTriesApproximateStrong(maximumVertexToNumber, tries);
+}
+
+double MultipleLabelConstraintEffectiveness::averageNumberOfVertex(const GraphStat &graphStat,
+                                                                         const double labelFromNumber,
+                                                                         const weight_t labelFrom) const {
+  auto tries = labelFromNumber * static_cast<double>(graphStat.edgeOutboundLabelTotalNumberMap.at(labelFrom))
+      / graphStat.vertexLabelTotalNumberMap.at(labelFrom);
+  return tries;
 }
 
 void MultipleLabelConstraintEffectiveness::print(std::ostream &ostream) const {

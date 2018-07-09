@@ -42,7 +42,13 @@ class MultipleLabelConstraintEffectiveness {
                           const double labelFromNumber,
                           const weight_t labelFrom,
                           const weight_t labelTo) const;
-
+  double averageNumberOfVertex(const GraphStat &graphStat,
+                        const double labelFromNumber,
+                        const weight_t labelFrom) const;
+  double averageNumberOfVertex(const GraphStat &graphStat,
+                                     const double labelFromNumber,
+                                     const weight_t labelFrom,
+                                     const weight_t labelTo) const;
   double averageNumberOfUniqueVertex(const GraphStat &graphStat,
                                      const double labelFromNumber,
                                      const weight_t labelFrom,

@@ -225,6 +225,7 @@ void GraphStatEffectivenessCpu::runEffectivenessApproximation() {
 
   for(const auto &it : generateCircular.getConstraintVector()) {
     //effectiveness.compute(*pattern, graphStat, it);
+    currentStepName="CC Strict";
     effectiveness.computeStrict(*pattern, graphStat, it);
     logEffectiveness(currentIteration, effectiveness);
   }
@@ -260,7 +261,7 @@ void GraphStatEffectivenessCpu::logEffectiveness(const int currentIteration, con
 
   // Print result csv
   {
-    auto output=sprintfString("%04d; %.6f ; %.0f ;  %.6f ",
+    auto output=sprintfString("%04d; %s; %.6f ; %.0f ;  %.6f ",
                               currentIteration, currentStepName.c_str(),
                               effectiveness.approximateMatchEliminated, effectiveness.approximateCostEliminated, effectiveness.approximateEffectiveness);
 
