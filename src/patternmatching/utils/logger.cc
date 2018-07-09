@@ -18,6 +18,7 @@ const std::string Logger::C_LOG_FILEPATTERN = "log.totem";
 
 const std::string Logger::C_ITERATION_RESULTS_FILEPATTERN = "results.totem";
 const std::string Logger::C_ENUMERATION_RESULTS_FILEPATTERN = "enumeration_%04d.totem";
+const std::string Logger::C_EFFECTIVENESS_RESULTS_FILEPATTERN = "effectiveness.totem";
 
 #if LOGGER_LEVEL_NO_DEBUG == 1
   const int Logger::C_MIN_LOG_LEVEL = Logger::E_LEVEL_INFO;
@@ -63,6 +64,9 @@ void Logger::init(const std::string &_resultDirectory, const bool &clearEnumerat
   std::ofstream iterationResultsFileStream
       (resultDirectory + C_ITERATION_RESULTS_FILEPATTERN, std::ofstream::out | std::ofstream::trunc);
   iterationResultsFileStream.close();
+  std::ofstream effectivenessResultsFileStream
+      (resultDirectory + C_EFFECTIVENESS_RESULTS_FILEPATTERN, std::ofstream::out | std::ofstream::trunc);
+  effectivenessResultsFileStream.close();
   std::ofstream logFileStream(resultDirectory + C_LOG_FILEPATTERN, std::ofstream::out | std::ofstream::trunc);
   logFileStream.close();
   if(clearEnumeration) {
@@ -108,6 +112,12 @@ void Logger::log(const LogLevel &logLevel, const std::string &message, const Log
 
   if (logOutput & E_OUTPUT_FILE_ITERATION_RESULTS) {
     std::ofstream fileStream(resultDirectory + C_ITERATION_RESULTS_FILEPATTERN, std::ofstream::app);
+    fileStream << message << std::endl;
+    fileStream.close();
+  }
+
+  if (logOutput & E_OUTPUT_FILE_EFFECTIVENESS_RESUTLS) {
+    std::ofstream fileStream(resultDirectory + C_EFFECTIVENESS_RESULTS_FILEPATTERN, std::ofstream::app);
     fileStream << message << std::endl;
     fileStream.close();
   }

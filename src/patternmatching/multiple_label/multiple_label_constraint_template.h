@@ -53,7 +53,6 @@ class MultipleLabelConstraintTemplate {
   size_t historyFindIndex(const std::vector<vid_t> &historyIndex, const vid_t &vertexIndex) const;
   TemplateConstraintOrigin templateConstraintOrigin;
   size_t length;
-  weight_t initialLabel;
   std::unordered_map<vid_t, std::set<vid_t> > vertexIndexGraph;
   std::unordered_map<vid_t, Walk> walkMap;
 };

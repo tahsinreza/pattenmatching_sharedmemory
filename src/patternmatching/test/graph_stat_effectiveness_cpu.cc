@@ -53,6 +53,8 @@ error_t GraphStatEffectivenessCpu::allocate(CmdLineOption &cmdLineOption) {
 
   // Generate pattern
   Logger::get().log(Logger::E_LEVEL_INFO, "Generate pattern multiple_label");
+  Logger::get().log(Logger::E_LEVEL_INFO, "Generate Graph Stat");
+  graphStatCpu.preprocessPatern(*pattern);
 
   Logger::get().log(Logger::E_LEVEL_INFO, "Generate Local constraint");
   generateLocal.preprocessPatern(*pattern);
@@ -135,7 +137,7 @@ int GraphStatEffectivenessCpu::runPatternMatching() {
     totem_timing_reset();
     stopwatch_t stopwatch;
     stopwatch_start(&stopwatch);
-    auto graphStat = graphStatCpu.compute(*graph, &patternmatchingState);
+    graphStat = graphStatCpu.compute(*graph, &patternmatchingState);
 
     currentStepTime = stopwatch_elapsed(&stopwatch);
     totalStepTime += currentStepTime;
@@ -150,6 +152,9 @@ int GraphStatEffectivenessCpu::runPatternMatching() {
                               Logger::E_OUTPUT_COUT);
   }
 
+  Logger::get().log(Logger::E_LEVEL_INFO, "Effectiveness Approximation");
+  runEffectivenessApproximation();
+/*
   Logger::get().log(Logger::E_LEVEL_INFO, "Run LCC");
   // Run LCC
   {
@@ -170,16 +175,16 @@ int GraphStatEffectivenessCpu::runPatternMatching() {
       currentIteration++;
       if (algoResults.isEmpty()) finished = true;
     }
-  }
-
+  }*/
+/*
   Logger::get().log(Logger::E_LEVEL_INFO, "Run CC");
   currentStepName="CC";
-  runTest(generateCircular, ccCpu);
+  runTest(generateCircular, ccCpu);*/
 
   Logger::get().log(Logger::E_LEVEL_INFO, "Run CC Strict");
   currentStepName="CC Strict";
   runTest(generateCircular, ccStrictCpu);
-
+/*
   Logger::get().log(Logger::E_LEVEL_INFO, "Run CC Backtrack");
   currentStepName="CC Backtrack";
   runTest(generateCircular, ccBacktrackCpu);
@@ -206,13 +211,24 @@ int GraphStatEffectivenessCpu::runPatternMatching() {
 
   Logger::get().log(Logger::E_LEVEL_INFO, "Run TDS Backtrack");
   currentStepName="TDS Backtrack";
-  runTest(generateTemplate, tdsBacktrackCpu);
+  runTest(generateTemplate, tdsBacktrackCpu);*/
 
   Logger::get().log(Logger::E_LEVEL_INFO, "Run Enumerate");
   currentStepName="ENUMERATE";
   runTest(generateEnumeration, enumerationCpu);
 
   return 0;
+}
+
+void GraphStatEffectivenessCpu::runEffectivenessApproximation() {
+  MultipleLabelConstraintEffectiveness effectiveness;
+
+  for(const auto &it : generateCircular.getConstraintVector()) {
+    //effectiveness.compute(*pattern, graphStat, it);
+    effectiveness.computeStrict(*pattern, graphStat, it);
+    logEffectiveness(currentIteration, effectiveness);
+  }
+
 }
 
 template<class Generator, class Algorithm>
@@ -232,6 +248,36 @@ void GraphStatEffectivenessCpu::runTest(Generator &generator, Algorithm &algorit
   }
 };
 
+void GraphStatEffectivenessCpu::logEffectiveness(const int currentIteration, const MultipleLabelConstraintEffectiveness &effectiveness) const {
+  Logger::get().setCurrentIteration(currentIteration);
+  static bool first=true;
+  // Print Result file
+  if (first) {
+    std::string resultHeader = "Iteration; Step; Number pruned; Cost; Effectiveness";
+    Logger::get().log(Logger::E_LEVEL_RESULT, resultHeader, Logger::E_OUTPUT_FILE_EFFECTIVENESS_RESUTLS);
+    first=false;
+  }
+
+  // Print result csv
+  {
+    auto output=sprintfString("%04d; %.6f ; %.0f ;  %.6f ",
+                              currentIteration, currentStepName.c_str(),
+                              effectiveness.approximateMatchEliminated, effectiveness.approximateCostEliminated, effectiveness.approximateEffectiveness);
+
+    Logger::get().log(Logger::E_LEVEL_RESULT, output, Logger::E_OUTPUT_FILE_EFFECTIVENESS_RESUTLS);
+  }
+
+  // Log result
+  {
+    auto output=sprintfString( "Iteration %4d [%s], "
+                               "Number pruned %.6f, Cost %.0f, Effectiveness %.6f",
+                               currentIteration, currentStepName.c_str(),
+                               effectiveness.approximateMatchEliminated, effectiveness.approximateCostEliminated, effectiveness.approximateEffectiveness);
+
+    Logger::get().log(Logger::E_LEVEL_RESULT, output, Logger::E_OUTPUT_DEBUG);
+  }
+}
+
 void GraphStatEffectivenessCpu::logResults(const int currentIteration, const bool logGraph) const {
   Logger::get().setCurrentIteration(currentIteration);
   // Print Result file
@@ -240,7 +286,8 @@ void GraphStatEffectivenessCpu::logResults(const int currentIteration, const boo
                                "Eliminated vertex; Active vertex; Total vertex; "
                                "Eliminated edge; Active edge; Total edge; "
                                "Eliminated match; "
-                               "Enumeration number";
+                               "Enumeration number; "
+                               "Effectiveness";
     Logger::get().log(Logger::E_LEVEL_RESULT, resultHeader, Logger::E_OUTPUT_FILE_ITERATION_RESULTS);
   }
 
@@ -250,12 +297,14 @@ void GraphStatEffectivenessCpu::logResults(const int currentIteration, const boo
                         "%zu; %zu; %zu; "
                         "%zu; %zu; %zu; "
                         "%zu; "
-                        "%zu",
+                        "%zu; "
+                        "%.6f",
                      currentIteration, currentStepName.c_str(), currentStepTime, totalStepTime,
                         algoResults.vertexEliminated, patternmatchingState.graphActiveVertexCount, patternmatchingState.graphVertexCount,
                         algoResults.edgeEliminated, patternmatchingState.graphActiveEdgeCount, patternmatchingState.graphEdgeCount,
                         algoResults.matchEliminated,
-                        algoResults.enumeration);
+                        algoResults.enumeration,
+                        static_cast<double>(algoResults.matchEliminated)/currentStepTime);
 
     Logger::get().log(Logger::E_LEVEL_RESULT, output, Logger::E_OUTPUT_FILE_ITERATION_RESULTS);
   }
@@ -266,12 +315,14 @@ void GraphStatEffectivenessCpu::logResults(const int currentIteration, const boo
                                "Eliminated vertex %zu/%zu/%zu, "
                                "Eliminated edge %zu/%zu/%zu, "
                                "Eliminated match %zu,"
-                               "Enumeration %zu",
+                               "Enumeration %zu,"
+                               "Effectiveness %.6f",
                                currentIteration, currentStepName.c_str(), currentStepTime, totalStepTime,
                                algoResults.vertexEliminated, patternmatchingState.graphActiveVertexCount, patternmatchingState.graphVertexCount,
                                algoResults.edgeEliminated, patternmatchingState.graphActiveEdgeCount, patternmatchingState.graphEdgeCount,
                                algoResults.matchEliminated,
-                               algoResults.enumeration);
+                               algoResults.enumeration,
+                               static_cast<double>(algoResults.matchEliminated)/currentStepTime);
 
     Logger::get().log(Logger::E_LEVEL_RESULT, output, Logger::E_OUTPUT_DEBUG);
   }

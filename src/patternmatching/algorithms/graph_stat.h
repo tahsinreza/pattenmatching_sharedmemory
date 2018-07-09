@@ -22,6 +22,7 @@ class GraphStat {
   #endif
  public:
   GraphStat();
+  GraphStat(const std::map<weight_t, std::map<weight_t, size_t> > &accumulationMaximumMap);
 
   GraphStat& operator+=(const GraphStat& other);
   friend GraphStat operator+(GraphStat left,
@@ -29,6 +30,7 @@ class GraphStat {
 
   void addVertex(const weight_t &vertexLabel);
   void addEdge(const weight_t &vertexFromLabel, const weight_t &vertexTpLabel);
+  void addAccumulation(const weight_t &vertexFromLabel, const std::map<weight_t, size_t> &vertexToMapNumber);
 
   void computeStats();
 
@@ -36,6 +38,7 @@ class GraphStat {
  public:
   MapType<weight_t, MapType<weight_t, size_t> > edgeLabelTotalNumberMap;
   MapType<weight_t, size_t> vertexLabelTotalNumberMap;
+  MapType<weight_t, MapType<weight_t, MapType<size_t, size_t> > > vertexLabelWithAtLeastNeighborLabelMap;
 
   size_t vertexTotalNumber;
   MapType<weight_t, double> vertexLabelAverageNumberMap;
@@ -45,6 +48,7 @@ class GraphStat {
   MapType<weight_t, size_t> edgeOutboundLabelTotalNumberMap;
   MapType<weight_t, double> edgeOutboundLabelAverageNumberMap;
 
+  std::map<weight_t, std::map<weight_t, size_t> > accumulationMaximumMap;
 
 };
 

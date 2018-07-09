@@ -11,14 +11,43 @@
 namespace patternmatching {
 
 template<class State, class BaseClass>
+void
+GraphStatCpu<State, BaseClass>::preprocessPatern(const graph_t &pattern) {
+  accumulationMaximumMap.clear();
+  for (vid_t vertexId = 0; vertexId < pattern.vertex_count; vertexId++) {
+    weight_t vertexLabel=pattern.values[vertexId];
+    std::map<weight_t, size_t> currentAccumulation;
+    for (eid_t neighborEdgeId = pattern.vertices[vertexId]; neighborEdgeId < pattern.vertices[vertexId + 1];
+         neighborEdgeId++) {
+      vid_t neighborVertexId = pattern.edges[neighborEdgeId];
+      weight_t neighborLabel=pattern.values[neighborVertexId];
+      currentAccumulation[neighborLabel]+=1;
+    }
+    for(const auto &it : currentAccumulation) {
+      if(accumulationMaximumMap[vertexLabel][it.first]<currentAccumulation[it.first]) {
+        accumulationMaximumMap[vertexLabel][it.first]=currentAccumulation[it.first];
+      }
+    }
+  }
+
+  for(const auto &it : accumulationMaximumMap) {
+    for(const auto &it2 : it.second) {
+      std::cout << it.first <<"\t"<<it2.first <<"\t"<<it2.second <<"\t"<<std::endl;
+    }
+  }
+}
+
+template<class State, class BaseClass>
 GraphStat
 GraphStatCpu<State, BaseClass>::compute(const graph_t &graph, State *globalState) const {
   GraphStat graphStat;
   std::cout << "Start Graph Stat " << std::endl;
 
+
   #pragma omp parallel
   {
-    GraphStat privateGraphStat;
+    GraphStat privateGraphStat(accumulationMaximumMap);
+    std::map<weight_t, size_t> privateAccumulation;
 
     #pragma omp for nowait
     for (vid_t vertexId = 0; vertexId < graph.vertex_count; vertexId++) {
@@ -35,8 +64,9 @@ GraphStatCpu<State, BaseClass>::compute(const graph_t &graph, State *globalState
         weight_t neighborLabel = graph.values[neighborVertexId];
 
         privateGraphStat.addEdge(currentLabel, neighborLabel);
+        privateAccumulation[neighborLabel]+=1;
       }
-
+      privateGraphStat.addAccumulation(currentLabel, privateAccumulation);
     }
 
     //Reduction

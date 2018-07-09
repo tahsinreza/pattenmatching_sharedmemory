@@ -11,7 +11,8 @@ namespace patternmatching {
 
 void MultipleLabelCpu::initialiseTotem() {
   // Configure OpenMP.
-  omp_set_num_threads(omp_get_max_threads());
+  //omp_set_num_threads(omp_get_max_threads());
+  omp_set_num_threads(60);
   omp_set_schedule(omp_sched_guided, 0);
 
 }

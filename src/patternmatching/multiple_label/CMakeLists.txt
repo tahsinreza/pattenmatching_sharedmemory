@@ -4,10 +4,10 @@ project(patternmatching_multiple_label LANGUAGES CXX CUDA)
 include_directories(
         ${PROJECT_SOURCE_DIR}
         ${PATTERNMATCHING_SOURCE_DIR}/utils
+        ${PATTERNMATCHING_SOURCE_DIR}/algorithms
         ${SOURCE_ROOT_DIR}/totem)
 
 add_library(${PROJECT_NAME}
-        ../utils/common_utils.h
         multiple_label_cc_backtrack_cpu.h
         multiple_label_cc_backtrack_cpu.tpp
         multiple_label_cc_cpu.h
@@ -27,6 +27,9 @@ add_library(${PROJECT_NAME}
         multiple_label_constraint_template.h
         multiple_label_enumeration_cpu.h
         multiple_label_enumeration_cpu.tpp
+        multiple_label_constraint_effectiveness.h
+        multiple_label_constraint_effectiveness.cc
+        multiple_label_constraint_effectiveness.tpp
         multiple_label_generate_constraint_circular.cc
         multiple_label_generate_constraint_circular.h
         multiple_label_generate_constraint_enumeration.cc

@@ -25,6 +25,7 @@
 #include "multiple_label_enumeration_cpu.h"
 #include "graph_stat_cpu.h"
 #include "algo_results.h"
+#include "multiple_label_constraint_effectiveness.h"
 
 namespace patternmatching {
 
@@ -59,7 +60,9 @@ class GraphStatEffectivenessCpu {
   void printActiveGraph(std::ostream &ostream=std::cout) const;
   void printActiveVertex(std::ostream &ostream=std::cout) const;
   void logResults(const int currentIteration, const bool logGraph) const;
+  void logEffectiveness(const int currentIteration, const MultipleLabelConstraintEffectiveness &effectiveness) const;
 
+  void runEffectivenessApproximation();
   template<class Generator, class Algorithm>
   void runTest(Generator &generator, Algorithm &algorithm);
 
@@ -74,6 +77,7 @@ class GraphStatEffectivenessCpu {
   totem_attr_t attributeCpu;
   MultipleLabelGlobalStateInt patternmatchingState;
   MultipleLabelGlobalStateInt patternMatchingStateTemporary;
+  GraphStat graphStat;
 
   MultipleLabelGenerateConstraintLocal generateLocal;
   MultipleLabelGenerateConstraintEnumeration generateEnumeration;

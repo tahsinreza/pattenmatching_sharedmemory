@@ -28,7 +28,8 @@ class Logger {
     E_OUTPUT_FILE_VERTEX=1<<2,
     E_OUTPUT_FILE_ITERATION_RESULTS=1<<3,
     E_OUTPUT_FILE_ENUMERATION_RESUTLS=1<<4,
-    E_OUTPUT_FILE_LOG=1<<5,
+    E_OUTPUT_FILE_EFFECTIVENESS_RESUTLS=1<<5,
+    E_OUTPUT_FILE_LOG=1<<6,
     E_OUTPUT_DEBUG=E_OUTPUT_COUT | E_OUTPUT_FILE_LOG
   };
 
@@ -66,6 +67,7 @@ class Logger {
   static const std::string C_LOG_FILEPATTERN;
   static const std::string C_ITERATION_RESULTS_FILEPATTERN;
   static const std::string C_ENUMERATION_RESULTS_FILEPATTERN;
+  static const std::string C_EFFECTIVENESS_RESULTS_FILEPATTERN;
   static const int C_MIN_LOG_LEVEL;
 };
 

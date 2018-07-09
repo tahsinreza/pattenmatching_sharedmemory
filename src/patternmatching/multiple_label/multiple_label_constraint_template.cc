@@ -130,7 +130,6 @@ void MultipleLabelConstraintTemplate::generateWalk(Walk &walk,
     if(!isInVector(historyVertexIndex, neighborVertex)) {
       if (!isOn) {
         walk.addMoveBack(currentVertexIndex, currentWalkIndex);
-        isOn = true;
       }
 
       historyEdgeIndex.push_back(edge);

@@ -7,9 +7,12 @@
 GraphStat::GraphStat()
     : vertexTotalNumber(0), edgeTotalNumber(0) {}
 
+GraphStat::GraphStat(const std::map<weight_t, std::map<weight_t, size_t> > &accumulationMaximumMap_)
+    : vertexTotalNumber(0), edgeTotalNumber(0), accumulationMaximumMap(accumulationMaximumMap_) {}
+
 GraphStat &GraphStat::operator+=(const GraphStat &other) {
-  edgeTotalNumber+=other.edgeTotalNumber;
-  vertexTotalNumber+=other.vertexTotalNumber;
+  edgeTotalNumber += other.edgeTotalNumber;
+  vertexTotalNumber += other.vertexTotalNumber;
   for (const auto &it1 : other.vertexLabelTotalNumberMap) {
     vertexLabelTotalNumberMap[it1.first] += it1.second;
   }
@@ -21,6 +24,13 @@ GraphStat &GraphStat::operator+=(const GraphStat &other) {
   for (const auto &it1 : other.edgeOutboundLabelTotalNumberMap) {
     edgeOutboundLabelTotalNumberMap[it1.first] += it1.second;
   }
+  for (const auto &it1 : other.vertexLabelWithAtLeastNeighborLabelMap) {
+    for (const auto &it2 : it1.second) {
+      for (const auto &it3 : it2.second) {
+        vertexLabelWithAtLeastNeighborLabelMap[it1.first][it2.first][it3.first] += it3.second;
+      }
+    }
+  }
   return *this;
 }
 
@@ -31,42 +41,50 @@ GraphStat operator+(GraphStat left,
 }
 
 void GraphStat::print(std::ostream &ostream) const {
-  ostream << "Global Stats :" <<std::endl;
-  ostream <<"\tvertexTotalNumber : " << vertexTotalNumber<<std::endl;
-  ostream <<"\tedgeTotalNumber : " << edgeTotalNumber<<std::endl;
+  ostream << "Global Stats :" << std::endl;
+  ostream << "\tvertexTotalNumber : " << vertexTotalNumber << std::endl;
+  ostream << "\tedgeTotalNumber : " << edgeTotalNumber << std::endl;
 
-  ostream << "vertexLabelTotalNumberMap :" <<std::endl;
+  ostream << "vertexLabelTotalNumberMap :" << std::endl;
   for (const auto &it : vertexLabelTotalNumberMap) {
-    ostream << "\t" << it.first << " : " << it.second<< std::endl;
+    ostream << "\t" << it.first << " : " << it.second << std::endl;
   }
-  ostream << "vertexLabelAverageNumberMap :" <<std::endl;
+  ostream << "vertexLabelAverageNumberMap :" << std::endl;
   for (const auto &it : vertexLabelAverageNumberMap) {
-    ostream << "\t" << it.first << " : " << it.second<< std::endl;
+    ostream << "\t" << it.first << " : " << it.second << std::endl;
   }
 
-  ostream << "edgeLabelTotalNumberMap :" <<std::endl;
+  ostream << "edgeLabelTotalNumberMap :" << std::endl;
   for (const auto &it1 : edgeLabelTotalNumberMap) {
     for (const auto &it2 : it1.second) {
-      ostream << "\t(" << it1.first <<","<< it2.first <<") : " << it2.second<< std::endl;
+      ostream << "\t(" << it1.first << "," << it2.first << ") : " << it2.second << std::endl;
     }
   }
-  ostream << "edgeLabelAverageNumberMap :" <<std::endl;
+  ostream << "edgeLabelAverageNumberMap :" << std::endl;
   for (const auto &it1 : edgeLabelAverageNumberMap) {
     for (const auto &it2 : it1.second) {
-      ostream << "\t(" << it1.first <<","<< it2.first <<") : " << it2.second<< std::endl;
+      ostream << "\t(" << it1.first << "," << it2.first << ") : " << it2.second << std::endl;
     }
   }
 
-  ostream << "edgeOutboundLabelTotalNumberMap :" <<std::endl;
+  ostream << "edgeOutboundLabelTotalNumberMap :" << std::endl;
   for (const auto &it : edgeOutboundLabelTotalNumberMap) {
-    ostream << "\t" << it.first << " : " << it.second<< std::endl;
+    ostream << "\t" << it.first << " : " << it.second << std::endl;
   }
-  ostream << "edgeOutboundLabelAverageNumberMap :" <<std::endl;
+  ostream << "edgeOutboundLabelAverageNumberMap :" << std::endl;
   for (const auto &it : edgeOutboundLabelAverageNumberMap) {
-    ostream << "\t" << it.first << " : " << it.second<< std::endl;
+    ostream << "\t" << it.first << " : " << it.second << std::endl;
   }
 
-  ostream <<std::endl;
+  ostream << "vertexLabelWithAtLeastNeighborLabelMap :" << std::endl;
+  for (const auto &it1 : vertexLabelWithAtLeastNeighborLabelMap) {
+    for (const auto &it2 : it1.second) {
+      for (const auto &it3 : it2.second) {
+        ostream << "\t(" << it1.first << "," << it2.first << "," << it3.first << ") : " << it3.second << std::endl;
+      }
+    }
+  }
+  ostream << std::endl;
 }
 
 void GraphStat::addVertex(const weight_t &vertexLabel) {
@@ -78,6 +96,18 @@ void GraphStat::addEdge(const weight_t &vertexFromLabel, const weight_t &vertexT
   edgeTotalNumber += 1;
   edgeLabelTotalNumberMap[vertexFromLabel][vertexToLabel] += 1;
   edgeOutboundLabelTotalNumberMap[vertexFromLabel] += 1;
+}
+void GraphStat::addAccumulation(const weight_t &vertexFromLabel, const std::map<weight_t, size_t> &vertexToMapNumber) {
+  for (const auto &it : vertexToMapNumber) {
+    if(accumulationMaximumMap.at(vertexFromLabel).find(it.first) != accumulationMaximumMap.at(vertexFromLabel).end()) {
+      auto accumulationMaximum = accumulationMaximumMap.at(vertexFromLabel).at(it.first);
+      for (size_t i = 1; i <= accumulationMaximum; i++) {
+        if (it.second >= i) {
+          vertexLabelWithAtLeastNeighborLabelMap[vertexFromLabel][it.first][i] += 1;
+        }
+      }
+    }
+  }
 }
 
 void GraphStat::computeStats() {
