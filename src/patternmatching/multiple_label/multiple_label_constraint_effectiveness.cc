@@ -151,19 +151,37 @@ void MultipleLabelConstraintEffectiveness::computeStrict(const graph_t &pattern,
                                                          const MultipleLabelConstraintCircular &constraint) {
   clear();
 
-  weight_t labelFrom, labelTo;
+  weight_t labelFrom, labelTo, labelPrevious;
 
   // Compute finding probability array
   std::vector<double> findingProbabilityArray;
   for (int i = 0; i < constraint.length; i++) {
     double findingProbability = 1.;
     double uniqueVertexNumber = 1;
+    std::map<weight_t, size_t> visitedLabelNumber;
     for (int j = 0; j < constraint.length; j++) {
       labelFrom = constraint.vertexLabelVector[(i + j) % constraint.length];
       labelTo = constraint.vertexLabelVector[(i + j + 1) % constraint.length];
-
       findingProbability *= probaFindOnePath(graphStat, uniqueVertexNumber, labelFrom, labelTo);
-      uniqueVertexNumber = averageNumberOfUniqueVertex(graphStat, uniqueVertexNumber, labelFrom, labelTo, j == 0);
+      uniqueVertexNumber = averageNumberOfUniqueVertex(graphStat, uniqueVertexNumber, labelFrom, labelTo, j==0);
+      /*
+      if (j == 0) {
+        findingProbability *= probaFindOnePath(graphStat, uniqueVertexNumber, labelFrom, labelTo);
+        uniqueVertexNumber = averageNumberOfUniqueVertex(graphStat, uniqueVertexNumber, labelFrom, labelTo, true);
+      } else {
+        labelPrevious = constraint.vertexLabelVector[(i + j - 1) % constraint.length];
+        if (labelPrevious != labelTo) {
+          findingProbability *= probaFindOnePath(graphStat, uniqueVertexNumber, labelFrom, labelTo);
+          uniqueVertexNumber = averageNumberOfUniqueVertex(graphStat, uniqueVertexNumber, labelFrom, labelTo);
+        } else {
+          // We know that there exist one edge but we can't go there
+          findingProbability *= probaFindOnePath(graphStat, uniqueVertexNumber, labelFrom, labelTo);
+          //findingProbability *= probaFindOnePathKnowing(graphStat, uniqueVertexNumber, labelFrom, labelTo, 1);
+          uniqueVertexNumber = averageNumberOfUniqueVertex(graphStat, uniqueVertexNumber, labelFrom, labelTo);
+          //uniqueVertexNumber = averageNumberOfUniqueVertexKnowing(graphStat, uniqueVertexNumber, labelFrom, labelTo, 1);
+        }
+      }*/
+      visitedLabelNumber[labelFrom] += 1;
     }
     // Closure
     labelTo = constraint.vertexLabelVector[(i + constraint.length) % constraint.length];
@@ -186,17 +204,17 @@ void MultipleLabelConstraintEffectiveness::computeStrict(const graph_t &pattern,
     for (int j = 0; j < constraint.length; j++) {
       labelFrom = constraint.vertexLabelVector[(i + j) % constraint.length];
       labelTo = constraint.vertexLabelVector[(i + j + 1) % constraint.length];
-      cost+=averageNumberOfVertex(graphStat, traversedVertexNumber, labelFrom);
+      cost += averageNumberOfVertex(graphStat, traversedVertexNumber, labelFrom);
       traversedVertexNumber = averageNumberOfVertex(graphStat, traversedVertexNumber, labelFrom, labelTo);
     }
     // Closure
-    labelFrom = constraint.vertexLabelVector[(i + constraint.length -1) % constraint.length];
-    cost+=averageNumberOfVertex(graphStat, traversedVertexNumber, labelFrom);
+    labelFrom = constraint.vertexLabelVector[(i + constraint.length - 1) % constraint.length];
+    cost += averageNumberOfVertex(graphStat, traversedVertexNumber, labelFrom);
 
     cost += traversedVertexNumber;
-    double costIncrease = possibleMatch * cost * (1-findingProbabilityArray[i]);
-    costIncrease/=threadNumber;
-    costIncrease/=1+ static_cast<double>(constraint.length-1)/2 * (findingProbabilityArray[i]);
+    double costIncrease = possibleMatch * cost * (1 - findingProbabilityArray[i]);
+    costIncrease /= threadNumber;
+    costIncrease /= 1 + static_cast<double>(constraint.length - 1) / 2 * (findingProbabilityArray[i]);
     approximateCostEliminated += costIncrease;
   }
 
@@ -208,35 +226,6 @@ void MultipleLabelConstraintEffectiveness::computeBacktrack(const graph_t &patte
                                                             const MultipleLabelConstraintCircular &constraint) {
   clear();
 
-  // Compute finding probability array
-  std::vector<double> findingProbabilityArray;
-  for (int i = 0; i < constraint.length; i++) {
-    double findingProbability = 1.;
-    for (int j = 0; j < constraint.length; j++) {
-      findingProbability *= probaFindVertex(graphStat,
-                                            constraint.vertexLabelVector[(i + j) % constraint.length],
-                                            constraint.vertexLabelVector[(i + j + 1) % constraint.length]);
-    }
-    // Closure
-    findingProbability *= probaFindDifferentVertex(graphStat,
-                                                   constraint.vertexLabelVector[(i + constraint.length)
-                                                       % constraint.length],
-                                                   constraint.vertexLabelVector[(i + constraint.length + 1)
-                                                       % constraint.length]);
-    findingProbabilityArray.push_back(findingProbability);
-  }
-
-  // Compute number pruned
-  for (int i = 0; i < constraint.length; i++) {
-    size_t possibleMatch = graphStat.vertexLabelTotalNumberMap.at(constraint.vertexLabelVector[i]);
-    approximateMatchEliminated += possibleMatch * (1 - findingProbabilityArray[i]);
-  }
-
-  // Compute cost
-
-  // Compute effectiveness
-  approximateEffectiveness = approximateMatchEliminated / approximateCostEliminated;
-
 }
 
 double MultipleLabelConstraintEffectiveness::probaFindEdge(
@@ -246,8 +235,9 @@ double MultipleLabelConstraintEffectiveness::probaFindEdge(
 }
 
 double MultipleLabelConstraintEffectiveness::probaFindVertex(
-    const GraphStat &graphStat, const weight_t &labelFrom, const weight_t &labelTo) const {
-  return static_cast<double>(graphStat.vertexLabelWithAtLeastNeighborLabelMap.at(labelFrom).at(labelTo).at(1))
+    const GraphStat &graphStat, const weight_t labelFrom, const weight_t labelTo, const size_t knowingNumber) const {
+  return static_cast<double>(graphStat.vertexLabelWithAtLeastNeighborLabelMap.at(labelFrom).at(labelTo).at(
+      1))
       / graphStat.vertexLabelTotalNumberMap.at(labelFrom);
 }
 double MultipleLabelConstraintEffectiveness::probaFindDifferentVertex(
@@ -264,6 +254,14 @@ double MultipleLabelConstraintEffectiveness::probaFindOnePath(const GraphStat &g
                                                               const weight_t labelTo) const {
   return 1 - pow(1 - probaFindVertex(graphStat, labelFrom, labelTo), labelFromNumber);
 }
+double MultipleLabelConstraintEffectiveness::probaFindOnePathKnowing(const GraphStat &graphStat,
+                                                              const double labelFromNumber,
+                                                              const weight_t labelFrom,
+                                                              const weight_t labelTo,
+                                                              const size_t knowingNumber) const {
+  return 1 - pow(1 - probaFindVertex(graphStat, labelFrom, labelTo, knowingNumber), labelFromNumber);
+}
+
 double MultipleLabelConstraintEffectiveness::probaFindOneVertex(const GraphStat &graphStat,
                                                                 const double labelFromNumber,
                                                                 const weight_t label) const {
@@ -272,9 +270,9 @@ double MultipleLabelConstraintEffectiveness::probaFindOneVertex(const GraphStat 
 }
 
 double MultipleLabelConstraintEffectiveness::averageNumberOfVertex(const GraphStat &graphStat,
-                                                                         const double labelFromNumber,
-                                                                         const weight_t labelFrom,
-                                                                         const weight_t labelTo) const {
+                                                                   const double labelFromNumber,
+                                                                   const weight_t labelFrom,
+                                                                   const weight_t labelTo) const {
   return averageNumberOfUniqueVertex(graphStat, labelFromNumber, labelFrom, labelTo, true);
 }
 
@@ -289,10 +287,23 @@ double MultipleLabelConstraintEffectiveness::averageNumberOfUniqueVertex(const G
   auto maximumVertexToNumber = static_cast<double>(graphStat.vertexLabelTotalNumberMap.at(labelTo));
   return averageDifferentVertexFromTriesApproximateStrong(maximumVertexToNumber, tries);
 }
+double MultipleLabelConstraintEffectiveness::averageNumberOfUniqueVertexKnowing(const GraphStat &graphStat,
+                                                                         const double labelFromNumber,
+                                                                         const weight_t labelFrom,
+                                                                         const weight_t labelTo,
+                                                                         const size_t knowingNumber,
+                                                                         const bool forceUnique) const {
+  auto tries = labelFromNumber * static_cast<double>(graphStat.edgeLabelTotalNumberMap.at(labelFrom).at(labelTo))
+      / graphStat.vertexLabelWithAtLeastNeighborLabelMap.at(labelFrom).at(labelTo).at(
+          knowingNumber);
+  if (forceUnique) return tries;
+  auto maximumVertexToNumber = static_cast<double>(graphStat.vertexLabelTotalNumberMap.at(labelTo));
+  return averageDifferentVertexFromTriesApproximateStrong(maximumVertexToNumber, tries);
+}
 
 double MultipleLabelConstraintEffectiveness::averageNumberOfVertex(const GraphStat &graphStat,
-                                                                         const double labelFromNumber,
-                                                                         const weight_t labelFrom) const {
+                                                                   const double labelFromNumber,
+                                                                   const weight_t labelFrom) const {
   auto tries = labelFromNumber * static_cast<double>(graphStat.edgeOutboundLabelTotalNumberMap.at(labelFrom))
       / graphStat.vertexLabelTotalNumberMap.at(labelFrom);
   return tries;
