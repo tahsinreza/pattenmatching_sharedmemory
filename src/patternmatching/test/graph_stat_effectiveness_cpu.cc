@@ -20,7 +20,7 @@ void GraphStatEffectivenessCpu::initialiseTotem() {
 error_t GraphStatEffectivenessCpu::allocate(CmdLineOption &cmdLineOption) {
   // Load graph
   Logger::get().log(Logger::E_LEVEL_INFO, "Loading graph");
-  if(isFile(cmdLineOption.getInputGraphBinFilePath())) {
+  if (isFile(cmdLineOption.getInputGraphBinFilePath())) {
     graph_initialize(cmdLineOption.getInputGraphBinFilePath().c_str(), 0, &graph);
   } else {
     graph_initialize(cmdLineOption.getInputGraphFilePath().c_str(), 0, &graph);
@@ -29,13 +29,14 @@ error_t GraphStatEffectivenessCpu::allocate(CmdLineOption &cmdLineOption) {
       FILE *file_handler = fopen(cmdLineOption.getInputVertexMetadataFilePath().c_str(), "r");
       if (file_handler != NULL) parseVertexFile(file_handler, graph);
     }
-    Logger::get().log(Logger::E_LEVEL_INFO, std::string("Saved graph as : ")+ cmdLineOption.getInputGraphBinFilePath());
+    Logger::get().log(Logger::E_LEVEL_INFO,
+                      std::string("Saved graph as : ") + cmdLineOption.getInputGraphBinFilePath());
     graph_store_binary(graph, cmdLineOption.getInputGraphBinFilePath().c_str());
   }
 
   // Load pattern
   Logger::get().log(Logger::E_LEVEL_INFO, "Loading pattern");
-  if(isFile(cmdLineOption.getInputPatternDirectory() + "pattern_edge.totem")) {
+  if (isFile(cmdLineOption.getInputPatternDirectory() + "pattern_edge.totem")) {
     graph_initialize((cmdLineOption.getInputPatternDirectory() + "pattern_edge.totem").c_str(), 0, &pattern);
   } else {
     graph_initialize((cmdLineOption.getInputPatternDirectory() + "pattern_edge").c_str(), 0, &pattern);
@@ -64,7 +65,9 @@ error_t GraphStatEffectivenessCpu::allocate(CmdLineOption &cmdLineOption) {
   Logger::get().log(Logger::E_LEVEL_INFO, "Generate Circular constraint");
   generateCircular.preprocessPatern(*pattern);
   Logger::get().logFunction(Logger::E_LEVEL_INFO,
-                            generateCircular, &MultipleLabelGenerateConstraintCircular::print, Logger::E_OUTPUT_FILE_LOG);
+                            generateCircular,
+                            &MultipleLabelGenerateConstraintCircular::print,
+                            Logger::E_OUTPUT_FILE_LOG);
 
   Logger::get().log(Logger::E_LEVEL_INFO, "Generate Path constraint");
   generatePath.preprocessPatern(*pattern);
@@ -74,14 +77,20 @@ error_t GraphStatEffectivenessCpu::allocate(CmdLineOption &cmdLineOption) {
                             generatePath, &MultipleLabelGenerateConstraintPath::print, Logger::E_OUTPUT_COUT);
 
   Logger::get().log(Logger::E_LEVEL_INFO, "Generate Template constraint");
-  generateTemplate.preprocessPatern(*pattern, generateCircular.getConstraintVector(), generatePath.getConstraintVector());
+  generateTemplate.preprocessPatern(*pattern,
+                                    generateCircular.getConstraintVector(),
+                                    generatePath.getConstraintVector());
   Logger::get().logFunction(Logger::E_LEVEL_INFO,
-                            generateTemplate, &MultipleLabelGenerateConstraintTemplate::print, Logger::E_OUTPUT_FILE_LOG);
+                            generateTemplate,
+                            &MultipleLabelGenerateConstraintTemplate::print,
+                            Logger::E_OUTPUT_FILE_LOG);
 
   Logger::get().log(Logger::E_LEVEL_INFO, "Generate Enumeration constraint");
   generateEnumeration.preprocessPatern(*pattern);
   Logger::get().logFunction(Logger::E_LEVEL_INFO,
-                            generateEnumeration, &MultipleLabelGenerateConstraintEnumeration::print, Logger::E_OUTPUT_FILE_LOG);
+                            generateEnumeration,
+                            &MultipleLabelGenerateConstraintEnumeration::print,
+                            Logger::E_OUTPUT_FILE_LOG);
 
   // Initialise unique_label
   Logger::get().log(Logger::E_LEVEL_INFO, "Initialize LCC0, LCC, CC, PC, TDS, and Enumeration");
@@ -98,7 +107,7 @@ error_t GraphStatEffectivenessCpu::allocate(CmdLineOption &cmdLineOption) {
   tdsStrictCpu.setConstraintVector(generateTemplate.getConstraintVector());
   enumerationCpu.setConstraint(generateEnumeration.getConstraint());
 
-  currentIteration=0;
+  currentIteration = 0;
 
   Logger::get().log(Logger::E_LEVEL_INFO, "End of initialisation");
   return SUCCESS;
@@ -118,7 +127,7 @@ int GraphStatEffectivenessCpu::runPatternMatching() {
   Logger::get().log(Logger::E_LEVEL_INFO, "Start run");
   // Run LCC0
   {
-    currentStepName="LCC0";
+    currentStepName = "LCC0";
     totem_timing_reset();
     stopwatch_t stopwatch;
     stopwatch_start(&stopwatch);
@@ -133,7 +142,7 @@ int GraphStatEffectivenessCpu::runPatternMatching() {
   Logger::get().log(Logger::E_LEVEL_INFO, "Graph stat");
   // Run Graph Stat
   {
-    currentStepName="Graph Stat";
+    currentStepName = "Graph Stat";
     totem_timing_reset();
     stopwatch_t stopwatch;
     stopwatch_start(&stopwatch);
@@ -141,7 +150,7 @@ int GraphStatEffectivenessCpu::runPatternMatching() {
 
     currentStepTime = stopwatch_elapsed(&stopwatch);
     totalStepTime += currentStepTime;
-    algoResults=AlgoResults();
+    algoResults = AlgoResults();
     logResults(currentIteration, false);
 
     Logger::get().logFunction(Logger::E_LEVEL_RESULT,
@@ -178,15 +187,15 @@ int GraphStatEffectivenessCpu::runPatternMatching() {
   }*/
 /*
   Logger::get().log(Logger::E_LEVEL_INFO, "Run CC");
-  currentStepName="CC";
-  runTest(generateCircular, ccCpu);*/
+  currentStepName = "CC";
+  runTest(generateCircular, ccCpu);
 
   Logger::get().log(Logger::E_LEVEL_INFO, "Run CC Strict");
-  currentStepName="CC Strict";
+  currentStepName = "CC Strict";
   runTest(generateCircular, ccStrictCpu);
-/*
+
   Logger::get().log(Logger::E_LEVEL_INFO, "Run CC Backtrack");
-  currentStepName="CC Backtrack";
+  currentStepName = "CC Backtrack";
   runTest(generateCircular, ccBacktrackCpu);
 
   Logger::get().log(Logger::E_LEVEL_INFO, "Run PC");
@@ -199,7 +208,7 @@ int GraphStatEffectivenessCpu::runPatternMatching() {
 
   Logger::get().log(Logger::E_LEVEL_INFO, "Run PC Backtrack");
   currentStepName="PC Backtrack";
-  runTest(generatePath, pcBacktrackCpu);
+  runTest(generatePath, pcBacktrackCpu);*/
 
   Logger::get().log(Logger::E_LEVEL_INFO, "Run TDS");
   currentStepName="TDS";
@@ -211,10 +220,10 @@ int GraphStatEffectivenessCpu::runPatternMatching() {
 
   Logger::get().log(Logger::E_LEVEL_INFO, "Run TDS Backtrack");
   currentStepName="TDS Backtrack";
-  runTest(generateTemplate, tdsBacktrackCpu);*/
+  runTest(generateTemplate, tdsBacktrackCpu);
 
   Logger::get().log(Logger::E_LEVEL_INFO, "Run Enumerate");
-  currentStepName="ENUMERATE";
+  currentStepName = "ENUMERATE";
   runTest(generateEnumeration, enumerationCpu);
 
   return 0;
@@ -222,19 +231,92 @@ int GraphStatEffectivenessCpu::runPatternMatching() {
 
 void GraphStatEffectivenessCpu::runEffectivenessApproximation() {
   MultipleLabelConstraintEffectiveness effectiveness;
-
-  for(const auto &it : generateCircular.getConstraintVector()) {
-    //effectiveness.compute(*pattern, graphStat, it);
-    currentStepName="CC Strict";
-    effectiveness.computeStrict(*pattern, graphStat, it);
+  auto currentIterationCopy = currentIteration;
+/*
+  currentStepName = "CC";
+  currentIteration = 0;
+  for (const auto &it : generateCircular.getConstraintVector()) {
+    effectiveness.compute(*pattern, graphStat, it);
     logEffectiveness(currentIteration, effectiveness);
+    currentIteration++;
   }
 
+  currentStepName = "CC Strict";
+  currentIteration = 0;
+  for (const auto &it : generateCircular.getConstraintVector()) {
+    effectiveness.computeStrict(*pattern, graphStat, it);
+    logEffectiveness(currentIteration, effectiveness);
+    currentIteration++;
+  }
+
+  currentStepName = "CC Backtrack";
+  currentIteration = 0;
+  for (const auto &it : generateCircular.getConstraintVector()) {
+    effectiveness.computeBacktrack(*pattern, graphStat, it);
+    logEffectiveness(currentIteration, effectiveness);
+    currentIteration++;
+  }
+
+  currentStepName = "PC";
+  currentIteration = 0;
+  for (const auto &it : generatePath.getConstraintVector()) {
+    effectiveness.compute(*pattern, graphStat, it);
+    logEffectiveness(currentIteration, effectiveness);
+    currentIteration++;
+  }
+
+  currentStepName = "PC Strict";
+  currentIteration = 0;
+  for (const auto &it : generatePath.getConstraintVector()) {
+    effectiveness.computeStrict(*pattern, graphStat, it);
+    logEffectiveness(currentIteration, effectiveness);
+    currentIteration++;
+  }
+
+  currentStepName = "PC Backtrack";
+  currentIteration = 0;
+  for (const auto &it : generatePath.getConstraintVector()) {
+    effectiveness.computeBacktrack(*pattern, graphStat, it);
+    logEffectiveness(currentIteration, effectiveness);
+    currentIteration++;
+  }*/
+
+  currentStepName = "TDS ";
+  currentIteration = 0;
+  for (const auto &it : generateTemplate.getConstraintVector()) {
+    effectiveness.compute(*pattern, graphStat, it);
+    logEffectiveness(currentIteration, effectiveness);
+    currentIteration++;
+  }
+
+  currentStepName = "TDS Strict";
+  currentIteration = 0;
+  for (const auto &it : generateTemplate.getConstraintVector()) {
+    effectiveness.computeStrict(*pattern, graphStat, it);
+    logEffectiveness(currentIteration, effectiveness);
+    currentIteration++;
+  }
+
+  currentStepName = "TDS Backtrack";
+  currentIteration = 0;
+  for (const auto &it : generateTemplate.getConstraintVector()) {
+    effectiveness.computeBacktrack(*pattern, graphStat, it);
+    logEffectiveness(currentIteration, effectiveness);
+    currentIteration++;
+  }
+
+  currentStepName = "ENUMERATE";
+  currentIteration = 0;
+  effectiveness.computeStrict(*pattern, graphStat, generateEnumeration.getConstraint());
+  logEffectiveness(currentIteration, effectiveness);
+  currentIteration++;
+
+  currentIteration=currentIterationCopy;
 }
 
 template<class Generator, class Algorithm>
 void GraphStatEffectivenessCpu::runTest(Generator &generator, Algorithm &algorithm) {
-  for(int currentConstraint=0; currentConstraint< generator.getConstraintNumber(); currentConstraint++) {
+  for (int currentConstraint = 0; currentConstraint < generator.getConstraintNumber(); currentConstraint++) {
     patternMatchingStateTemporary = patternmatchingState;
 
     totem_timing_reset();
@@ -249,31 +331,38 @@ void GraphStatEffectivenessCpu::runTest(Generator &generator, Algorithm &algorit
   }
 };
 
-void GraphStatEffectivenessCpu::logEffectiveness(const int currentIteration, const MultipleLabelConstraintEffectiveness &effectiveness) const {
+void GraphStatEffectivenessCpu::logEffectiveness(const int currentIteration,
+                                                 const MultipleLabelConstraintEffectiveness &effectiveness) const {
   Logger::get().setCurrentIteration(currentIteration);
-  static bool first=true;
+  static bool first = true;
   // Print Result file
   if (first) {
     std::string resultHeader = "Iteration; Step; Number pruned; Cost; Effectiveness";
     Logger::get().log(Logger::E_LEVEL_RESULT, resultHeader, Logger::E_OUTPUT_FILE_EFFECTIVENESS_RESUTLS);
-    first=false;
+    first = false;
   }
 
   // Print result csv
   {
-    auto output=sprintfString("%04d; %s; %.6f ; %.0f ;  %.6f ",
-                              currentIteration, currentStepName.c_str(),
-                              effectiveness.approximateMatchEliminated, effectiveness.approximateCostEliminated, effectiveness.approximateEffectiveness);
+    auto output = sprintfString("%04d; %s; %.6f ; %.0f ;  %.6f ",
+                                currentIteration,
+                                currentStepName.c_str(),
+                                effectiveness.approximateMatchEliminated,
+                                effectiveness.approximateCostEliminated,
+                                effectiveness.approximateEffectiveness);
 
     Logger::get().log(Logger::E_LEVEL_RESULT, output, Logger::E_OUTPUT_FILE_EFFECTIVENESS_RESUTLS);
   }
 
   // Log result
   {
-    auto output=sprintfString( "Iteration %4d [%s], "
-                               "Number pruned %.6f, Cost %.0f, Effectiveness %.6f",
-                               currentIteration, currentStepName.c_str(),
-                               effectiveness.approximateMatchEliminated, effectiveness.approximateCostEliminated, effectiveness.approximateEffectiveness);
+    auto output = sprintfString("Iteration %4d [%s], "
+                                "Number pruned %.6f, Cost %.0f, Effectiveness %.6f",
+                                currentIteration,
+                                currentStepName.c_str(),
+                                effectiveness.approximateMatchEliminated,
+                                effectiveness.approximateCostEliminated,
+                                effectiveness.approximateEffectiveness);
 
     Logger::get().log(Logger::E_LEVEL_RESULT, output, Logger::E_OUTPUT_DEBUG);
   }
@@ -294,36 +383,50 @@ void GraphStatEffectivenessCpu::logResults(const int currentIteration, const boo
 
   // Print result csv
   {
-    auto output=sprintfString("%04d; %s; %.4f ; %.4f ; "
-                        "%zu; %zu; %zu; "
-                        "%zu; %zu; %zu; "
-                        "%zu; "
-                        "%zu; "
-                        "%.6f",
-                     currentIteration, currentStepName.c_str(), currentStepTime, totalStepTime,
-                        algoResults.vertexEliminated, patternmatchingState.graphActiveVertexCount, patternmatchingState.graphVertexCount,
-                        algoResults.edgeEliminated, patternmatchingState.graphActiveEdgeCount, patternmatchingState.graphEdgeCount,
-                        algoResults.matchEliminated,
-                        algoResults.enumeration,
-                        static_cast<double>(algoResults.matchEliminated)/currentStepTime);
+    auto output = sprintfString("%04d; %s; %.4f ; %.4f ; "
+                                "%zu; %zu; %zu; "
+                                "%zu; %zu; %zu; "
+                                "%zu; "
+                                "%zu; "
+                                "%.6f",
+                                currentIteration,
+                                currentStepName.c_str(),
+                                currentStepTime,
+                                totalStepTime,
+                                algoResults.vertexEliminated,
+                                patternmatchingState.graphActiveVertexCount,
+                                patternmatchingState.graphVertexCount,
+                                algoResults.edgeEliminated,
+                                patternmatchingState.graphActiveEdgeCount,
+                                patternmatchingState.graphEdgeCount,
+                                algoResults.matchEliminated,
+                                algoResults.enumeration,
+                                static_cast<double>(algoResults.matchEliminated) / currentStepTime);
 
     Logger::get().log(Logger::E_LEVEL_RESULT, output, Logger::E_OUTPUT_FILE_ITERATION_RESULTS);
   }
 
   // Log result
   {
-    auto output=sprintfString( "Iteration %4d [%s], Running time %.4f/%.4f, "
-                               "Eliminated vertex %zu/%zu/%zu, "
-                               "Eliminated edge %zu/%zu/%zu, "
-                               "Eliminated match %zu,"
-                               "Enumeration %zu,"
-                               "Effectiveness %.6f",
-                               currentIteration, currentStepName.c_str(), currentStepTime, totalStepTime,
-                               algoResults.vertexEliminated, patternmatchingState.graphActiveVertexCount, patternmatchingState.graphVertexCount,
-                               algoResults.edgeEliminated, patternmatchingState.graphActiveEdgeCount, patternmatchingState.graphEdgeCount,
-                               algoResults.matchEliminated,
-                               algoResults.enumeration,
-                               static_cast<double>(algoResults.matchEliminated)/currentStepTime);
+    auto output = sprintfString("Iteration %4d [%s], Running time %.4f/%.4f, "
+                                "Eliminated vertex %zu/%zu/%zu, "
+                                "Eliminated edge %zu/%zu/%zu, "
+                                "Eliminated match %zu,"
+                                "Enumeration %zu,"
+                                "Effectiveness %.6f",
+                                currentIteration,
+                                currentStepName.c_str(),
+                                currentStepTime,
+                                totalStepTime,
+                                algoResults.vertexEliminated,
+                                patternmatchingState.graphActiveVertexCount,
+                                patternmatchingState.graphVertexCount,
+                                algoResults.edgeEliminated,
+                                patternmatchingState.graphActiveEdgeCount,
+                                patternmatchingState.graphEdgeCount,
+                                algoResults.matchEliminated,
+                                algoResults.enumeration,
+                                static_cast<double>(algoResults.matchEliminated) / currentStepTime);
 
     Logger::get().log(Logger::E_LEVEL_RESULT, output, Logger::E_OUTPUT_DEBUG);
   }
@@ -356,7 +459,8 @@ void GraphStatEffectivenessCpu::printActiveGraph(std::ostream &ostream) const {
 
       if (patternmatchingState.vertexActiveList[neighborVertexId] == 0) continue;
 
-      ostream << vertexId << " " << neighborVertexId << " " << graph->values[vertexId] << " " << graph->values[neighborVertexId]
+      ostream << vertexId << " " << neighborVertexId << " " << graph->values[vertexId] << " "
+              << graph->values[neighborVertexId]
               << std::endl;
     }
   }
@@ -368,7 +472,7 @@ void GraphStatEffectivenessCpu::printActiveVertex(std::ostream &ostream) const {
 
     ostream << vertexId << " ";
 
-    for(const auto& it : patternmatchingState.vertexPatternMatch[vertexId]) {
+    for (const auto &it : patternmatchingState.vertexPatternMatch[vertexId]) {
       ostream << it << " ";
     }
     ostream << std::endl;

@@ -14,7 +14,7 @@ void MultipleLabelGenerateConstraintEnumeration::preprocessPatern(
     const graph_t &pattern) {
 
   templateConstraint = MultipleLabelConstraintTemplate(pattern);
-  templateConstraint.generateWalkMap();
+  templateConstraint.generateWalkMap(pattern);
 }
 
 void MultipleLabelGenerateConstraintEnumeration::print(std::ostream &ostream) const {

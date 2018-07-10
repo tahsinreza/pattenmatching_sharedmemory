@@ -139,7 +139,7 @@ void MultipleLabelGenerateConstraintTemplate::preprocessPatern(
   preprocessSubtemplateConstraint();
 
   for (auto &it : templateConstraintVector) {
-    it.generateWalkMap();
+    it.generateWalkMap(pattern);
   }
 
 }

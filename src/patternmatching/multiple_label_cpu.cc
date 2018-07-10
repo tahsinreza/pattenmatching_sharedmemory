@@ -118,7 +118,7 @@ int MultipleLabelCpu::runPatternMatching() {
 
   int currentIteration = 0;
   algorithmStep.getNextStep(algoResults, &currentStep, &currentStepName);
-  while (!finished && currentIteration < 200) {
+  while (!finished && currentIteration < 1000) {
   // reinitialise
     switch (currentStep) {
       case MultipleLabelStep::E_CC :

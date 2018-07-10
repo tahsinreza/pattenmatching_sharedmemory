@@ -35,7 +35,7 @@ class MultipleLabelConstraintTemplate {
   MultipleLabelConstraintTemplate(const MultipleLabelConstraintPath &pathConstraint);
   MultipleLabelConstraintTemplate(const MultipleLabelConstraintTemplate &templateConstraint1,
                                   const MultipleLabelConstraintTemplate &templateConstraint2);
-  void generateWalkMap();
+  void generateWalkMap(const graph_t &pattern);
 
   void print(std::ostream &ostream = std::cout) const;
   void printWalk(std::ostream &ostream = std::cout) const;
@@ -46,10 +46,12 @@ class MultipleLabelConstraintTemplate {
 
   bool haveCommonEdge(const MultipleLabelConstraintTemplate &other) const;
   bool haveCommonVector(const MultipleLabelConstraintTemplate &other) const;
-  void generateWalk(Walk &walk,
-                    std::vector<vid_t> &historyIndex,
-                    std::vector<UndirectedEdge> &historyEdgeIndex,
-                    const vid_t &currentVertexIndex) const;
+  void generateWalk(
+      const graph_t &pattern,
+      Walk &walk,
+      std::vector<vid_t> &historyIndex,
+      std::vector<UndirectedEdge> &historyEdgeIndex,
+      const vid_t &currentVertexIndex) const;
   size_t historyFindIndex(const std::vector<vid_t> &historyIndex, const vid_t &vertexIndex) const;
   TemplateConstraintOrigin templateConstraintOrigin;
   size_t length;

@@ -50,11 +50,11 @@ bool MultipleLabelCcCpu<State>::checkConstraint(
       if (!globalState->vertexPatternMatch[neighborVertexId].isIn(nextConstraintVertexIndex))
         continue;
 
-      const auto &edge = (currentVertexId > neighborVertexId) ? std::make_pair(currentVertexId, neighborVertexId)
-                                                              : std::make_pair(neighborVertexId, currentVertexId);
+      const auto edge = (currentVertexId > neighborVertexId) ? std::make_pair(currentVertexId, neighborVertexId)
+                                                             : std::make_pair(neighborVertexId, currentVertexId);
 
       if (sourceTraversalMap.find(edge) != sourceTraversalMap.end()
-          && sourceTraversalMap[edge].isIn(currentPositionInConstraint)) {
+          && sourceTraversalMap.at(edge).isIn(currentPositionInConstraint)) {
         continue;
       }
 
@@ -90,7 +90,6 @@ MultipleLabelCcCpu<State>::compute(
   PROGRESSION_INSERT_BEGIN()
 
   sourceTraversalMapType sourceTraversalMap;
-  sourceTraversalMap.reserve(1000);
 
   #pragma omp parallel for private(sourceTraversalMap) //schedule(dynamic, 1000)
   for (vid_t vertexId = 0; vertexId < graph.vertex_count; vertexId++) {
@@ -126,8 +125,7 @@ MultipleLabelCcCpu<State>::compute(
 
     if (hasBeenModified) {
       BaseClass::makeModifiedVertex(globalState, vertexId);
-    }
-    PROGRESSION_INSERT_LOOP()
+    }PROGRESSION_INSERT_LOOP()
   }
 
   size_t vertexEliminatedNumber = 0;

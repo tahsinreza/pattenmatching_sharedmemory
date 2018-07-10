@@ -44,7 +44,7 @@ MultipleLabelConstraintTemplate::MultipleLabelConstraintTemplate(const MultipleL
 }
 
 MultipleLabelConstraintTemplate::MultipleLabelConstraintTemplate(const MultipleLabelConstraintTemplate &templateConstraint1,
-                                       const MultipleLabelConstraintTemplate &templateConstraint2) {
+                                                                 const MultipleLabelConstraintTemplate &templateConstraint2) {
   if ((templateConstraint1.templateConstraintOrigin == E_CC || templateConstraint1.templateConstraintOrigin == E_TDS_CC)
       && (templateConstraint2.templateConstraintOrigin == E_CC
           || templateConstraint2.templateConstraintOrigin == E_TDS_CC)) {
@@ -84,7 +84,6 @@ MultipleLabelConstraintTemplate::MultipleLabelConstraintTemplate(const graph_t &
   }
 }
 
-
 bool MultipleLabelConstraintTemplate::haveCommonVector(const MultipleLabelConstraintTemplate &other) const {
   for (const auto &it : vertexIndexGraph) {
     if (other.vertexIndexGraph.count(it.first) > 0) {
@@ -110,7 +109,7 @@ bool MultipleLabelConstraintTemplate::haveCommonEdge(const MultipleLabelConstrai
 }
 
 size_t MultipleLabelConstraintTemplate::historyFindIndex(const std::vector<vid_t> &historyIndex,
-                                            const vid_t &vertexIndex) const {
+                                                         const vid_t &vertexIndex) const {
   auto it = historyIndex.cbegin();
   size_t index = 0;
   for (; it != historyIndex.cend(); ++it, ++index) {
@@ -119,48 +118,50 @@ size_t MultipleLabelConstraintTemplate::historyFindIndex(const std::vector<vid_t
   return index;
 }
 
-void MultipleLabelConstraintTemplate::generateWalk(Walk &walk,
-                                      std::vector<vid_t> &historyVertexIndex,
-                                      std::vector<UndirectedEdge> &historyEdgeIndex,
-                                      const vid_t &currentVertexIndex) const {
+void MultipleLabelConstraintTemplate::generateWalk(
+    const graph_t &pattern,
+    Walk &walk,
+    std::vector<vid_t> &historyVertexIndex,
+    std::vector<UndirectedEdge> &historyEdgeIndex,
+    const vid_t &currentVertexIndex) const {
   bool isOn = true;
   auto currentWalkIndex = walk.vertexLength - 1;
   for (const auto &neighborVertex : vertexIndexGraph.at(currentVertexIndex)) {
     auto edge = UndirectedEdge(currentVertexIndex, neighborVertex);
-    if(!isInVector(historyVertexIndex, neighborVertex)) {
+    if (!isInVector(historyVertexIndex, neighborVertex)) {
       if (!isOn) {
-        walk.addMoveBack(currentVertexIndex, currentWalkIndex);
+        walk.addMoveBack(pattern, currentVertexIndex, currentWalkIndex);
       }
 
       historyEdgeIndex.push_back(edge);
       historyVertexIndex.push_back(neighborVertex);
-      walk.addVertex(neighborVertex);
-      generateWalk(walk, historyVertexIndex, historyEdgeIndex, neighborVertex);
+      walk.addVertex(pattern, neighborVertex);
+      generateWalk(pattern, walk, historyVertexIndex, historyEdgeIndex, neighborVertex);
       isOn = false;
     } else {
-      if(isInVector(historyEdgeIndex,edge)) continue;
+      if (isInVector(historyEdgeIndex, edge)) continue;
 
       if (!isOn) {
-        walk.addMoveBack(currentVertexIndex, currentWalkIndex);
+        walk.addMoveBack(pattern, currentVertexIndex, currentWalkIndex);
         isOn = true;
       }
       auto previousIndex = historyFindIndex(historyVertexIndex, neighborVertex);
 
       historyEdgeIndex.push_back(edge);
-      walk.addCheck(neighborVertex, previousIndex);
+      walk.addCheck(pattern, neighborVertex, previousIndex);
     }
   }
 }
 
-void MultipleLabelConstraintTemplate::generateWalkMap() {
+void MultipleLabelConstraintTemplate::generateWalkMap(const graph_t &pattern) {
   for (const auto &it : vertexIndexGraph) {
     Walk currentWalk;
 
     std::vector<vid_t> historyVertexIndex;
     std::vector<UndirectedEdge> historyEdgeIndex;
     historyVertexIndex.push_back(it.first);
-    currentWalk.addVertex(it.first);
-    generateWalk(currentWalk, historyVertexIndex, historyEdgeIndex, it.first);
+    currentWalk.addVertex(pattern, it.first);
+    generateWalk(pattern, currentWalk, historyVertexIndex, historyEdgeIndex, it.first);
     currentWalk.computeStoredVertex();
 
     walkMap[it.first] = currentWalk;

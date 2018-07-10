@@ -26,18 +26,37 @@ class MultipleLabelConstraintEffectiveness {
                         const GraphStat &graphStat,
                         const MultipleLabelConstraintCircular &constraint);
 
+
+  void compute(const graph_t &pattern, const GraphStat &graphStat, const MultipleLabelConstraintPath &constraint);
+  void computeStrict(const graph_t &pattern,
+                     const GraphStat &graphStat,
+                     const MultipleLabelConstraintPath &constraint);
+  void computeBacktrack(const graph_t &pattern,
+                        const GraphStat &graphStat,
+                        const MultipleLabelConstraintPath &constraint);
+
+  void compute(const graph_t &pattern, const GraphStat &graphStat, const MultipleLabelConstraintTemplate &constraint);
+  void computeStrict(const graph_t &pattern,
+                     const GraphStat &graphStat,
+                     const MultipleLabelConstraintTemplate &constraint);
+  void computeBacktrack(const graph_t &pattern,
+                        const GraphStat &graphStat,
+                        const MultipleLabelConstraintTemplate &constraint);
+
   void clear();
   void print(std::ostream &ostream = std::cout) const;
 
  public:
-  double probaFindEdge(const GraphStat &graphStat, const weight_t &labelFrom, const weight_t &labelTo) const;
   double probaFindVertex(const GraphStat &graphStat,
                          const weight_t labelFrom,
                          const weight_t labelTo,
-                         const size_t knowingNumber=0) const;
-  double probaFindDifferentVertex(const GraphStat &graphStat, const weight_t &labelFrom, const weight_t &labelTo) const;
+                         const size_t knowingEdgeNumber = 0,
+                         const size_t knowingVertexNumber = 0) const;
 
-  double probaFindOneVertex(const GraphStat &graphStat,
+  double probaFindSameVertex(const GraphStat &graphStat,
+                             const double labelFromNumber,
+                             const weight_t label) const;
+  double probaFindDifferentVertex(const GraphStat &graphStat,
                             const double labelFromNumber,
                             const weight_t label) const;
 
@@ -46,10 +65,11 @@ class MultipleLabelConstraintEffectiveness {
                           const weight_t labelFrom,
                           const weight_t labelTo) const;
   double probaFindOnePathKnowing(const GraphStat &graphStat,
-                          const double labelFromNumber,
-                          const weight_t labelFrom,
-                          const weight_t labelTo,
-                          const size_t knowingNumber=0) const;
+                                 const double labelFromNumber,
+                                 const weight_t labelFrom,
+                                 const weight_t labelTo,
+                                 const size_t knowingEdgeNumber = 0,
+                                 const size_t knowingVertexNumber = 0) const;
 
   double averageNumberOfVertex(const GraphStat &graphStat,
                                const double labelFromNumber,
@@ -58,17 +78,22 @@ class MultipleLabelConstraintEffectiveness {
                                const double labelFromNumber,
                                const weight_t labelFrom,
                                const weight_t labelTo) const;
+  double averageNumberOfVertexKnowing(const GraphStat &graphStat,
+                                      const double labelFromNumber,
+                                      const weight_t labelFrom,
+                                      const weight_t labelTo,
+                                      const size_t knowingEdgeNumber = 0,
+                                      const size_t knowingVertexNumber = 0) const;
   double averageNumberOfUniqueVertex(const GraphStat &graphStat,
                                      const double labelFromNumber,
                                      const weight_t labelFrom,
-                                     const weight_t labelTo,
-                                     const bool forceUnique = false) const;
+                                     const weight_t labelTo) const;
   double averageNumberOfUniqueVertexKnowing(const GraphStat &graphStat,
                                             const double labelFromNumber,
                                             const weight_t labelFrom,
                                             const weight_t labelTo,
-                                            const size_t knowingNumber = 1,
-                                            const bool forceUnique= false) const;
+                                            const size_t knowingEdgeNumber = 0,
+                                            const size_t knowingVertexNumber = 0) const;
 
   template<typename T>
   T averageDifferentVertexFromTries(const T vertexNumber, const T tries) const;

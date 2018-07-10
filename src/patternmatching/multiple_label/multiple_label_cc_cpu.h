@@ -9,6 +9,7 @@
 #include <vector>
 #include <unordered_set>
 #include <unordered_map>
+#include <map>
 #include <iostream>
 #include "multiple_label_constraint_circular.h"
 #include "common_utils.h"
@@ -21,6 +22,7 @@ class MultipleLabelCcCpu : public MultipleLabelCpuBase<State> {
  protected:
   typedef MultipleLabelCpuBase<State> BaseClass;
   using sourceTraversalMapType = std::unordered_map<std::pair<vid_t, vid_t>, FixedBitmapType, PairHash>;
+  //using sourceTraversalMapType = std::map<std::pair<vid_t, vid_t>, FixedBitmapType>;
  public:
   AlgoResults compute(const graph_t &graph, State *globalState);
   void resetState(State *globalState);
