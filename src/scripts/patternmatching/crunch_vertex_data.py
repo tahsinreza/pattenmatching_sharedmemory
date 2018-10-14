@@ -24,7 +24,7 @@ def main(inputFileList, outputFileName):
     outputFile.close()
     print('Converted files into '+outputFileName)
 
-inputDirectory='data/patternmatching/IMDB/vertex_data/test1/'
+inputDirectory='data/patternmatching/IMDB_PARSED/vertex_data/test2_3/'
 main([inputDirectory+'vertex_data.actresses.list.vertex_data',\
       inputDirectory+'vertex_data.actors.list.vertex_data',\
       inputDirectory+'vertex_data.directors.list.vertex_data',\

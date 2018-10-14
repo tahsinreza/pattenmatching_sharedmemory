@@ -12,14 +12,14 @@
 #include <sstream>
 #include "totem_graph.h"
 
-#define PRODUCTION 0
+#define PRODUCTION 1
 
 #if PRODUCTION == 1
   #define PROGRESSION_INSERT 0
   #define LOGGER_LEVEL_NO_DEBUG 1
   #define ENUMERATION_BINARY_FORMAT 1
 #else
-  #define PROGRESSION_INSERT 0
+  #define PROGRESSION_INSERT 1
   #define LOGGER_LEVEL_NO_DEBUG 0
   #define ENUMERATION_BINARY_FORMAT 0
 #endif

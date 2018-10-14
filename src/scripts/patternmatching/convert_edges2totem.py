@@ -30,7 +30,7 @@ def main(inputFileName, outputFileName, directed=False):
     outputFile.close()
     print('Converted file ' + inputFileName + ' into '+outputFileName)
     
-main('data/patternmatching/IMDB/patterns/test1/pattern_edge', 'data/patternmatching/IMDB/patterns/test1/pattern_edge.totem')
+main('data/patternmatching/IMDB/pattern_1/test_1/pattern_edge', 'data/patternmatching/IMDB/pattern_1/test_1/pattern_edge.totem')
 #main('data/patternmatching/IMDB/all.sorted.edge', 'data/patternmatching/IMDB/graph.totem')
 
 if __name__ == '__main__':

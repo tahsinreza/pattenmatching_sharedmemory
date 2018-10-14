@@ -13,26 +13,30 @@ Walk::Walk()
 {
 }
 
-void Walk::addMoveBack(const vid_t &vertexIndex, const size_t &previousPositionIt) {
+void Walk::addMoveBack(const graph_t &pattern, const vid_t &vertexIndex, const size_t &previousPositionIt) {
   moveVector.push_back(E_MOVE_BACK);
   vertexIndexVector.push_back(vertexIndex);
+  vertexLabelVector.push_back(pattern.values[vertexIndex]);
   moveBackIndexVector.push_back(previousPositionIt);
   ++length;
 }
 
-void Walk::addCheck(const vid_t &vertexIndex, const size_t &previousPositionIt) {
+void Walk::addCheck(const graph_t &pattern, const vid_t &vertexIndex, const size_t &previousPositionIt) {
   moveVector.push_back(E_CHECK);
   vertexIndexVector.push_back(vertexIndex);
+  vertexLabelVector.push_back(pattern.values[vertexIndex]);
   moveBackIndexVector.push_back(previousPositionIt);
   ++length;
 }
 
-void Walk::addVertex(const vid_t &vertexIndex) {
+void Walk::addVertex(const graph_t &pattern, const vid_t &vertexIndex) {
   moveVector.push_back(E_VERTEX_NO_STORE);
   vertexIndexVector.push_back(vertexIndex);
+  vertexLabelVector.push_back(pattern.values[vertexIndex]);
   moveBackIndexVector.push_back(0);
   ++length;
   historyIndexVector.push_back(vertexIndex);
+  historyLabelVector.push_back(pattern.values[vertexIndex]);
   ++vertexLength;
 }
 
@@ -70,7 +74,7 @@ void Walk::print(std::ostream &ostream) const {
     } else if(moveVector[i]==E_VERTEX_NO_STORE) {
       move="VN";
     }
-    ostream << "[" << move << "," << vertexIndexVector[i] << "," << moveBackIndexVector[i] << "]";
+    ostream << "[" << move << "," << vertexIndexVector[i] << ","<< vertexLabelVector[i]<< "," << moveBackIndexVector[i] << "]";
   }
   ostream << std::endl;
 }

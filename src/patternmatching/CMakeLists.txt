@@ -4,8 +4,10 @@ project(patternmatching LANGUAGES CXX CUDA)
 set(PATTERNMATCHING_SOURCE_DIR ${SOURCE_ROOT_DIR}/patternmatching/)
 
 add_subdirectory(test)
+add_subdirectory(test_article)
 add_subdirectory(unique_label)
 add_subdirectory(multiple_label)
+add_subdirectory(multiple_label_test)
 add_subdirectory(algorithms)
 add_subdirectory(utils)
 

@@ -20,6 +20,7 @@ else ()
 endif ()
 
 # add CUDA
+set(CMAKE_CUDA_COMPILER "/usr/local/cuda/bin/nvcc")
 enable_language(CUDA)
 find_package(CUDA REQUIRED)
 if (CUDA_FOUND)

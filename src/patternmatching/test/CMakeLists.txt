@@ -69,3 +69,4 @@ target_link_libraries(${PROJECT_NAME}_graph_make_undirected
         ${TBB_LIBRARIES}
         ${OpenMP_CXX_LIBRARIES}
         ${CUDA_LIBRARIES})
+
