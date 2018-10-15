@@ -74,8 +74,8 @@ It accepts the same arguments as `run_patternmatching.py`.
 ## Additional datasets
 
 The additional datasets are huge (1GB - 64GB). They can be downloaded here :
-- Youtube (1GB) http://www.ece.ubc.ca/~treza/youtube
-- Patent (1GB) http://www.ece.ubc.ca/~treza/patent
+- Youtube (1GB) http://www.ece.ubc.ca/~treza/Youtube
+- Patent (1GB) http://www.ece.ubc.ca/~treza/Patent
 - IMDB (1GB) http://www.ece.ubc.ca/~treza/IMDB
 - Reddit (64GB) http://www.ece.ubc.ca/~treza/Reddit
 
